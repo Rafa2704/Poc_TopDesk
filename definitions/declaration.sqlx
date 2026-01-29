@@ -1,0 +1,6 @@
+config {
+  type: "declaration",
+  database: "dev-autopass-bi-001",
+  schema: "tmp",
+  name: "ext_incidents_full" 
+}
