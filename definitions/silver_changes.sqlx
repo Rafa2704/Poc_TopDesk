@@ -12,6 +12,7 @@ config {
   
 }
 
+
 SELECT
     -- Identificadores (UUIDs e chaves estrangeiras)
     CAST(id AS STRING) AS id,
