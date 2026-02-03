@@ -1,0 +1,37 @@
+config {
+  type:"incremental",
+  schema:"tmp",
+  name:"silver_incidente_details",
+  description:"Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey:["id"],
+  bigquery:{
+    partitionBy:"DATE(creationDate)",
+    updatePartitionFilter:"creationDate \x3e\x3d timestamp_sub(current_timestamp(), interval 5 day)"
+  },
+  tags:["topdesk"],
+  }
+
+
+
+SELECT
+    -- Identificadores (UUIDs e IDs de Negócio)
+    CAST(id AS STRING) AS id,
+    CAST(incidentNumber AS STRING) AS incidentNumber,
+    CAST(assetId AS STRING) AS assetId,
+    CAST(objectId AS STRING) AS objectId,
+
+    -- Descrições e Informações de Contato
+    CAST(briefDescription AS STRING) AS briefDescription,
+    CAST(reporterName AS STRING) AS reporterName,
+    CAST(externalNumber AS STRING) AS externalNumber,
+    CAST(email AS STRING) AS email,
+    CAST(concerning AS STRING) AS concerning,
+
+    -- Datas (Tratando o formato ISO com SAFE.PARSE)
+    SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', creationDate) AS creationDate
+
+FROM `dev-autopass-bi-001.tmp.ext_incidentdetails_full`
+
+${when(incremental(), 
+  `WHERE SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', creationDate) >= (SELECT max(creationDate) FROM ${self()}) - INTERVAL 3 DAY`
+)}
