@@ -4,7 +4,8 @@ config {
     name: "silver_logs_execucao_topdesk",
     bigquery: {
         partitionBy: "DATE(timestamp_processamento)"
-    }
+    },
+    tags: ["topdesk"],
 }
 
 WITH base_limpa AS (
