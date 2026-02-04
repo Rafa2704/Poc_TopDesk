@@ -1,0 +1,47 @@
+config {
+    type: "incremental",
+    schema: "tmp",
+    name: "silver_logs_execucao_topdesk",
+    bigquery: {
+        partitionBy: "DATE(timestamp_processamento)"
+    }
+}
+
+WITH base_limpa AS (
+    SELECT 
+        REPLACE(linha, '""', '"') as linha_corrigida,
+        _FILE_NAME as nome_arquivo -- Útil para auditoria
+    FROM `dev-autopass-bi-001.tmp.ext_logs_execucao_topdesk`
+    --${ref("ext_logs_execucao_topdesk")}
+),
+json_unificado AS (
+    SELECT 
+        STRING_AGG(linha_corrigida, ' ') as json_full,
+        nome_arquivo
+    FROM base_limpa
+    GROUP BY nome_arquivo
+),
+tabelas_extraidas AS (
+    SELECT
+        nome_arquivo,
+        [
+            STRUCT('Incidents' AS tabela, JSON_QUERY(json_full, '$.Incidents') AS info),
+            STRUCT('IncidentDetails' AS tabela, JSON_QUERY(json_full, '$.IncidentDetails') AS info),
+            STRUCT('Changes' AS tabela, JSON_QUERY(json_full, '$.Changes') AS info)
+        ] AS lista_tabelas
+    FROM json_unificado
+)
+
+SELECT
+    CURRENT_TIMESTAMP() AS timestamp_processamento,
+    nome_arquivo,
+    item.tabela,
+    JSON_VALUE(item.info, '$.data') AS data_execucao,
+    JSON_VALUE(item.info, '$.status') AS status,
+    SAFE_CAST(JSON_VALUE(item.info, '$.registros') AS INT64) AS registros,
+    JSON_VALUE(item.info, '$.erro') AS erro
+FROM tabelas_extraidas, UNNEST(lista_tabelas) AS item
+
+${when(incremental(), `
+    WHERE JSON_VALUE(item.info, '$.data') > (SELECT MAX(data_execucao) FROM ${self()})
+`)}
