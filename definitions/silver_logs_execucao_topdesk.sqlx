@@ -43,6 +43,6 @@ SELECT
     JSON_VALUE(item.info, '$.erro') AS erro
 FROM tabelas_extraidas, UNNEST(lista_tabelas) AS item
 
-${when(incremental(), `
-    WHERE JSON_VALUE(item.info, '$.data') > (SELECT MAX(data_execucao) FROM ${self()})
-`)}
+-- ${when(incremental(), `
+--     WHERE JSON_VALUE(item.info, '$.data') > (SELECT MAX(data_execucao) FROM ${self()})
+-- `)}
