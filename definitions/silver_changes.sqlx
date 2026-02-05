@@ -91,5 +91,5 @@ ${when(incremental(), `
   WHERE modificationDate >= (
     SELECT COALESCE(MAX(modificationDate), TIMESTAMP('1900-01-01')) 
     FROM ${self()}
-  ) - INTERVAL 3 DAY
+  ) - INTERVAL 5 DAY
 `)}

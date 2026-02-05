@@ -1,37 +1,45 @@
 config {
-  type:"incremental",
-  schema:"tmp",
-  name:"silver_incidente_details",
-  description:"Tabela de incidentes tipada e persistida via Merge Incremental",
-  uniqueKey:["id"],
-  bigquery:{
-    partitionBy:"DATE(creationDate)",
-    updatePartitionFilter:"creationDate \x3e\x3d timestamp_sub(current_timestamp(), interval 5 day)"
+  type: "incremental",
+  schema: "tmp",
+  name: "silver_incidente_details",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"], 
+  bigquery: {
+    partitionBy: "DATE(creationDate)",
+    
+    updatePartitionFilter: "creationDate >= timestamp_sub(current_timestamp(), interval 90 day)"
   },
-  tags:["topdesk"],
-  }
+  tags: ["topdesk"],
+}
 
-
-
-SELECT
-    -- Identificadores (UUIDs e IDs de Negócio)
+WITH base_tipada AS (
+  SELECT
+    -- Identificadores
     CAST(id AS STRING) AS id,
     CAST(incidentNumber AS STRING) AS incidentNumber,
     CAST(assetId AS STRING) AS assetId,
     CAST(objectId AS STRING) AS objectId,
 
-    -- Descrições e Informações de Contato
+    -- Descrições e Contato
     CAST(briefDescription AS STRING) AS briefDescription,
     CAST(reporterName AS STRING) AS reporterName,
     CAST(externalNumber AS STRING) AS externalNumber,
     CAST(email AS STRING) AS email,
     CAST(concerning AS STRING) AS concerning,
 
-    -- Datas (Tratando o formato ISO com SAFE.PARSE)
+    -- Datas (Processadas na CTE para facilitar o filtro final)
     SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', creationDate) AS creationDate
 
-FROM `dev-autopass-bi-001.tmp.ext_incidentdetails_full`
+  FROM `dev-autopass-bi-001.tmp.ext_incidentdetails_full`
+)
 
-${when(incremental(), 
-  `WHERE SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', creationDate) >= (SELECT max(creationDate) FROM ${self()}) - INTERVAL 3 DAY`
-)}
+SELECT * FROM base_tipada
+
+${when(incremental(), `
+  -- O COALESCE garante que se a tabela estiver vazia (após um drop), 
+  -- o MAX não retorne NULL e o script consiga carregar tudo de novo
+  WHERE creationDate >= (
+    SELECT COALESCE(MAX(creationDate), TIMESTAMP('1900-01-01')) 
+    FROM ${self()}
+  ) - INTERVAL 5 DAY
+`)}

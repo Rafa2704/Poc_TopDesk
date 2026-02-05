@@ -1,86 +1,90 @@
-
-
 config {
-  type:"incremental",
-  schema:"tmp",
-  name:"silver_incidents",
-  description:"Tabela de incidentes tipada e persistida via Merge Incremental",
-  uniqueKey:["id"],
-  bigquery:{
-    partitionBy:"DATE(creationDate)",
-    updatePartitionFilter:"creationDate \x3e\x3d timestamp_sub(current_timestamp(), interval 10 day)"
+  type: "incremental",
+  schema: "tmp",
+  name: "silver_incidents",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(creationDate)",
+    updatePartitionFilter: "creationDate >= timestamp_sub(current_timestamp(), interval 90 day)"
   },
-  tags:["topdesk"],
-  
+  tags: ["topdesk"],
 }
 
-SELECT
-  -- ID e Status (Strings)
-  id,
-  status,
-  linkedBranchName,
+WITH base_pre_tipada AS (
+  SELECT
+    -- ID e Status
+    CAST(id AS STRING) AS id,
+    CAST(status AS STRING) AS status,
+    CAST(linkedBranchName AS STRING) AS linkedBranchName,
 
-  -- Datas (Conversão Garantida)
-  SAFE_CAST(creationDate AS TIMESTAMP) as creationDate,
-  SAFE_CAST(modificationDate AS TIMESTAMP) as modificationDate,
-  SAFE_CAST(callDate AS TIMESTAMP) as callDate,
-  SAFE_CAST(targetDate AS TIMESTAMP) as targetDate,
-  SAFE_CAST(slaTargetDate AS TIMESTAMP) as slaTargetDate,
-  SAFE_CAST(completionDate AS TIMESTAMP) as completionDate,
-  SAFE_CAST(responseTargetDate AS TIMESTAMP) as responseTargetDate,
-  SAFE_CAST(responseDate AS TIMESTAMP) as responseDate,
-  SAFE_CAST(closureDate AS TIMESTAMP) as closureDate,
-  SAFE_CAST(onHoldDate AS TIMESTAMP) as onHoldDate,
+    -- Datas (Convertendo para TIMESTAMP para usar no filtro final)
+    SAFE_CAST(creationDate AS TIMESTAMP) as creationDate,
+    SAFE_CAST(modificationDate AS TIMESTAMP) as modificationDate,
+    SAFE_CAST(callDate AS TIMESTAMP) as callDate,
+    SAFE_CAST(targetDate AS TIMESTAMP) as targetDate,
+    SAFE_CAST(slaTargetDate AS TIMESTAMP) as slaTargetDate,
+    SAFE_CAST(completionDate AS TIMESTAMP) as completionDate,
+    SAFE_CAST(responseTargetDate AS TIMESTAMP) as responseTargetDate,
+    SAFE_CAST(responseDate AS TIMESTAMP) as responseDate,
+    SAFE_CAST(closureDate AS TIMESTAMP) as closureDate,
+    SAFE_CAST(onHoldDate AS TIMESTAMP) as onHoldDate,
 
-  -- Inteiros (IDs e durações)
-  SAFE_CAST(entryTypeId AS INT64) as entryTypeId,
-  SAFE_CAST(typeId AS INT64) as typeId,
-  SAFE_CAST(categoryId AS INT64) as categoryId,
-  SAFE_CAST(subcategoryId AS INT64) as subcategoryId,
-  SAFE_CAST(impactId AS INT64) as impactId,
-  SAFE_CAST(urgencyId AS INT64) as urgencyId,
-  SAFE_CAST(priorityId AS INT64) as priorityId,
-  SAFE_CAST(durationId AS INT64) as durationId,
-  SAFE_CAST(branchId AS INT64) as branchId,
-  SAFE_CAST(departmentId AS INT64) as departmentId,
-  SAFE_CAST(budgetHolderId AS INT64) as budgetHolderId,
-  SAFE_CAST(operatorGroupId AS INT64) as operatorGroupId,
-  SAFE_CAST(operatorId AS INT64) as operatorId,
-  SAFE_CAST(supplierId AS INT64) as supplierId,
-  SAFE_CAST(processingStatusId AS INT64) as processingStatusId,
-  SAFE_CAST(linkedBranchId AS INT64) as linkedBranchId,
-  SAFE_CAST(linkedLocationId AS INT64) as linkedLocationId,
-  SAFE_CAST(reporterId AS INT64) as reporterId,
-  SAFE_CAST(closureCodeId AS INT64) as closureCodeId,
-  SAFE_CAST(escalationReasonId AS INT64) as escalationReasonId,
-  SAFE_CAST(archivingReasonId AS INT64) as archivingReasonId,
-  SAFE_CAST(expectedTimeSpent_inSeconds AS INT64) as expectedTimeSpent_inSeconds,
-  SAFE_CAST(totalDuration_inSeconds AS INT64) as totalDuration_inSeconds,
-  SAFE_CAST(inProgressDuration_inSeconds AS INT64) as inProgressDuration_inSeconds,
-  SAFE_CAST(majorIncidentId AS INT64) as majorIncidentId,
-  SAFE_CAST(feedbackRating AS INT64) as feedbackRating,
-  SAFE_CAST(serviceId AS INT64) as serviceId,
-  SAFE_CAST(creatorId AS INT64) as creatorId,
-  SAFE_CAST(modifierId AS INT64) as modifierId,
+    -- Inteiros
+    SAFE_CAST(entryTypeId AS INT64) as entryTypeId,
+    SAFE_CAST(typeId AS INT64) as typeId,
+    SAFE_CAST(categoryId AS INT64) as categoryId,
+    SAFE_CAST(subcategoryId AS INT64) as subcategoryId,
+    SAFE_CAST(impactId AS INT64) as impactId,
+    SAFE_CAST(urgencyId AS INT64) as urgencyId,
+    SAFE_CAST(priorityId AS INT64) as priorityId,
+    SAFE_CAST(durationId AS INT64) as durationId,
+    SAFE_CAST(branchId AS INT64) as branchId,
+    SAFE_CAST(departmentId AS INT64) as departmentId,
+    SAFE_CAST(budgetHolderId AS INT64) as budgetHolderId,
+    SAFE_CAST(operatorGroupId AS INT64) as operatorGroupId,
+    SAFE_CAST(operatorId AS INT64) as operatorId,
+    SAFE_CAST(supplierId AS INT64) as supplierId,
+    SAFE_CAST(processingStatusId AS INT64) as processingStatusId,
+    SAFE_CAST(linkedBranchId AS INT64) as linkedBranchId,
+    SAFE_CAST(linkedLocationId AS INT64) as linkedLocationId,
+    SAFE_CAST(reporterId AS INT64) as reporterId,
+    SAFE_CAST(closureCodeId AS INT64) as closureCodeId,
+    SAFE_CAST(escalationReasonId AS INT64) as escalationReasonId,
+    SAFE_CAST(archivingReasonId AS INT64) as archivingReasonId,
+    SAFE_CAST(expectedTimeSpent_inSeconds AS INT64) as expectedTimeSpent_inSeconds,
+    SAFE_CAST(totalDuration_inSeconds AS INT64) as totalDuration_inSeconds,
+    SAFE_CAST(inProgressDuration_inSeconds AS INT64) as inProgressDuration_inSeconds,
+    SAFE_CAST(majorIncidentId AS INT64) as majorIncidentId,
+    SAFE_CAST(feedbackRating AS INT64) as feedbackRating,
+    SAFE_CAST(serviceId AS INT64) as serviceId,
+    SAFE_CAST(creatorId AS INT64) as creatorId,
+    SAFE_CAST(modifierId AS INT64) as modifierId,
 
-  -- Booleanos
-  SAFE_CAST(completed AS BOOL) as completed,
-  SAFE_CAST(responded AS BOOL) as responded,
-  SAFE_CAST(closed AS BOOL) as closed,
-  SAFE_CAST(escalated AS BOOL) as escalated,
-  SAFE_CAST(deescalated AS BOOL) as deescalated,
-  SAFE_CAST(onHold AS BOOL) as onHold,
-  SAFE_CAST(majorIncident AS BOOL) as majorIncident,
+    -- Booleanos
+    SAFE_CAST(completed AS BOOL) as completed,
+    SAFE_CAST(responded AS BOOL) as responded,
+    SAFE_CAST(closed AS BOOL) as closed,
+    SAFE_CAST(escalated AS BOOL) as escalated,
+    SAFE_CAST(deescalated AS BOOL) as deescalated,
+    SAFE_CAST(onHold AS BOOL) as onHold,
+    SAFE_CAST(majorIncident AS BOOL) as majorIncident,
 
-  -- Números (Custos)
-  SAFE_CAST(itemCosts AS FLOAT64) as itemCosts,
-  SAFE_CAST(objectCosts AS FLOAT64) as objectCosts,
-  SAFE_CAST(costs AS FLOAT64) as costs,
-  SAFE_CAST(totalCosts AS FLOAT64) as totalCosts
+    -- Números
+    SAFE_CAST(itemCosts AS FLOAT64) as itemCosts,
+    SAFE_CAST(objectCosts AS FLOAT64) as objectCosts,
+    SAFE_CAST(costs AS FLOAT64) as costs,
+    SAFE_CAST(totalCosts AS FLOAT64) as totalCosts
 
-FROM ${ref("ext_incidents_full")}
---`dev-autopass-bi-001.tmp.ext_incidents_full`
+  FROM ${ref("ext_incidents_full")}
+)
 
-${when(incremental(), 
-  `WHERE SAFE_CAST(modificationDate AS TIMESTAMP) >= (SELECT max(modificationDate) FROM ${self()}) - INTERVAL 3 DAY`
-)}
+SELECT * FROM base_pre_tipada
+
+${when(incremental(), `
+  -- O filtro usa modificationDate para capturar atualizações em registros existentes
+  WHERE modificationDate >= (
+    SELECT COALESCE(MAX(modificationDate), TIMESTAMP('1900-01-01')) 
+    FROM ${self()}
+  ) - INTERVAL 5 DAY
+`)}
