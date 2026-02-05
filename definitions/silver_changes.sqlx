@@ -11,6 +11,7 @@ config {
   tags: ["topdesk"],
 }
 
+
 WITH base_tipada AS (
   SELECT
     -- Identificadores
