@@ -6,7 +6,7 @@ config {
   uniqueKey: ["id"],
   bigquery: {
     partitionBy: "DATE(creationDate)",
-    updatePartitionFilter: "creationDate >= timestamp_sub(current_timestamp(), interval 90 day)"
+    updatePartitionFilter: "creationDate >= timestamp_sub(current_timestamp(), interval 180 day)"
   },
   tags: ["topdesk"],
 }
