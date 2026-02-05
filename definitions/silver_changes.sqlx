@@ -6,15 +6,14 @@ config {
   uniqueKey: ["id"],
   bigquery: {
     partitionBy: "DATE(creationDate)",
-    updatePartitionFilter: "creationDate >= timestamp_sub(current_timestamp(), interval 10 day)"
+    updatePartitionFilter: "creationDate >= timestamp_sub(current_timestamp(), interval 90 day)"
   },
   tags: ["topdesk"],
-  
 }
 
-
-SELECT
-    -- Identificadores (UUIDs e chaves estrangeiras)
+WITH base_tipada AS (
+  SELECT
+    -- Identificadores
     CAST(id AS STRING) AS id,
     CAST(typeId AS STRING) AS typeId,
     CAST(categoryId AS STRING) AS categoryId,
@@ -39,7 +38,7 @@ SELECT
     CAST(creatorId AS STRING) AS creatorId,
     CAST(modifierId AS STRING) AS modifierId,
 
-    -- Datas e Timestamps (ISO 8601)
+    -- Datas (ISO 8601) - Processamos aqui para usar no WHERE final
     SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', creationDate) AS creationDate,
     SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', modificationDate) AS modificationDate,
     SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', callDate) AS callDate,
@@ -73,7 +72,7 @@ SELECT
     SAFE_CAST(progressChangeCanBeAuthorized AS BOOL) AS progressChangeCanBeAuthorized,
     SAFE_CAST(evalChangeCanBeAuthorized AS BOOL) AS evalChangeCanBeAuthorized,
 
-    -- Métricas (Duração e Custos)
+    -- Métricas
     SAFE_CAST(originalPlannedTimeSpent_inSeconds AS INT64) AS originalPlannedTimeSpent_inSeconds,
     SAFE_CAST(currentPlannedTimeSpent_inSeconds AS INT64) AS currentPlannedTimeSpent_inSeconds,
     SAFE_CAST(estimatedTimeSpent_inSeconds AS INT64) AS estimatedTimeSpent_inSeconds,
@@ -83,8 +82,14 @@ SELECT
     SAFE_CAST(estimatedCosts AS FLOAT64) AS estimatedCosts,
     SAFE_CAST(costs AS FLOAT64) AS costs
 
-FROM `dev-autopass-bi-001.tmp.ext_changes_full`
+  FROM `dev-autopass-bi-001.tmp.ext_changes_full`
+)
 
-${when(incremental(), 
-  `WHERE SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', modificationDate) >= (SELECT max(modificationDate) FROM ${self()}) - INTERVAL 3 DAY`
-)}
+SELECT * FROM base_tipada
+
+${when(incremental(), `
+  WHERE modificationDate >= (
+    SELECT COALESCE(MAX(modificationDate), TIMESTAMP('1900-01-01')) 
+    FROM ${self()}
+  ) - INTERVAL 3 DAY
+`)}
