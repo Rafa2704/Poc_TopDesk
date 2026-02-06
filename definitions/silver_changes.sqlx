@@ -83,7 +83,8 @@ WITH base_tipada AS (
     SAFE_CAST(estimatedCosts AS FLOAT64) AS estimatedCosts,
     SAFE_CAST(costs AS FLOAT64) AS costs
 
-  FROM `dev-autopass-bi-001.tmp.ext_changes_full`
+  FROM ${ref("changes_all_text")}
+  --`dev-autopass-bi-001.tmp.ext_changes_full`
 )
 
 SELECT * FROM base_tipada

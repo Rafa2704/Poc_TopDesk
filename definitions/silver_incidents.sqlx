@@ -77,7 +77,7 @@ WITH base_pre_tipada AS (
     SAFE_CAST(costs AS FLOAT64) as costs,
     SAFE_CAST(totalCosts AS FLOAT64) as totalCosts
 
-  FROM ${ref("ext_incidents_full")}
+  FROM ${ref("incidents_all_text")}
 )
 
 SELECT * FROM base_pre_tipada
