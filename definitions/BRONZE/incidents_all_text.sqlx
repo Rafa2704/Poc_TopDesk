@@ -2,7 +2,8 @@ config {
     type: "table",
     schema: "tmp",
     name: "incidents_all_text",
-    description: "Camada Bronze: Incidentes persistidos como texto para garantir resiliência contra inferência automática do Parquet"
+    description: "Camada Bronze: Incidentes persistidos como texto para garantir resiliência contra inferência automática do Parquet",
+    tags: ["topdesk"],
 }
 
 SELECT

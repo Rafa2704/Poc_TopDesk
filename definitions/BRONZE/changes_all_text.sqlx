@@ -2,7 +2,8 @@ config {
     type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
     schema: "tmp",
     name: "changes_all_text",
-    description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema"
+    description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema",
+    tags: ["topdesk"],
 }
 
 SELECT
