@@ -2,7 +2,8 @@ config {
     type: "table",
     schema: "tmp",
     name: "incident_details_all_text",
-    description: "Camada Bronze: Detalhes dos incidentes persistidos como texto para evitar erros de tipagem na origem Parquet"
+    description: "Camada Bronze: Detalhes dos incidentes persistidos como texto para evitar erros de tipagem na origem Parquet",
+    tags: ["topdesk"],
 }
 
 SELECT
