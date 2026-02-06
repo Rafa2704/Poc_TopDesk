@@ -31,7 +31,8 @@ WITH base_tipada AS (
     -- Datas (Processadas na CTE para facilitar o filtro final)
     SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%SZ', creationDate) AS creationDate
 
-  FROM `dev-autopass-bi-001.tmp.ext_incidentdetails_full`
+  FROM ${ref("incident_details_all_text")}
+  --`dev-autopass-bi-001.tmp.ext_incidentdetails_full`
 )
 
 SELECT * FROM base_tipada
