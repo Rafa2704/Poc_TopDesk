@@ -19,6 +19,6 @@ SELECT
   CAST(objectId AS STRING) AS objectId,
   CAST(email AS STRING) AS email,
   CAST(concerning AS STRING) AS concerning
-FROM
-  `dev-autopass-bi-001.tmp.ext_incident_details_full`
- -- ${ref("ext_incident_details_full")} -- Referência à sua extração Parquet
+FROM    `dev-autopass-bi-001.tmp.ext_incidentdetails_full`
+        
+ 
