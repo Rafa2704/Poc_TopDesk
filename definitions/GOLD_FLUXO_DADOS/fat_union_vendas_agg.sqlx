@@ -273,31 +273,33 @@ with union_vendas as (
     atm.ds_product
     ,atm.dt_transaction_br
     ,atm.ds_payment_mode
---   UNION ALL
---   SELECT  --TOP
---     ts_processing dh_atualizacao,
---     'PRODATA' AS origem_venda,
---     'TOP' as ds_produto,
---     'CARTÃO TOP' as ds_meio_pagamento,
---     cd_system_source as cd_origem_sistema,
---     wb.dt_recharge_account dt_venda,
---     'WEB' ds_canal,
---     'VT TOP' ds_aplicacao,
---     SUM(wb.vl_amount) vl_venda,
---     count(distinct wb.nr_receipt) AS qt_vendas,
---     0 qt_bilhetes,
---     'WEB' ds_forma_pagamento
---     , 'N/I' ds_bandeira_cartao
---     , 'N/I' ds_adquirente
---   FROM `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_web` wb
---   WHERE (1=1)
---   and wb.dt_recharge_account >=  '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
---   AND wb.cd_provider_usage NOT IN ('99999', '2', '173703', '73', '4', '74', '189075', '189076', '187697', '189099')
---   GROUP BY
---   ts_processing
---   ,cd_system_source,
---   wb.dt_recharge_account,
---   wb.cd_provider_usage
+
+-- VT ANTIGA
+  UNION ALL
+  SELECT  --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    wb.dt_recharge_account dt_venda,
+    'WEB' ds_canal,
+    'VT TOP' ds_aplicacao,
+    SUM(wb.vl_amount) vl_venda,
+    count(distinct wb.nr_receipt) AS qt_vendas,
+    0 qt_bilhetes,
+    'WEB' ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_web` wb
+  WHERE (1=1)
+  and wb.dt_recharge_account >=  '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  AND wb.cd_provider_usage NOT IN ('99999', '2', '173703', '73', '4', '74', '189075', '189076', '187697', '189099')
+  GROUP BY
+  ts_processing
+  ,cd_system_source,
+  wb.dt_recharge_account,
+  wb.cd_provider_usage
   UNION ALL
   SELECT  --TOP
     ts_processing dh_atualizacao,
@@ -682,25 +684,25 @@ ts_processing
   dt_transaction,
   ds_type
 
-UNION ALL
+-- UNION ALL
 
-SELECT
-dt_process                      AS dh_atualizacao,
-'TMOB_VT_TRS'                          AS origem_venda,    
-'TOP'                           AS ds_produto,
-ds_payment_mode                 AS ds_meio_pagamento  ,
-'TMB001'                        AS cd_origem_sistema,
-dt_credit                      AS  dt_venda,  
-ds_channel                      AS ds_canal,    
-ds_aplication                   AS ds_aplicacao,
-SUM(vl_recharge)                  AS vl_venda,
-COUNT(DISTINCT cd_sales_order)  AS qt_vendas,
-0                               AS qt_bilhetes,
-ds_channel                      AS ds_forma_pagamento,
-'N/I'                           AS ds_bandeira_cartao,
-'N/I'                           AS ds_adquirente  
-FROM  `dev-autopass-bi-001.his.tb_his_silver_top001_vendas_vt`
-GROUP BY ALL
+-- SELECT
+-- dt_process                      AS dh_atualizacao,
+-- 'TMOB_VT_TRS'                          AS origem_venda,    
+-- 'TOP'                           AS ds_produto,
+-- ds_payment_mode                 AS ds_meio_pagamento  ,
+-- 'TMB001'                        AS cd_origem_sistema,
+-- dt_credit                      AS  dt_venda,  
+-- ds_channel                      AS ds_canal,    
+-- ds_aplication                   AS ds_aplicacao,
+-- SUM(vl_recharge)                  AS vl_venda,
+-- COUNT(DISTINCT cd_sales_order)  AS qt_vendas,
+-- 0                               AS qt_bilhetes,
+-- ds_channel                      AS ds_forma_pagamento,
+-- 'N/I'                           AS ds_bandeira_cartao,
+-- 'N/I'                           AS ds_adquirente  
+-- FROM  `dev-autopass-bi-001.his.tb_his_silver_top001_vendas_vt`
+-- GROUP BY ALL
 ),
 ultima_camada as (
 SELECT
