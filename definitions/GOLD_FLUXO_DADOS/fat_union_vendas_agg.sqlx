@@ -1,0 +1,843 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela gold para o fluxo de dados fat_union_vendas ",
+    tags: ["powerbi"],
+    bigquery: {
+        partitionBy: "dt_venda",
+    }
+}
+
+with union_vendas as (
+    SELECT
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'BOM' as ds_produto,
+    'PAGANTE DINHEIRO' as ds_meio_pagamento
+    , cd_system_source as cd_origem_sistema
+    , dt_card_usage as dt_venda
+    , 'PAGANTE DINHEIRO' as ds_canal
+    , ds_product as ds_aplicacao
+    ,SUM(vl_fare) vl_venda
+    ,COUNT(dt_card_usage) qt_vendas
+    ,0 qt_bilhetes
+    ,'DINHEIRO' ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+    FROM prd-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_gate tese
+    WHERE dt_card_usage >= '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    AND ds_product IN ('BOTOEIRAS', 'PGTE MOEDEIRA')
+      GROUP BY
+    ts_processing
+    ,cd_system_source
+    ,dt_card_usage
+    ,ds_product
+  UNION ALL
+    SELECT
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'PAGANTE DINHEIRO' as ds_meio_pagamento
+    , cd_system_source as cd_origem_sistema
+    , dt_card_usage as dt_venda
+    , 'PAGANTE DINHEIRO' as ds_canal
+    , ds_product as ds_aplicacao
+    ,SUM(vl_fare) vl_venda
+    ,COUNT(dt_card_usage) qt_vendas
+    ,0 qt_bilhetes
+    ,'DINHEIRO' ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+    FROM prd-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate tese
+    WHERE dt_card_usage >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    AND ds_product IN ('BOTOEIRAS', 'PGTE MOEDEIRA')
+      GROUP BY
+    ts_processing
+    ,cd_system_source
+    ,dt_card_usage
+    ,ds_product
+  UNION ALL
+  SELECT
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'EMV' as ds_meio_pagamento,
+    emv_tr.cd_system_source as cd_origem_sistema,
+    emv_tr.dt_process_br as dt_venda,
+    'EMV' ds_canal,
+    'EMV' ds_aplicacao,
+    sum(emv_tr.vl_amount) as vl_venda,
+    count(emv_tr.cd_abt_emv_transaction)qt_vendas,
+    0 qt_bilhetes,
+    emv_tr.ds_card_modality as ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_aut001_abt_emv_transaction` emv_tr
+  where emv_tr.dt_process_br >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  and emv_tr.cd_status_general = 'APROVADO'
+  group by
+  ts_processing,
+  emv_tr.cd_system_source,
+  emv_tr.dt_process_br,
+  --emv_tr.vl_amount,
+  emv_tr.ds_card_modality
+  UNION ALL
+  SELECT -- BU_TMOB
+    ts_processing dh_atualizacao,
+    'TMOB' AS origem_venda,
+    'BU' as ds_produto,
+    'BU' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    tmbu.dt_transaction_br dt_venda,
+    'ATM' ds_canal,
+    tmbu.ds_product ds_aplicacao,
+    SUM(tmbu.vl_transaction) vl_venda,
+    COUNT(tmbu.nr_transaction) qt_vendas,
+    0 qt_bilhetes,
+    tmbu.ds_payment_mode ds_forma_pagamento
+    , ds_card_flag ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_tmb001_bu_atm_sale` tmbu
+  WHERE fl_payment_complete = 1
+  and dt_transaction_br >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  AND fl_confirm = 1
+  AND ds_product in ('ESCOLAR DINH.',
+                      'VC D INTEG.',
+                      'VC D TRILHO',
+                      'VE D G TRI',
+                      'RESTITUICAO',
+                      'VC M ONIBUS',
+                      'FIDELIDADE 20',
+                      'VALE TRANSPORTE TOP',
+                      'VC D ONIBUS',
+                      'VC M TRILHO',
+                      'FIDELIDADE 50', 
+                      'VC M ONIBUS L',
+                      'COMUM DINHEIRO',
+                      'VC M INTEG. L',
+                      'FIDELIDADE 10',
+                      'VC M TRILHO L',
+                      'VC M INTEG.',
+                      'VC D INTEG. L',
+                      'FIDELIDADE 8',
+                      'VD D G T L',
+                      'VD D G O L'
+) --necessario alteração para acrescentar produtos
+  GROUP BY
+    ts_processing
+    ,cd_system_source,
+    tmbu.dt_transaction_br,
+    tmbu.ds_product,
+    ds_payment_mode,
+    ds_card_flag
+  UNION ALL
+  SELECT --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    sn.dt_create dt_venda,
+    'REDE DE VENDAS' ds_canal,
+    sn.nm_product ds_aplicacao,
+    SUM(sn.vl_recharge) vl_venda,
+    SUM(sn.qt_cd_financial_entry) qt_vendas,
+    0 qt_bilhetes,
+    sn.ds_payment_type ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM
+    `prd-autopass-bi-001.itg.vw_itg_trs_bar001_sale_network` sn
+    where (1=1)
+    and dt_create >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    and nm_dealer <> 'PAKMAN'
+    and cd_issuer = '14'
+  GROUP BY
+    ts_processing
+    ,cd_system_source,
+    sn.dt_create,
+    sn.nm_product,
+    sn.nm_dealer,
+    sn.ds_payment_type
+  UNION ALL
+  SELECT --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    sa.dt_create dt_venda,
+    CASE
+      WHEN sa.nm_dealer = 'VOUD' THEN 'VOUD'
+      ELSE 'APP TOP'
+    END ds_canal,
+    sa.nm_product ds_aplicacao,
+    SUM(vl_recharge) vl_venda,
+    SUM(qt_financial_entry) qt_vendas,
+    0 qt_bilhetes,
+    ds_payment_type ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , nm_acquirer ds_adquirente
+  FROM
+    `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_app` sa
+  WHERE dt_create >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+    ts_processing
+    ,cd_system_source,
+    dt_create,
+    CASE
+      WHEN nm_dealer = 'VOUD' THEN 'VOUD'
+    ELSE
+    'APP TOP'
+    END,
+    nm_product,
+    ds_payment_type,
+    nm_acquirer
+  UNION ALL
+  SELECT  --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    ws.dt_create dt_venda,
+    'WHATSAPP' ds_canal,      
+    ws.nm_product ds_aplicacao,
+    SUM(ws.vl_recharge) vl_venda,
+    SUM(ws.qt_financial_entry) qt_vendas,
+    0 qt_bilhetes,
+    CASE
+      WHEN ws.ds_payment_type IN ('PIX','Credito','Crédito','CREDITO','CRÉDITO') THEN ws.ds_payment_type
+      ELSE 'PIX'
+    END ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , nm_acquirer ds_adquirente
+    FROM    `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_whatsapp` ws
+    WHERE dt_create >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    GROUP BY
+    ts_processing
+    ,cd_system_source,
+    ws.dt_create,
+    ws.nm_product,
+    CASE
+        WHEN ws.ds_payment_type IN ('PIX','Credito','Crédito','CREDITO','CRÉDITO') THEN ws.ds_payment_type
+        ELSE 'PIX'
+    END
+    ,nm_acquirer
+  UNION ALL
+  SELECT  --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    atm.dt_transaction dt_venda,
+    'ATM' ds_canal,                
+    atm.ds_product ds_aplicacao,
+    SUM(atm.vl_amount) vl_venda,
+    COUNT(distinct atm.cd_transaction) AS qt_vendas,
+    0 qt_bilhetes,
+    atm.ds_payment_mode ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM    `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_atm` atm
+  WHERE dt_transaction between  '2023-01-01' and '2025-04-30' -- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+    ts_processing
+    ,cd_system_source,
+    atm.nm_client,
+    atm.ds_product
+    ,atm.dt_transaction
+    ,atm.ds_payment_mode
+    ,atm.nm_station
+ UNION ALL --VENDAS TMOB
+    SELECT  --TOP
+    ts_processing dh_atualizacao,
+    'TMOB' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    atm.dt_transaction_br dt_venda,
+    'ATM' ds_canal,                
+    atm.ds_product ds_aplicacao,
+    SUM(atm.vl_transaction) vl_venda,
+    COUNT(distinct atm.cd_transaction) AS qt_vendas,
+    0 qt_bilhetes,
+    atm.ds_payment_mode ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM    `prd-autopass-bi-001.itg.vw_itg_trs_tmb001_credit_sale_atm` atm
+  WHERE dt_transaction >='2025-05-01' -- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+    ts_processing
+    ,cd_system_source,
+    atm.ds_product
+    ,atm.dt_transaction_br
+    ,atm.ds_payment_mode
+  UNION ALL
+  SELECT  --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    wb.dt_recharge_account dt_venda,
+    'WEB' ds_canal,
+    'VT TOP' ds_aplicacao,
+    SUM(wb.vl_amount) vl_venda,
+    count(distinct wb.nr_receipt) AS qt_vendas,
+    0 qt_bilhetes,
+    'WEB' ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_web` wb
+  WHERE (1=1)
+  and wb.dt_recharge_account >=  '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  AND wb.cd_provider_usage NOT IN ('99999', '2', '173703', '73', '4', '74', '189075', '189076', '187697', '189099')
+  GROUP BY
+  ts_processing
+  ,cd_system_source,
+  wb.dt_recharge_account,
+  wb.cd_provider_usage
+  UNION ALL
+  SELECT  --TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    dt_transaction dt_venda,
+    'ATM' ds_canal,
+    nm_issuer_product ds_aplicacao,
+    SUM(vl_recharge) vl_venda,
+    COUNT(distinct ds_atm_group) qt_vendas,
+    0 qt_bilhetes,
+    ds_payment_mode ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_ayt001_transaction_sale_atm`
+  WHERE  ds_record_status = 'TRN_EFETIVADA'
+  AND cd_issuer = '14'
+  AND nm_issuer_product IN ('COMUM', 'ESCOLAR')
+  AND dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+  ts_processing
+  ,cd_system_source,
+  dt_transaction,
+  nm_issuer_product,
+  ds_payment_mode
+  UNION ALL
+  SELECT --QRCODE
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'QR CODE' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    qs.dt_transaction dt_venda,
+    CASE
+      WHEN qs.cd_pos_device = '988' then 'REDE DE VENDAS'
+      WHEN qs.cd_pos_device = '9999201' THEN 'WHATSAPP'
+      ELSE qs.ds_device_type
+    END ds_canal,
+    'QR CODE' as ds_aplicacao,
+    SUM(qs.vl_transaction) vl_venda,
+    COUNT(DISTINCT cd_transaction) qt_vendas,
+    COUNT(cd_qrcode_media) qt_bilhetes,
+    CASE
+      WHEN qs.cd_pos_device = '9999201' AND qs.ds_payment_mode NOT IN ('PIX','CREDITO') THEN 'PIX' ELSE qs.ds_payment_mode
+    END ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , nm_acquirer ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_top001_qrcode_sale` qs
+  WHERE ds_status_sale = 'A' --APENAS VENDAS VALIDAS DE QRCODE
+  and dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    GROUP BY
+    ts_processing
+    ,cd_system_source,
+    cd_pos_device,
+    ds_device_type,
+    CASE
+      WHEN qs.cd_pos_device = '988' then 'REDE DE VENDAS'
+      WHEN qs.cd_pos_device = '9999201' THEN 'WHATSAPP'
+      else qs.ds_device_type
+    END,
+    ds_product,
+    CASE
+      WHEN qs.cd_pos_device = '9999201' AND qs.ds_payment_mode NOT IN ('PIX','CREDITO') THEN 'PIX' ELSE qs.ds_payment_mode
+    END,
+    qs.dt_transaction
+    , ds_adquirente
+  UNION ALL
+  SELECT --QIWI
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    CASE
+      WHEN nm_issuer = 'CMT' THEN 'BOM'
+      WHEN nm_issuer = 'SPTRANS' THEN 'BU'
+      ELSE nm_issuer
+    END ds_produto,
+    CASE
+      WHEN nm_issuer = 'CMT' THEN 'CARTÃO BOM'
+      WHEN nm_issuer = 'SPTRANS' THEN 'BU'
+      ELSE nm_issuer
+    END ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    dt_transaction dt_venda,
+    ds_channel ds_canal,
+    ds_product ds_aplicacao,
+    SUM(vl_transaction) vl_venda,
+    SUM(qt_transaction) qt_vendas,
+    0 qt_bilhetes,
+    ds_payment_type ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_odi001_qiwi_atm_sale`
+  where dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+  ts_processing
+    ,nm_issuer,
+  cd_system_source,
+  dt_transaction,
+  ds_channel,
+  ds_payment_type,
+  ds_product
+  UNION ALL
+  SELECT  -- BU_ATM
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'BU' as ds_produto,
+    'BU' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    dt_transaction dt_venda,
+    ds_channel ds_canal,
+    ds_product ds_aplicacao,
+    SUM(vl_transaction) vl_venda,
+    SUM(qt_transaction) qt_vendas,
+    0 qt_bilhetes,
+    ds_payment_type ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_odi001_bu_atm_sale`
+  where dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+ts_processing
+    ,cd_system_source,
+  dt_transaction,
+  ds_channel,
+  ds_payment_type,
+  ds_product
+  UNION ALL
+  SELECT -- BOM
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'BOM' as ds_produto,
+    'CARTÃO BOM' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    dt_transaction dt_venda,
+    CASE
+        WHEN ds_channel = 'REDE DE VENDAS' AND ds_sub_channel = 'AUTOPASS - ATM' THEN 'ATM' -- PRODATA??
+        WHEN ds_channel = 'WEB' AND ds_sub_channel IN ('RECARGA FÁCIL','SEM TRANS BARR','WEB CLIENT','WEB CORPORATE') THEN 'WEB'
+        WHEN ds_channel = 'REDE DE VENDAS' AND ds_sub_channel IN ('PONTO CERTO', 'QIWI - POS', 'REDE SIGA POS', 'SERVLOT') THEN 'REDE DE VENDAS'
+        WHEN ds_channel IN ('GARAGENS','ITINERANTE','LOJAS/QUIOSQUES') OR (ds_channel = 'REDE DE VENDAS' AND ds_sub_channel = 'LOJA ESB AUTOPASS') THEN  'POS'
+        ELSE ds_channel
+    END ds_canal,
+    ds_product ds_aplicacao,
+    sum(vl_transaction) vl_venda,
+    count(*) qt_vendas,
+    0 qt_bilhetes,
+    ds_pos_payment_mode ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_odi001_bom_sale`
+  WHERE (1=1)
+  AND ds_sub_channel NOT IN ('MOBILE','QIWI','WHATSAPP')
+  AND ds_product IN ('VT','COMUM','ESCOLAR','ESCOLAR PAULISTA','EMPRESARIAL')
+  AND dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+  ts_processing
+  ,cd_system_source,
+  dt_transaction,
+  ds_channel,
+  ds_sub_channel,
+  ds_issuer ,
+  ds_product ,
+  ds_pos_payment_mode
+  UNION ALL
+  SELECT  -- VOUD
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    cd_issuer_type ds_produto,
+    cd_issuer_type ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    vft.dt_transaction dt_venda,
+    'VOUD' ds_canal,
+    CASE
+          WHEN vft.cd_card_type = '4' THEN 'VALE TRANSPORTE'
+          WHEN vft.cd_card_type = '6' THEN 'ESCOLAR'
+          WHEN vft.cd_card_type = '8' THEN 'COMUM'
+          WHEN vft.cd_card_type = '17' THEN 'VALE TRANSPORTE'
+          WHEN vft.cd_card_type = '19' THEN 'ESCOLAR'
+          WHEN vft.cd_card_type = '20' THEN 'COMUM'
+          WHEN vft.cd_card_type = '30' THEN 'ESCOLAR'
+          WHEN vft.nm_merchant = 'AUTOPASS S/A - VOUD BU' THEN 'COMUM'
+          ELSE vft.nm_merchant
+      END ds_aplicacao,
+    SUM(vft.vl_transaction) vl_venda,
+    COUNT(vft.nr_line) qt_vendas,
+    0 qt_bilhetes,
+    vft.ds_transaction_type ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.his.tb_his_trs_vou001_financial_transaction` vft
+  WHERE (1=1)
+  AND dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  AND vft.cd_status = 'PROCCESSED'
+  AND vft.cd_transaction_status = 'PAYMENT_CONFIRMED'
+  AND vft.cd_issuer_type IN('BOM','BU')
+  AND vft.cd_channel = 'VOUD'
+  GROUP BY
+    ts_processing,
+    cd_issuer_type,
+    cd_system_source,
+    vft.dt_transaction,
+    vft.cd_channel,
+    CASE
+          WHEN vft.cd_card_type = '4' THEN 'VALE TRANSPORTE'
+          WHEN vft.cd_card_type = '6' THEN 'ESCOLAR'
+          WHEN vft.cd_card_type = '8' THEN 'COMUM'
+          WHEN vft.cd_card_type = '17' THEN 'VALE TRANSPORTE'
+          WHEN vft.cd_card_type = '19' THEN 'ESCOLAR'
+          WHEN vft.cd_card_type = '20' THEN 'COMUM'
+          WHEN vft.cd_card_type = '30' THEN 'ESCOLAR'
+          WHEN vft.nm_merchant = 'AUTOPASS S/A - VOUD BU' THEN 'COMUM'
+          ELSE vft.nm_merchant
+      END,
+  vft.ds_transaction_type
+  UNION ALL
+  SELECT  -- BARRAMENTO
+    fe.ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+      CASE
+    WHEN fe.cd_issuer = '31' THEN 'BOM'
+    WHEN fe.cd_issuer = '59' THEN 'BU'
+    ELSE fe.cd_issuer
+    END ds_produto,
+    CASE
+    WHEN fe.cd_issuer = '31' THEN 'CARTÃO BOM'
+    WHEN fe.cd_issuer = '59' THEN 'BU'
+    ELSE fe.cd_issuer
+    END ds_meio_pagamento,
+    fe.cd_system_source as cd_origem_sistema,
+    fe.dt_create dt_venda,
+    'WHATSAPP' ds_canal,
+    'COMUM' ds_aplicacao,
+    SUM(fe.vl_transaction) vl_venda,
+    SUM(fe.vl_amount) qt_vendas,
+    0 qt_bilhetes,
+    fe.cd_operation_type ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry` fe
+  INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_bar001_dealer` d on d.cd_dealer = fe.cd_dealer
+  INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_bar001_issuer` i on i.cd_issuer = fe.cd_issuer
+  WHERE
+    (d.cd_dealer = '10'
+    AND fe.cd_issuer in ('31')
+    AND fe.cd_status = 'CONFIRMED'
+    AND fe.cd_transaction_type in ('SALE','SALE_MOBILE')
+    AND d.cd_dealer NOT IN ('1'))
+    AND fe.dt_create >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    or
+    (d.cd_dealer = '10'
+    AND fe.cd_issuer in ('59')
+    AND fe.cd_status = 'CONFIRMED'
+    AND fe.cd_transaction_type in ('SALE','SALE_MOBILE')
+    AND d.cd_dealer NOT IN ('1'))
+    AND fe.dt_create >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+    fe.ts_processing,
+    fe.cd_issuer,
+    fe.cd_system_source,
+    fe.dt_create,
+    fe.cd_operation_type
+  UNION ALL
+  SELECT -- AYIT
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'BU' as ds_produto,
+    'BU' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    tsa.dt_transaction dt_venda,
+    'ATM' ds_canal,
+    nm_issuer_product ds_aplicacao,
+    SUM(tsa.vl_recharge) vl_venda,
+    COUNT(*) qt_vendas,
+    0 qt_bilhetes,
+    tsa.ds_payment_mode ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_ayt001_transaction_sale_atm` tsa
+  WHERE tsa.ds_record_status IN ('TRN_EFETIVADA')
+  AND tsa.nm_issuer_product IN ('COMUM','ESCOLAR')
+  AND tsa.dt_transaction >= '2023-01-01'-- date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+  ts_processing,
+  cd_system_source,
+  tsa.dt_transaction ,
+  tsa.ds_payment_mode,
+  nm_issuer_product
+  UNION ALL
+  SELECT -- APP_TOP
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'BU' as ds_produto,
+    'BU' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    fe.dt_create dt_venda,
+    'APP TOP' ds_canal,
+    'BU' ds_aplicacao,
+    SUM(fe.vl_transaction) vl_venda,
+    SUM(fe.vl_amount) qt_vendas,
+    0 qt_bilhetes,
+    fe.cd_operation_type ds_forma_pagamento,
+    'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM `prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry` fe
+  WHERE fe.cd_dealer = '13'
+  AND fe.cd_issuer = '59'
+  AND fe.dt_create >=  '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+    ts_processing,
+    cd_system_source,
+    fe.dt_create,
+    fe.cd_operation_type
+  UNION ALL
+  SELECT 
+    ts_processing dh_atualizacao,
+    'PRODATA' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    atm.dt_transaction dt_venda,
+    'POS' ds_canal,                
+    atm.ds_product ds_aplicacao,
+    SUM(atm.vl_amount) vl_venda,
+    COUNT(distinct atm.cd_transaction) AS qt_vendas,
+    0 qt_bilhetes,
+    atm.ds_payment_mode ds_forma_pagamento
+    , 'N/I' ds_bandeira_cartao
+    , 'N/I' ds_adquirente
+  FROM    `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_pos_municipal_school` atm
+  WHERE dt_transaction >=  '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  GROUP BY
+    ts_processing,
+    cd_system_source,
+    atm.ds_product
+    ,atm.dt_transaction
+    ,atm.ds_payment_mode
+  UNION ALL
+  SELECT --TOP TMB
+    ts_processing as dh_atualizacao,
+    'TMOB' AS origem_venda,
+    'TOP' as ds_produto,
+    'CARTÃO TOP' as ds_meio_pagamento,
+    cd_system_source as cd_origem_sistema,
+    dt_transaction dt_venda,
+    'POS' ds_canal,
+    ds_product ds_aplicacao,
+    SUM(atm.vl_transaction) vl_venda,
+    COUNT(atm.cd_transaction) AS qt_vendas,
+    0 qt_bilhetes,
+    atm.ds_payment_mode ds_forma_pagamento, 
+    'N/I' ds_bandeira_cartao,
+    'N/I' ds_adquirente
+    FROM `prd-autopass-bi-001.itg.vw_itg_trs_tmb001_credit_sale_pos_municipal_school` atm
+    WHERE dt_transaction >=  '2025-05-09'
+    GROUP BY
+    ts_processing,
+    cd_system_source,
+    atm.ds_product,
+    atm.dt_transaction,
+    atm.ds_payment_mode
+  UNION ALL
+  SELECT --acrescentado no dia 28/10/2024
+  ts_processing dh_atualizacao,
+  'PRODATA' AS origem_venda,
+  'TOP' as ds_produto,
+  'ABT' as ds_meio_pagamento,
+  cd_system_source as cd_origem_sistema,
+  dt_transaction as dt_venda,
+  'APP TOP' as ds_canal,
+  'ABT' as ds_aplicacao,
+  sum(vl_amount) vl_venda,
+  sum(qt_transaction) qt_vendas,
+  0 qt_bilhetes,
+  ds_type as ds_forma_pagamento
+  , 'N/I' ds_bandeira_cartao
+  , 'N/I' ds_adquirente
+  FROM prd-autopass-bi-001.itg.vw_itg_trs_top001_abt_transaction_sale
+  WHERE dt_transaction >=  '2023-01-01'--date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+  group by 
+  ts_processing,
+  cd_system_source,
+  dt_transaction,
+  ds_type
+),
+ultima_camada as (
+SELECT
+    dh_atualizacao,
+    origem_venda,
+    ds_produto,
+    ds_meio_pagamento,
+    cd_origem_sistema,
+    dt_venda,
+    CASE
+      WHEN ds_canal IN ('ATM', 'ATM - PRODATA', 'ATM - QIWI') THEN 'ATM'
+      WHEN ds_canal IN ('TOP', 'APP TOP') THEN 'APP TOP'
+      WHEN ds_canal IN ('VOUD', 'APP VOUD') THEN 'APP VOUD'
+      else ds_canal
+    END ds_canal,
+    ds_aplicacao,
+    vl_venda,
+    qt_vendas,
+    qt_bilhetes,
+    CASE
+      WHEN ds_canal IN ('APP VOUD', 'WHATSAPP', 'APP', 'GOOGLE WALLET','TOP', 'APP TOP', 'VOUD', 'GOOGLE WALLET', 'WEB') then 'DIGITAL'
+      WHEN ds_canal IN ('ATM', 'ATM - PRODATA', 'ATM - QIWI', 'BILHETERIA','REDE DE VENDAS', 'POS' ) then 'FÍSICO'
+      ELSE 'OUTROS'
+    END ds_tipo_canal,
+    CASE
+      WHEN ds_forma_pagamento in ('CREDIT', 'CARTAO CREDITO', 'CREDITO') then 'CRÉDITO'
+      WHEN ds_forma_pagamento like 'CR%DIT%VISTA%' THEN 'CRÉDITO'
+      WHEN ds_forma_pagamento in ('Dinheiro', 'DINHEIRO') then 'DINHEIRO'
+      WHEN ds_forma_pagamento IN ('Débito', 'DEBITO', 'DEBITO A VISTA', 'CARTAO DEBITO') then 'DÉBITO'
+      WHEN ds_forma_pagamento IS NULL THEN 'N/A'
+      ELSE ds_forma_pagamento
+    END ds_forma_pagamento,
+    ds_bandeira_cartao,
+CASE
+    WHEN ds_aplicacao = 'AC ARUJA' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'AC COTIA' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'AC TABOAO' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ACOMP.' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'BOTOEIRAS' THEN 'PAGANTE DINHEIRO'
+    WHEN ds_aplicacao = 'COMUM' THEN 'COMUM'
+    WHEN ds_aplicacao = 'ESC ARUJA' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC COTIA' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC MT PREF' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC MT SEC EDU' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC PAULISTA' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC PL COTIA' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC PL RGS' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESC. TABOAO' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESP ARUJA' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESP ARUJA AC' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESP COTIA' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESP COTIA AC' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESP TABOAO' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESP TABOAO AC' THEN 'ESPECIAL'
+    WHEN ds_aplicacao like '%ESP%' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESP. C/AC' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'ESPECIAL' THEN 'ESPECIAL'
+    WHEN ds_aplicacao = 'FUNCIONAL' THEN 'FUNCIONAL'
+    WHEN ds_aplicacao = 'GRATUIDADE' THEN 'GRATUIDADE'
+    WHEN ds_aplicacao = 'MAE COTIANA' THEN 'GRATUIDADE'
+    WHEN ds_aplicacao = 'PGTE MOEDEIRA' THEN 'PAGANTE DINHEIRO'
+    WHEN ds_aplicacao = 'SENIOR' THEN 'SENIOR'
+    WHEN ds_aplicacao = 'SENIOR ARUJA' THEN 'SENIOR'
+    WHEN ds_aplicacao = 'SENIOR COTIA' THEN 'SENIOR'
+    WHEN ds_aplicacao = 'SENIOR PAULISTA' THEN 'SENIOR PAULISTA'
+    WHEN ds_aplicacao = 'SENIOR RGS' THEN 'SENIOR'
+    WHEN ds_aplicacao = 'V.T.' THEN 'VALE TRANSPORTE'
+    WHEN ds_aplicacao like '%VT%' THEN 'VALE TRANSPORTE'
+    WHEN ds_aplicacao = 'VT' THEN 'VALE TRANSPORTE'
+    WHEN ds_aplicacao = 'V.T. GUARUPAS' THEN 'VALE TRANSPORTE'
+    WHEN ds_aplicacao = 'AGENTES TABOAO' THEN 'FUNCIONAL'
+    WHEN ds_aplicacao = 'COLABORADOR' THEN 'FUNCIONAL'
+    WHEN ds_aplicacao IN ('TESTE MOBI 8/9','TOP TESTE CPTM', 'TOP TESTE METRO', 'TOP TESTE VIA4', 'TESTE BNT', 'TESTE VIA MOBI') THEN 'TESTE'
+    WHEN ds_aplicacao = 'SENIOR TABOAO' THEN 'SENIOR'
+    WHEN ds_aplicacao = 'COMUM' THEN 'COMUM'
+    WHEN ds_aplicacao like '%COMUM%TOP%' THEN 'COMUM'
+    WHEN ds_aplicacao = 'COMUM VALONLINE' THEN 'COMUM'
+    WHEN ds_aplicacao = 'ESC TABOAO ABASP' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR ARUJA' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR COTIA' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR TABOAO' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR TABOAO MUNI' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'ESCOLAR TOP' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'TOP COMUM' THEN 'COMUM'
+    WHEN ds_aplicacao = 'TOP ESCOLAR' THEN 'ESCOLAR'
+    WHEN ds_aplicacao = 'VT TOP' THEN 'VALE TRANSPORTE'
+    WHEN ds_aplicacao = 'ESCOLAR DINH.' THEN 'ESCOLAR'	--tmob
+    WHEN ds_aplicacao = 'VC D INTEG.' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao = 'VC D TRILHO' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao = 'VE D G TRI' THEN 'ESCOLAR'	--tmob
+    WHEN ds_aplicacao = 'RESTITUICAO' THEN 'RESTITUICAO'	--tmob
+    WHEN ds_aplicacao = 'VC M ONIBUS' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao = 'FIDELIDADE 20' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao = 'VALE TRANSPORTE TOP' THEN 'VALE TRANSPORTE'	--tmob
+    WHEN ds_aplicacao = 'VC D ONIBUS' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao = 'VC M TRILHO' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao = 'FIDELIDADE 50' THEN 'COMUM'	--tmob
+    WHEN ds_aplicacao in ('QR PLBS', 'QR SUPRESSAO', 'QR SUPRESSAO CPTM', 'QR TESTE METRO', 'QRCODE NEXT INTEG', 'LOTE UNITARIO', 'PRODUTO QRCODE', 'UNITARIO', 'UNITARIO OFFLINE')   THEN 'QR CODE'
+    WHEN ds_aplicacao in ('ESP.', 'ESP. TABOAO AC', 'ACOMP TABOAO', 'ESPECIAL TABOAO') THEN 'ESPECIAL'
+    WHEN ds_aplicacao in ('AGENTES', 'COLAB CPTM', 'EDMONSON', 'FUNC GUARUPAS') THEN 'FUNCIONAL'
+    WHEN ds_aplicacao in ('PGTE', 'PGTE GUARUPAS') THEN 'PAGANTE DINHEIRO'
+    WHEN ds_aplicacao in ('EMV') THEN 'EMV'
+    WHEN ds_aplicacao in ('VT-EXP') THEN 'VALE TRANSPORTE'
+    WHEN ds_aplicacao in ('ESC.', 'PROF.')  THEN 'ESCOLAR'
+    WHEN ds_aplicacao in ('QR TESTE CPTM', 'QR TESTE VIA4', 'QR TESTE VIAMOBI') THEN 'TESTE'
+    WHEN ds_aplicacao = 'VC D TRILHO' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC M ONIBUS L' THEN 'COMUM'
+      WHEN ds_aplicacao = 'COMUM DINHEIRO' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC M INTEG. L' THEN 'COMUM'
+      WHEN ds_aplicacao = 'FIDELIDADE 10' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC D ONIBUS' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC M TRILHO L' THEN 'COMUM'
+      WHEN ds_aplicacao like '%VC%' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC M INTEG.' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC D INTEG. L' THEN 'COMUM'
+      WHEN ds_aplicacao = 'FIDELIDADE 8' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VC M ONIBUS' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VD D G T L' THEN 'COMUM'
+      WHEN ds_aplicacao = 'VD D G O L' THEN 'COMUM'
+      WHEN ds_aplicacao like '%COMUM%' THEN 'COMUM'
+      WHEN ds_aplicacao like '%ESC%' THEN 'ESCOLAR'
+    else ds_aplicacao
+    end ds_mascara_produto
+    , ds_adquirente
+FROM union_vendas
+)
+SELECT
+  dh_atualizacao,
+  origem_venda,
+  ds_produto,
+  ds_meio_pagamento,
+  cd_origem_sistema,
+  dt_venda,
+  ds_canal,
+  ds_aplicacao,
+  vl_venda,
+  qt_vendas,
+  qt_bilhetes,
+  ds_tipo_canal,
+  ds_forma_pagamento,
+  ds_bandeira_cartao,
+  coalesce(ds_adquirente,'N/I') ds_adquirente,
+  ds_mascara_produto,
+  case
+    WHEN  ds_mascara_produto = 'ESPECIAL' THEN 'NAO VALORADA'
+    WHEN  ds_mascara_produto = 'FUNCIONAL' THEN 'NAO VALORADA'
+    WHEN  ds_mascara_produto = 'ESCOLAR' THEN 'VALORADA'
+    WHEN  ds_mascara_produto = 'PAGANTE DINHEIRO' THEN  'PAGANTE DINHEIRO'
+    WHEN  ds_mascara_produto = 'GRATUIDADE' THEN  'NAO VALORADA'
+    WHEN  ds_mascara_produto = 'SENIOR' THEN  'NAO VALORADA'
+    WHEN  ds_mascara_produto = 'VALE TRANSPORTE' THEN 'VALORADA'
+    WHEN  ds_mascara_produto = 'COMUM' THEN 'VALORADA'
+    WHEN  ds_mascara_produto = 'QR CODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    WHEN  ds_mascara_produto = 'BU' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+  else ds_mascara_produto
+  end ds_mascara_aplicacao
+FROM ultima_camada 
