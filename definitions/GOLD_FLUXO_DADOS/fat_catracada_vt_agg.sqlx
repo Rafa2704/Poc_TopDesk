@@ -1,0 +1,60 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
+    tags: ["powerbi"],
+    bigquery: {
+        partitionBy: "month_usage",
+    }
+}
+
+
+
+--fat_catracada_vt
+SELECT
+  'TOP' origem,
+  format_date('%Y-%m', dt_card_usage) month_usage,
+  format_date('%Y-%m', dt_emission) month_emission,
+  usage.nr_card AS nr_cartao,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash, 
+  cd_application ds_aplicacao, 
+  ds_product ds_produto,
+  CASE 
+    WHEN ds_product LIKE 'COM%' THEN 'COMUM'
+    WHEN ds_product LIKE 'ESC%' THEN 'ESCOLAR'
+    WHEN ds_product LIKE 'SEN%' THEN 'SENIOR'
+    WHEN ds_product = 'V.T' THEN 'VT'
+  ELSE ds_product
+  END ds_grupo_produto,
+  CASE
+      WHEN emss.cd_card_design = '7' THEN 'PURO TRANSPORTE'
+      WHEN emss.cd_card_design = '17' THEN 'HÍBRIDO'
+      WHEN emss.cd_card_design = '01' THEN 'OPERACIONAL'
+      WHEN emss.cd_card_design = '02' THEN 'PURO TRANSPORTE' 
+      ELSE 'TESTE'
+  END AS ds_tipo_cartao_simplificado,
+  ds_modal,
+  fl_hot_list,
+  cd_card_usage_type as cd_tipo_uso_cartao,
+  --MAX(dt_card_usage) dt_ultimo_uso,
+  COUNT(cd_card_usage_internal) AS qt_uso,
+  sum(vl_fare) vl_uso
+  --SUM(CASE WHEN usage.dt_card_usage >= current_date-90 then 1 else 0 END ) AS qt_uso_90dias
+FROM 
+  prd-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate usage
+  LEFT JOIN prd-autopass-bi-001.itg.vw_itg_trs_top001_card_emission emss
+  ON usage.nr_card = emss.nr_card
+  where 
+  dt_card_usage >=  date_sub(DATE_TRUNC(CURRENT_DATE(), YEAR), interval 2 year) 
+  AND ds_product = 'V.T.'
+GROUP BY
+   usage.nr_card ,
+   emss.cd_card_design,
+   SHA256(nr_registered_number_cpf) , 
+  format_date('%Y-%m', dt_card_usage),
+  format_date('%Y-%m', dt_emission),
+  ds_product ,
+  cd_application,
+  ds_modal,
+  fl_hot_list,
+  cd_card_usage_type 
