@@ -1,0 +1,152 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
+    tags: ["powerbi"],
+    bigquery: {
+        partitionBy: "dt_uso",
+    }
+}
+
+
+--fat_catracada_cartao
+SELECT
+  'TOP' origem,
+  format_date('%Y-%m', dt_card_usage) month_usage,
+  format_date('%Y-%m', dt_emission) month_emission,
+  usage.nr_card AS nr_cartao,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash,
+  dt_card_usage AS dt_uso,
+  cd_application ds_aplicacao,
+  ds_product ds_produto,
+  CASE
+    WHEN ds_product LIKE 'COM%' THEN 'COMUM'
+    WHEN ds_product LIKE 'ESC%' THEN 'ESCOLAR'
+    WHEN ds_product LIKE 'SEN%' THEN 'SENIOR'
+    WHEN ds_product = 'V.T' THEN 'VT'
+    ELSE ds_product
+  END ds_grupo_produto,
+  CASE
+      WHEN emss.cd_card_design = '7'  THEN 'PURO TRANSPORTE'
+      WHEN emss.cd_card_design = '17' THEN 'HÍBRIDO'
+      WHEN emss.cd_card_design = '01' THEN 'OPERACIONAL'
+      WHEN emss.cd_card_design = '02' THEN 'PURO TRANSPORTE'
+      ELSE 'TESTE'
+  END AS ds_tipo_cartao_simplificado,
+  ds_modal,
+  fl_hot_list,
+ 
+  -- [ADD]
+  usage.cd_hot_list_reason,   -- [ADD]
+  hlr.ds_hot_list_reason,     -- [ADD]
+ 
+  cd_card_usage_type as cd_tipo_uso_cartao,
+  COUNT(cd_card_usage_internal) AS qt_uso,
+  SUM(vl_fare) vl_uso
+FROM
+  prd-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate usage
+  LEFT JOIN prd-autopass-bi-001.itg.vw_itg_trs_top001_card_emission emss
+    ON usage.nr_card = emss.nr_card
+ 
+  -- [ADD] código → descrição
+  LEFT JOIN (
+    SELECT
+      cd_hot_list_reason,
+      ds_hot_list_reason
+    FROM his.tb_his_mrd_top001_hot_list_reason
+    QUALIFY ROW_NUMBER() OVER (
+      PARTITION BY cd_hot_list_reason
+      ORDER BY dt_registration DESC
+    ) = 1
+  ) hlr
+    ON usage.cd_hot_list_reason = hlr.cd_hot_list_reason
+  -- [ADD]
+ 
+WHERE
+  dt_card_usage >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 4 MONTH)
+ 
+GROUP BY
+  usage.nr_card,
+  emss.cd_card_design,
+  SHA256(nr_registered_number_cpf),
+  format_date('%Y-%m', dt_card_usage),
+  format_date('%Y-%m', dt_emission),
+  dt_card_usage,
+  ds_product,
+  cd_application,
+  ds_modal,
+  fl_hot_list,
+  cd_card_usage_type,
+  usage.cd_hot_list_reason,
+  hlr.ds_hot_list_reason
+ 
+UNION ALL
+ 
+SELECT
+  'BOM' origem,
+  format_date('%Y-%m', dt_card_usage) month_usage,
+  NULL month_emission,
+  usage.nr_card AS nr_cartao,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash,
+  dt_card_usage AS dt_uso,
+  cd_application ds_aplicacao,
+  ds_product ds_produto,
+  CASE
+    WHEN ds_product LIKE 'COM%' THEN 'COMUM'
+    WHEN ds_product LIKE 'ESC%' THEN 'ESCOLAR'
+    WHEN ds_product LIKE 'SEN%' THEN 'SENIOR'
+    WHEN ds_product = 'V.T' THEN 'VT'
+    ELSE ds_product
+  END ds_grupo_produto,
+  CASE
+      WHEN emss.cd_card_design = '7'  THEN 'PURO TRANSPORTE'
+      WHEN emss.cd_card_design = '17' THEN 'HÍBRIDO'
+      WHEN emss.cd_card_design = '01' THEN 'OPERACIONAL'
+      WHEN emss.cd_card_design = '02' THEN 'PURO TRANSPORTE'
+      ELSE 'TESTE'
+  END AS ds_tipo_cartao_simplificado,
+  ds_modal,
+  fl_hot_list,
+ 
+  -- [ADD]
+  usage.cd_hot_list_reason,   -- [ADD]
+  hlr.ds_hot_list_reason,     -- [ADD]
+ 
+  cd_card_usage_type as cd_tipo_uso_cartao,
+  COUNT(cd_card_usage_internal) AS qt_uso,
+  SUM(vl_fare) vl_uso
+FROM
+  prd-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_gate usage
+  LEFT JOIN prd-autopass-bi-001.itg.tb_itg_trs_bom001_card_emission emss
+    ON usage.nr_card = emss.nr_card
+ 
+  -- [ADD] código → descrição
+  LEFT JOIN (
+    SELECT
+      cd_hot_list_reason,
+      ds_hot_list_reason
+    FROM his.tb_his_mrd_bom001_hot_list_reason
+    QUALIFY ROW_NUMBER() OVER (
+      PARTITION BY cd_hot_list_reason
+      ORDER BY dt_registration DESC
+    ) = 1
+  ) hlr
+    ON usage.cd_hot_list_reason = hlr.cd_hot_list_reason
+  -- [ADD]
+ 
+WHERE
+  dt_card_usage >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 4 MONTH)
+ 
+GROUP BY
+  usage.nr_card,
+  emss.cd_card_design,
+  SHA256(nr_registered_number_cpf),
+  format_date('%Y-%m', dt_card_usage),
+  dt_card_usage,
+  ds_product,
+  cd_application,
+  ds_modal,
+  fl_hot_list,
+  cd_card_usage_type,
+  usage.cd_hot_list_reason,
+  hlr.ds_hot_list_reason

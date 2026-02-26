@@ -1,0 +1,113 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
+    tags: ["powerbi"],
+    bigquery: {
+        partitionBy: "dt_uso",
+    }
+}
+
+--fat_catracada_cartao_desempregado
+
+WITH union_catracadas as (SELECT 
+   'TOP' as origem
+  ,nr_card nr_cartao
+  , nr_registered_number nr_cpf
+  ,dt_card_usage dt_uso
+  ,tm_card_usage tm_uso
+  ,cd_vehicle cd_bloqueio
+  ,cd_application cd_aplicacao
+  ,ds_product ds_aplicacao
+  ,nm_company nm_empresa
+  ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao
+  ,count(*) qt_uso
+FROM 
+  prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate
+WHERE 
+  nr_card LIKE '14.29%'
+  AND dt_card_usage >= '2025-01-01'
+GROUP BY
+   nr_card
+  ,dt_card_usage
+  ,nr_registered_number
+  ,tm_card_usage
+  ,cd_vehicle
+  ,nm_company
+  ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END 
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END
+    ,ds_product
+    ,cd_application
+  ),
+finalizacao_union as (
+    select
+    origem
+    ,nr_cartao
+    ,nr_cpf
+    ,cd_bloqueio
+    ,dt_uso
+    ,tm_uso
+    ,cd_aplicacao
+    ,ds_aplicacao
+    ,nm_empresa
+    ,nm_linha
+    ,nm_estacao
+     ,CONCAT(nm_linha,nm_estacao) nm_estacao_linha
+    ,qt_uso
+    ,`prd-autopass-bi-001.core.fn_aut001_application_format`(ds_aplicacao) as ds_mascara_produto
+    , `prd-autopass-bi-001.core.fn_aut001_nm_line_format`(nm_linha) AS nm_mascara_linha
+    ,`prd-autopass-bi-001.core.fn_aut001_nm_station_format`(nm_estacao) AS nm_mascara_estacao
+    from union_catracadas
+    )
+  select
+   origem
+  ,dt_uso
+  ,tm_uso
+  ,nr_cartao
+  ,nr_cpf
+  ,cd_aplicacao
+  ,ds_aplicacao
+  ,ds_mascara_produto
+  ,cd_bloqueio
+  ,nm_empresa
+  ,nm_linha
+  ,nm_mascara_linha
+  ,nm_estacao
+  ,nm_mascara_estacao
+  ,SHA256(CONCAT(COALESCE(nm_mascara_estacao, ''), COALESCE(nm_mascara_linha, ''))) AS cd_estacao_linha
+  ,nm_estacao_linha 
+  ,sum(qt_uso) as qt_uso
+  from finalizacao_union
+  group by 
+  origem
+  ,dt_uso
+  ,tm_uso
+  ,nr_cartao
+  ,nr_cpf
+  ,cd_aplicacao
+  ,ds_aplicacao
+  ,ds_mascara_produto
+  ,cd_bloqueio
+  ,nm_empresa
+  ,nm_linha
+  ,nm_mascara_linha
+  ,nm_estacao
+  ,nm_mascara_estacao
+  ,SHA256(CONCAT(COALESCE(nm_mascara_estacao, ''), COALESCE(nm_mascara_linha, ''))) 
+  ,nm_estacao_linha
+
+
+
