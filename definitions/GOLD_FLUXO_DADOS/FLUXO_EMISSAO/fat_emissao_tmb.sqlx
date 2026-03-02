@@ -4,7 +4,7 @@ config {
     description: "Tabela gold para o fluxo de dados df_emissao ",
     tags: ["powerbi_emissao"],
     bigquery: {
-        partitionBy: "dh_impressao",
+        partitionBy: "dt_impressao",
     }
 }
 SELECT distinct 
