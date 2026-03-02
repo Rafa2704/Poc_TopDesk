@@ -1,0 +1,102 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela gold para o fluxo de dados df_emissao ",
+    tags: ["powerbi_emissao"],
+    bigquery: {
+        partitionBy: "dh_impressao",
+    }
+}
+SELECT distinct 
+        'TOP' ds_origem,
+        a.ts_processing,
+        a.cd_system_source AS cd_origem_sistema,
+        a.nr_registered_number_cpf,
+        SHA256(a.nr_registered_number_cpf) AS cpf_hash,
+        CONCAT(CAST(a.dt_print AS STRING), ' ', CAST(a.tm_print AS STRING)) AS dh_impressao,
+        a.ds_long_remote_printer AS ds_impressora,
+        a.ds_print_status AS ds_status_impressao,  
+        a.cd_user_printer_card AS cd_usuario_impressao,
+        a.ds_card_status AS ds_status_cartao,
+        CASE
+            WHEN a.ds_card_status = 'AGUARDANDO IMPRESSAO' AND a.ds_print_status = 'NAO IMPRESSO' THEN 'NAO IMPRESSO'
+            WHEN a.ds_card_status = 'AGUARDANDO IMPRESSAO' AND a.ds_print_status = 'IMPRESSO' THEN 'NAO IMPRESSO'
+            WHEN a.ds_card_status = 'ATIVO' AND a.ds_print_status = 'IMPRESSO' THEN 'IMPRESSO'
+            WHEN a.ds_card_status = 'ATIVO' AND a.ds_print_status = 'ATIVO' THEN 'IMPRESSO'
+            WHEN a.ds_card_status = 'ATIVO' AND a.ds_print_status = 'NAO IMPRESSO' THEN 'NAO IMPRESSO'
+            WHEN a.ds_card_status = 'HOTLIST' AND a.ds_print_status = 'IMPRESSO' THEN 'IMPRESSO'
+            WHEN a.ds_card_status = 'HOTLIST' AND a.ds_print_status = 'NAO IMPRESSO' THEN 'NAO IMPRESSO'
+            WHEN a.ds_card_status = 'HOTLIST' AND a.ds_print_status = 'ATIVO' THEN 'IMPRESSO'
+            WHEN a.ds_card_status = 'INATIVO' AND a.ds_print_status = 'IMPRESSO' THEN 'IMPRESSO'
+            WHEN a.ds_card_status = 'INATIVO' AND a.ds_print_status = 'NAO IMPRESSO' THEN 'NAO IMPRESSO'
+            WHEN a.ds_card_status = 'INATIVO' AND a.ds_print_status = 'ATIVO' THEN 'NAO IMPRESSO'
+            WHEN a.ds_card_status = 'U' AND a.ds_print_status = 'ATIVO' THEN 'NAO IMPRESSO'
+            ELSE 'NAO IMPRESSO' 
+        END AS ds_status_simplificado, --ds_status_serpro,
+        CASE
+            WHEN a.ds_card_design = 'TOP' THEN 'TOP' 
+            WHEN a.ds_card_design = 'TOP EMV' THEN 'TOP EMV' 
+            WHEN a.ds_card_design = 'OPERACIONAL' THEN 'OPERACIONAL' 
+            ELSE 'TESTE'
+        END AS ds_tipo_cartao,
+        a.ds_cancel_reason AS ds_motivo_cancelamento,
+        a.ds_channel_emission AS ds_canal_emissao,
+        a.ds_card_version AS ds_via_cartao, 
+        a.cd_card_design AS cd_tipo_cartao_origem,
+        a.ds_card_design AS ds_tipo_cartao_origem,
+        a.nr_card AS nr_cartao,
+        a.dt_registration AS dt_cadastro,
+        a.tm_registration AS hr_cadastro, a.cd_user_registration cd_usuario_registro, 
+        a.dt_print AS dt_impressao,
+        a.tm_print AS hr_impressao,
+        TIME_TRUNC(CAST(a.tm_print AS TIME), HOUR)  AS hr_impressao_curta,
+        a.nr_print AS nr_impressao,
+        a.cd_user AS cd_usuario, 
+        ds_status_user ds_status_usuario,
+        usr.nm_usr_user AS ds_nome_usuario,
+        usr.dt_birth AS dt_nascimento_usuario,
+        usra.cd_state AS cd_uf,
+        usra.nm_city AS nm_cidade,
+        CASE
+            WHEN a.nr_registered_number_cpf IS NULL THEN 'I'
+            WHEN SUBSTR(LPAD(a.nr_registered_number_cpf,11), 9, 1) = '8' THEN 'S'
+            ELSE 'N'
+        END AS fl_emissao_sp,
+        CASE
+            WHEN a.cd_card_design = '7' THEN 'PURO TRANSPORTE'
+            WHEN a.cd_card_design = '17' THEN 'HÍBRIDO'
+            WHEN a.cd_card_design = '01' THEN 'OPERACIONAL'
+            WHEN a.cd_card_design = '02' THEN 'PURO TRANSPORTE' 
+            ELSE 'TESTE'
+        END AS ds_tipo_cartao_simplificado,
+        --app.dt_create AS dt_compra,
+        --app.vl_recharge, fl_chip_mifare_plus ,
+        ds_type_delivery ds_tipo_entrega, 
+        ds_request_channel ds_canal_requisicao, 
+        a.ds_print_point ds_ponto_impressao,
+        a.dt_registration ,
+a.tm_registration
+
+    FROM 
+         prd-autopass-bi-001.itg.tb_itg_trs_tmb001_card_emission a 
+
+    LEFT JOIN (SELECT DISTINCT nr_registered_number_emission nr_cpf
+                FROM prd-autopass-bi-001.itg.vw_itg_trs_pkm001_card_delivery) delivery
+    ON delivery.nr_cpf = a.nr_registered_number_cpf
+
+    LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_tmb001_usr_user usr
+    ON usr.cd_usr_user = a.cd_user
+
+    LEFT JOIN (select cd_usr_user, cd_state, nm_city
+                from (
+                select cd_usr_user, cd_state,
+                        nm_city,
+                        ROW_NUMBER() OVER (
+                                    PARTITION BY cd_usr_user
+                                    ORDER BY nr_zip DESC
+                                ) AS row_num 
+                from prd-autopass-bi-001.his.tb_his_mrd_tmb001_usr_address
+                --where cd_usr_user = '2889249'
+                )
+                where row_num = 1) usra
+    ON usra.cd_usr_user = a.cd_user
