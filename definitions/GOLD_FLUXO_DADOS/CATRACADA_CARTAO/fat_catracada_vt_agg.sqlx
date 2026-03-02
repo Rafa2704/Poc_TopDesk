@@ -4,7 +4,7 @@ config {
     description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
     tags: ["powerbi"],
     bigquery: {
-        partitionBy: "month_usage",
+        partitionBy: "dt_card_usage",
     }
 }
 
@@ -16,6 +16,7 @@ SELECT
   format_date('%Y-%m', dt_card_usage) month_usage,
   format_date('%Y-%m', dt_emission) month_emission,
   usage.nr_card AS nr_cartao,
+  dt_card_usage,
   SHA256(nr_registered_number_cpf) nr_cpf_hash, 
   cd_application ds_aplicacao, 
   ds_product ds_produto,
@@ -48,6 +49,7 @@ FROM
   dt_card_usage >=  date_sub(DATE_TRUNC(CURRENT_DATE(), YEAR), interval 2 year) 
   AND ds_product = 'V.T.'
 GROUP BY
+dt_card_usage,
    usage.nr_card ,
    emss.cd_card_design,
    SHA256(nr_registered_number_cpf) , 
