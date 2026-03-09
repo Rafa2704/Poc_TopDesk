@@ -11,6 +11,7 @@ config {
 }
 
 
+
 WITH 
 -- 1. Base de Cartões Bloqueados
 BLOQUEIO AS (
@@ -24,6 +25,40 @@ BLOQUEIO AS (
   FROM `dev-autopass-bi-001.tmp.tb_cartoes_acao_bloqueio`
   GROUP BY ALL
 ),
+
+BASE_VENDAS AS (
+SELECT 
+SUBSTR(fd.cd_card_external, 1, 2) || '.' ||
+      SUBSTR(fd.cd_card_external, 3, 2) || '.' ||
+      SUBSTR(fd.cd_card_external, 5, 8) || '-' ||
+      SUBSTR(fd.cd_card_external, 13, 1) nr_card,
+      fe.dt_create  AS data_venda,
+      'REDE DE VENDAS' AS canal,
+      p.nm_product AS sub_tipo,
+      SUM(fe.vl_recharge) AS valor
+FROM his.tb_his_trs_bar001_financial_entry fe
+LEFT OUTER JOIN his.tb_his_trs_bar001_financial_entry_detail fd 
+      ON fd.cd_financial_entry = fe.cd_financial_entry
+LEFT OUTER JOIN his.tb_his_mrd_bar001_dealer d
+ON fe.cd_dealer = d.cd_dealer
+LEFT OUTER JOIN his.tb_his_mrd_bar001_issuer iss
+ON fe.cd_issuer = iss.cd_issuer
+LEFT OUTER JOIN his.tb_his_mrd_bar001_product p
+ON fe.cd_product = p.cd_product
+LEFT OUTER JOIN his.tb_his_mrd_bar001_payment_type pt
+ON fe.cd_payment_type = pt.cd_payment_type
+LEFT OUTER JOIN his.tb_his_mrd_bar001_terminal t
+ON fe.cd_terminal = t.cd_terminal
+WHERE  ((fe.cd_transaction_type IN ('SALE', 'SALE_MOBILE')
+      AND t.cd_terminal_type IN ('POS', 'MSD')
+      AND fe.cd_issuer <> '18'
+      AND fe.cd_status = 'CONFIRMED')
+     OR (d.nm_dealer = 'PAKMAN'
+         AND fe.cd_issuer = '18'))
+         AND fe.dt_create >= '2026-03-01'
+ GROUP BY ALL 
+ ),
+
 
 -- 2. Referência de CPF Único por Cartão (Evita duplicação no Join)
 BASE_CPF AS (
@@ -110,6 +145,19 @@ VENDAS_UNIFICADAS AS (
   FROM `itg.vw_itg_trs_top001_credit_sale_app`
   WHERE nm_product IN ('TOP COMUM', 'TOP ESCOLAR')
   GROUP BY ALL
+
+  UNION ALL     
+-- REDE DE VENDAS
+SELECT 
+        REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+        data_venda,
+         canal,
+        sub_tipo,
+        SUM(valor) AS valor
+  
+  
+  FROM BASE_VENDAS
+  GROUP BY ALL 
 ),
 
 -- 4. Consolidação Final
@@ -129,5 +177,5 @@ FINAL AS (
 )
 
 SELECT * FROM FINAL 
---WHERE canal LIKE '%VT%'
+WHERE canal LIKE '%REDE%'
  
