@@ -1,0 +1,133 @@
+
+config {
+    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    schema: "itg",
+    name: "union_vendas_cpf_card",
+    description: "Unificação de vendas de todos os canais incluindo cpf e numero do cartão",
+    tags: ["vendas"],
+
+
+
+}
+
+
+WITH 
+-- 1. Base de Cartões Bloqueados
+BLOQUEIO AS (
+  SELECT 
+    cartoes,
+    REGEXP_REPLACE(cartoes, r'-.*', '') AS cartao_join,
+    data_bloqueio,
+    cartao_lake,
+    carregado,
+    nuvem
+  FROM `dev-autopass-bi-001.tmp.tb_cartoes_acao_bloqueio`
+  GROUP BY ALL
+),
+
+-- 2. Referência de CPF Único por Cartão (Evita duplicação no Join)
+BASE_CPF AS (
+  SELECT 
+    REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+    nr_registered_number_cpf AS cpf
+  FROM `itg.tb_itg_trs_tmb001_card_emission`
+  WHERE nr_registered_number_cpf IS NOT NULL
+  QUALIFY ROW_NUMBER() OVER(PARTITION BY REGEXP_REPLACE(nr_card, r'-.*', '') ORDER BY dt_registration DESC) = 1
+),
+
+-- 3. Unificação de Canais (Empilhando as Vendas)
+VENDAS_UNIFICADAS AS (
+  -- REMISSÃO
+  SELECT 
+    REGEXP_REPLACE(core.fn_aut001_card_format(cp.cd_issuer, cp.cd_card_design, cp.cd_card), r'-.*', '') AS cartao_join,
+    cp.dt_process_start AS data_venda,
+    'REMISSÃO' AS canal,
+    CASE 
+      WHEN UPPER(app.ds_short) LIKE '%ESC%' THEN 'ESCOLAR'
+      WHEN UPPER(app.ds_short) LIKE '%VT%'  THEN 'VT'
+      ELSE 'COMUM'
+    END AS sub_tipo,
+    SUM(cp.vl_fare) AS valor
+  FROM `his.tb_his_trs_top001_clearing_payment` cp
+  INNER JOIN `his.tb_his_mrd_top001_application` app ON app.cd_application = cp.cd_application
+  WHERE app.cd_issuer = '14' AND app.cd_status = 'A'
+    AND (cp.nr_part_fare = '1' OR cp.nr_part_fare IS NULL)
+    AND cp.dt_process_start >= '2026-03-01'
+    AND app.ds_short NOT IN ('BOTOEIRAS')
+  GROUP BY ALL
+
+  UNION ALL
+
+  -- VT
+  SELECT 
+    REGEXP_REPLACE(mm.nr_card, r'-.*', '') AS cartao_join,
+    cro.dt_release AS data_venda,
+    'VT_PEDIDO' AS canal,
+    'VT' AS sub_tipo,
+    SUM(crod.vl_recharge_order_detail) /100.0 AS valor
+  FROM `his.tb_his_trs_tmb001_com_recharge_order` cro
+  JOIN `his.tb_his_trs_tmb001_com_recharge_order_detail` crod ON cro.cd_com_recharge_order = crod.cd_com_recharge_order
+  JOIN `his.tb_his_mrd_tmb001_med_media` mm ON crod.nr_csn = mm.nr_csn
+  LEFT JOIN `dev-autopass-bi-001.his.tb_his_silver_top001_vendas_vt` VT ON VT.cd_sales_order = cro.cd_com_recharge_order AND  VT.cd_sales_order IS NOT NULL
+  
+  GROUP BY ALL
+
+  UNION ALL
+
+  -- WHATSAPP
+  SELECT 
+    REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+    dt_create AS data_venda,
+    'WHATSAPP' AS canal,
+    'COMUM' AS sub_tipo,
+    SUM(vl_recharge) AS valor
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_credit_sale_whatsapp`
+  WHERE dt_create >= '2026-03-01'
+  GROUP BY ALL
+
+  UNION ALL
+
+  -- ATM
+  SELECT 
+    REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+    CAST(dt_transaction_br AS DATE) AS data_venda,
+    'ATM' AS canal,
+    ds_product AS sub_tipo,
+    SUM(vl_transaction) AS valor
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_tmb001_credit_sale_atm`
+  WHERE dt_transaction >= '2025-05-01'
+  GROUP BY ALL
+
+  UNION ALL
+
+  -- APP
+  SELECT 
+    REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+    dt_create AS data_venda,
+    'APP' AS canal,
+    nm_product AS sub_tipo,
+    SUM(vl_recharge) AS valor
+  FROM `itg.vw_itg_trs_top001_credit_sale_app`
+  WHERE nm_product IN ('TOP COMUM', 'TOP ESCOLAR')
+  GROUP BY ALL
+),
+
+-- 4. Consolidação Final
+FINAL AS (
+  SELECT 
+    B.cartoes AS cartao_completo,
+    V.cartao_join AS cartao_formatado,
+    C.cpf,
+    B.data_bloqueio,
+    V.data_venda,
+    V.canal,
+    V.sub_tipo,
+    V.valor,
+  FROM VENDAS_UNIFICADAS V
+  INNER JOIN BLOQUEIO B ON V.cartao_join = B.cartao_join
+  LEFT JOIN BASE_CPF C   ON V.cartao_join = C.cartao_join
+)
+
+SELECT * FROM FINAL 
+--WHERE canal LIKE '%VT%'
+ 
