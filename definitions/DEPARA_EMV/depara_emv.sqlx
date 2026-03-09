@@ -1,0 +1,34 @@
+
+
+
+
+
+SELECT 
+      eu.cd_emv_usage,
+      eu.ds_transaction_mode,
+      eu.dt_usage,
+      eu.vl_usage,
+      eu.fl_confirm,
+      eu.cd_emv_payment,
+      eu.cd_emv_card,
+
+
+
+    ep.cd_emv_usage_first,
+    ep.cd_emv_payment,
+    ep.ds_transaction_mode,
+    ep.dt_payment,
+    ep.vl_payment,
+    ep.fl_authorize,
+    ep.fl_confirm,
+    ep.ds_status
+
+ FROM `his.tb_his_trs_tmb001_emv_usage` eu 
+  LEFT JOIN `his.tb_his_trs_tmb001_emv_payment` ep
+     ON eu.cd_emv_payment = ep.cd_emv_payment
+WHERE   eu.dt_usage >= '2026-01-01'
+ AND ep.dt_payment >= '2026-01-01'
+ AND eu.fl_confirm = 1 
+ AND ep.fl_confirm = 0
+--AND eu.cd_emv_usage = '120890692'
+AND eu.ds_transaction_mode =  'ONLINE'
