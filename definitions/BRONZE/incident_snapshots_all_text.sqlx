@@ -1,0 +1,42 @@
+config {
+    type: "table",
+    schema: "tmp",
+    name: "incident_snapshots_all_text",
+    description: "Camada Bronze: tabelas incidentes snapchots",
+    tags: ["topdesk"],
+}
+
+
+SELECT
+  id,
+  timeStamp,
+  incidentId,
+  duration_inSeconds,
+  requestDate,
+  completionDate,
+  closureDate,
+  responseDate,
+  targetDate,
+  slaTargetDate,
+  slaReponseTargetDate,
+  onHoldDate,
+  majorCall,
+  slaApplied,
+  taskSubType,
+  statusId,
+  typeId,
+  entryTypeId,
+  priorityId,
+  impactId,
+  urgencyId,
+  callerBranchId,
+  slaServiceId,
+  slaServiceLevelId,
+  contractId,
+  categoryId,
+  subCategoryId,
+  operatorId,
+  operatorGroupId,
+  supplierId,
+  serviceWindowId
+FROM `dev-autopass-bi-001.tmp.ext_incidentsnapshots`
