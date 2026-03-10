@@ -15,7 +15,9 @@ config {
 WITH base_pre_tipada AS (
   SELECT
   id,
-  timeStamp,
+  --criando ela pra deixar como timestamp
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', timeStamp) AS timeStamp,
+  timeStamp as timeStamp_original,
 
   incidentId,
 
@@ -58,7 +60,7 @@ SELECT * FROM base_pre_tipada
 
 ${when(incremental(), `
   -- O filtro usa modificationDate para capturar atualizações em registros existentes
-  WHERE modificationDate >= (
+  WHERE timeStamp >= (
     SELECT COALESCE(MAX(timeStamp), TIMESTAMP('1900-01-01')) 
     FROM ${self()}
   ) - INTERVAL 5 DAY
