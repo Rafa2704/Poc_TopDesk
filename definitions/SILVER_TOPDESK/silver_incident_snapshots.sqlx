@@ -1,0 +1,65 @@
+config {
+  type: "incremental",
+  schema: "tmp",
+  name: "silver_incident_snapshots",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(requestDate)",
+    updatePartitionFilter: "timeStamp >= timestamp_sub(current_timestamp(), interval 180 day)"
+  },
+  tags: ["topdesk"],
+}
+-- VAMOS BUSCAR SÓ OS ID DOS ULTIMOS 6 MESES PRA PODER FAZER UPDATE, SE UM ID TIVER SIDO CRIADO ANTES DE 6 MESES E O MODICATEDATE FOR DENTRO DO PERIODO, SERA FEITO UM INSERT
+
+WITH base_pre_tipada AS (
+  SELECT
+  id,
+  timeStamp,
+
+  incidentId,
+
+  SAFE_CAST(duration_inSeconds AS INT64) AS duration_inSeconds,
+
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', requestDate) AS requestDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', completionDate) AS completionDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', closureDate) AS closureDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', responseDate) AS responseDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', targetDate) AS targetDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', slaTargetDate) AS slaTargetDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', slaReponseTargetDate) AS slaReponseTargetDate,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%S%Ez', onHoldDate) AS onHoldDate,
+
+  majorCall,
+  slaApplied,
+  taskSubType,
+
+  statusId,
+  typeId,
+  entryTypeId,
+  priorityId,
+  impactId,
+  urgencyId,
+  callerBranchId,
+  slaServiceId,
+  slaServiceLevelId,
+  contractId,
+  categoryId,
+  subCategoryId,
+  operatorId,
+  operatorGroupId,
+  supplierId,
+  serviceWindowId
+
+  FROM ${ref("incident_snapshots_all_text")}
+)
+
+SELECT * FROM base_pre_tipada
+
+${when(incremental(), `
+  -- O filtro usa modificationDate para capturar atualizações em registros existentes
+  WHERE modificationDate >= (
+    SELECT COALESCE(MAX(timeStamp), TIMESTAMP('1900-01-01')) 
+    FROM ${self()}
+  ) - INTERVAL 5 DAY
+`)}
