@@ -8,7 +8,7 @@ config {
         partitionBy: "DATE(ctm_datetime_br)",
         updatePartitionFilter: "ctm_datetime_br >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 10 DAY)"
     },
-    description: "Tabela histórica incremental com tratamento de duplicidade e conversão de valores"
+    description: "Tabela histórica de todas as transações no tmob"
 }
 
 -- 1. Preparação dos dados de entrada (Carga Full ou Incremental)
@@ -51,10 +51,7 @@ SELECT
     ctm_legacy_id,
     ctm_datetime_br,
     ctm_value_num as ctm_value,
-    ctm_receivedvalue_num as ctm_receivedvalue,
-    
-    -- Marcação de auditoria (sempre pegará o tempo da carga atual)
-    CURRENT_TIMESTAMP() as dataform_updated_at
+    ctm_receivedvalue_num as ctm_receivedvalue
 
 FROM raw_data
 
@@ -65,5 +62,3 @@ ${when(incremental(), `
         OR TIMESTAMP(ctm_updatedat) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 DAY)
 `)}
 
--- O PULO DO GATO: Se houver duplicidade no lote, mantém apenas a linha mais recente
-QUALIFY ROW_NUMBER() OVER(PARTITION BY ctm_id ORDER BY ctm_updatedat DESC, CURRENT_TIMESTAMP() DESC) = 1
