@@ -2,6 +2,7 @@ config {
     type: "incremental",
     schema: "his",
     name: "his_com_tranmt",
+    tags: ["tmob"],
     uniqueKey: ["ctm_id"],
     bigquery: {
         partitionBy: "DATE(ctm_datetime_br)",
