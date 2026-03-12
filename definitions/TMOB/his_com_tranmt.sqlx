@@ -7,19 +7,21 @@ config {
     bigquery: {
         partitionBy: "DATE(ctm_datetime_br)",
         updatePartitionFilter: "ctm_datetime_br >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 10 DAY)"
-    }
+    },
+    description: "Tabela histórica incremental com tratamento de duplicidade e conversão de valores"
 }
 
--- 1. Preparamos os dados que estão chegando
-WITH new_data AS (
+-- 1. Preparação dos dados de entrada (Carga Full ou Incremental)
+WITH raw_data AS (
     SELECT 
         ctm_id, cm_id, ctt_id, cs_id, dv_id, ctm_status,
         ctm_datetime_tz, ctm_confirm_datetime_tz, ctm_externalid,
         ctm_createdat, ctm_updatedat, ctm_createdby, ctm_updatedby,
         ctm_tef_receipt, ctm_legacy_id,
-        SAFE_CAST(ctm_value AS NUMERIC) as ctm_value_numeric,
-        SAFE_CAST(ctm_receivedvalue AS NUMERIC) as ctm_receivedvalue_numeric,
-        -- Conversão blindada para data SP
+        -- Conversões numéricas
+        SAFE_CAST(ctm_value AS NUMERIC) as ctm_value_num,
+        SAFE_CAST(ctm_receivedvalue AS NUMERIC) as ctm_receivedvalue_num,
+        -- Conversão de data para SP (Brasília)
         DATETIME(TIMESTAMP(ctm_datetime_tz), 'America/Sao_Paulo') as ctm_datetime_br
     FROM (
         ${when(incremental(), 
@@ -27,10 +29,10 @@ WITH new_data AS (
           `SELECT * FROM \`dev-autopass-bi-001.temp.ext_com_tranmt\``
         )}
     )
-    -- Evita processar lixo ou IDs nulos
     WHERE ctm_id IS NOT NULL
 )
 
+-- 2. Seleção final com Garantia de Unicidade
 SELECT 
     ctm_id,
     cm_id,
@@ -48,11 +50,13 @@ SELECT
     ctm_tef_receipt,
     ctm_legacy_id,
     ctm_datetime_br,
-    ctm_value_numeric as ctm_value,
-    ctm_receivedvalue_numeric as ctm_receivedvalue,
-    -- Marcação simples de auditoria
+    ctm_value_num as ctm_value,
+    ctm_receivedvalue_num as ctm_receivedvalue,
+    
+    -- Marcação de auditoria (sempre pegará o tempo da carga atual)
     CURRENT_TIMESTAMP() as dataform_updated_at
-FROM new_data
+
+FROM raw_data
 
 ${when(incremental(), `
     WHERE 
@@ -60,3 +64,6 @@ ${when(incremental(), `
         OR TIMESTAMP(ctm_createdat) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 DAY)
         OR TIMESTAMP(ctm_updatedat) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 DAY)
 `)}
+
+-- O PULO DO GATO: Se houver duplicidade no lote, mantém apenas a linha mais recente
+QUALIFY ROW_NUMBER() OVER(PARTITION BY ctm_id ORDER BY ctm_updatedat DESC, CURRENT_TIMESTAMP() DESC) = 1
