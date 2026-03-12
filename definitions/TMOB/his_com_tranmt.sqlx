@@ -34,7 +34,8 @@ new_data AS (
         ctm_legacy_id,
         SAFE_CAST(ctm_value AS NUMERIC) as ctm_value_new,
         SAFE_CAST(ctm_receivedvalue AS NUMERIC) as ctm_receivedvalue_new,
-        DATETIME(SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%z', ctm_datetime_tz), (SELECT fuso_horario FROM config)) as ctm_datetime_br,
+        DATETIME(TIMESTAMP(ctm_datetime_tz), 'America/Sao_Paulo') as ctm_datetime_br,
+        --DATETIME(SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%z', ctm_datetime_tz), (SELECT fuso_horario FROM config)) as ctm_datetime_br,
         SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%z', ctm_createdat) as ts_createdat,
         SAFE.PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%z', ctm_updatedat) as ts_updatedat
     FROM (
