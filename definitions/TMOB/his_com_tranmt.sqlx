@@ -74,8 +74,8 @@ SELECT
     )},
 
     -- Flags de qualidade anteriores
-    COALESCE(t1.ts_updatedat > t1.ts_createdat, FALSE) as flag_registro_modificado_origem,
-    COALESCE(t1.ctm_receivedvalue_new != t1.ctm_value_new, FALSE) as flag_valor_divergente,
+    --COALESCE(t1.ts_updatedat > t1.ts_createdat, FALSE) as flag_registro_modificado_origem,
+    COALESCE(t1.ctm_value != t1.ctm_value_new, FALSE) as flag_valor_divergente,
     CURRENT_TIMESTAMP() as dataform_updated_at
 
 -- ... (mantenha todo o SELECT e o JOIN anterior igual)
