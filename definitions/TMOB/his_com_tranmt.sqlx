@@ -3,10 +3,11 @@ config {
     schema: "his",
     name: "his_com_tranmt",
     tags: ["tmob"],
-    uniqueKey: ["ctm_id"], 
     bigquery: {
         partitionBy: "DATE(ctm_datetime_br)",
-        updatePartitionFilter: "ctm_datetime_br >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 10 DAY)"
+        clusterBy: ["cm_id", "ctm_status", "cs_id"] ,
+        updatePartitionFilter: "ctm_datetime_br >= timestamp_sub(current_timestamp(), interval 180 day)"
+
     },
     description: "Tabela histórica de todas as transações no tmob"
 }
@@ -14,51 +15,30 @@ config {
 -- 1. Preparação dos dados de entrada (Carga Full ou Incremental)
 WITH raw_data AS (
     SELECT 
-        ctm_id, cm_id, ctt_id, cs_id, dv_id, ctm_status,
-        ctm_datetime_tz, ctm_confirm_datetime_tz, ctm_externalid,
-        ctm_createdat, ctm_updatedat, ctm_createdby, ctm_updatedby,
-        ctm_tef_receipt, ctm_legacy_id,
-        -- Conversões numéricas
+        ctm_id,
+        cm_id,
+        ctt_id,
+        cs_id,
+        dv_id,
+        ctm_status,
+        ctm_datetime_tz,
+        ctm_confirm_datetime_tz,
+        ctm_externalid,
+        ctm_createdat,
+        ctm_updatedat,
+        ctm_createdby,
+        ctm_updatedby,
+        ctm_tef_receipt,
+        ctm_legacy_id,
         SAFE_CAST(ctm_value AS NUMERIC) as ctm_value_num,
         SAFE_CAST(ctm_receivedvalue AS NUMERIC) as ctm_receivedvalue_num,
-        -- Conversão de data para SP (Brasília)
         DATETIME(TIMESTAMP(ctm_datetime_tz), 'America/Sao_Paulo') as ctm_datetime_br
-    FROM (
-        ${when(incremental(), 
-          `SELECT * FROM \`dev-autopass-bi-001.temp.day_com_tranmt\``, 
-          `SELECT * FROM \`dev-autopass-bi-001.temp.ext_com_tranmt\``
-        )}
-    )
-    WHERE ctm_id IS NOT NULL
+    FROM  `dev-autopass-bi-001.temp.day_com_tranmt`
+    
+    `dev-autopass-bi-001.temp.ext_com_tranmt` 
+    --${ref("ext_com_tranmt")}
+        
+-- teste
 )
 
--- 2. Seleção final com Garantia de Unicidade
-SELECT 
-    ctm_id,
-    cm_id,
-    ctt_id,
-    cs_id,
-    dv_id,
-    ctm_status,
-    ctm_datetime_tz,
-    ctm_confirm_datetime_tz,
-    ctm_externalid,
-    ctm_createdat,
-    ctm_updatedat,
-    ctm_createdby,
-    ctm_updatedby,
-    ctm_tef_receipt,
-    ctm_legacy_id,
-    ctm_datetime_br,
-    ctm_value_num as ctm_value,
-    ctm_receivedvalue_num as ctm_receivedvalue
-
-FROM raw_data
-
-${when(incremental(), `
-    WHERE 
-        TIMESTAMP(ctm_datetime_tz) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 DAY)
-        OR TIMESTAMP(ctm_createdat) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 DAY)
-        OR TIMESTAMP(ctm_updatedat) >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 10 DAY)
-`)}
-
+select * from raw_data
