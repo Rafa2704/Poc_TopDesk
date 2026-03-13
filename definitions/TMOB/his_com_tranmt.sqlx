@@ -3,18 +3,17 @@ config {
     schema: "his",
     name: "his_com_tranmt",
     tags: ["tmob"],
+    uniqueKey: ["ctm_id"], 
     bigquery: {
         partitionBy: "DATE(ctm_datetime_br)",
-        clusterBy: ["cm_id", "ctm_status", "cs_id"] ,
-        updatePartitionFilter: "ctm_datetime_br >= timestamp_sub(current_timestamp(), interval 180 day)"
-
+        clusterBy: ["cm_id", "ctm_status", "cs_id"],
+        updatePartitionFilter: "ctm_datetime_br >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 180 DAY)"
     },
     description: "Tabela histórica de todas as transações no tmob"
 }
 
--- 1. Preparação dos dados de entrada (Carga Full ou Incremental)
 WITH raw_data AS (
-    SELECT 
+    SELECT
         ctm_id,
         cm_id,
         ctt_id,
@@ -30,15 +29,27 @@ WITH raw_data AS (
         ctm_updatedby,
         ctm_tef_receipt,
         ctm_legacy_id,
-        SAFE_CAST(ctm_value AS NUMERIC) as ctm_value_num,
-        SAFE_CAST(ctm_receivedvalue AS NUMERIC) as ctm_receivedvalue_num,
-        DATETIME(TIMESTAMP(ctm_datetime_tz), 'America/Sao_Paulo') as ctm_datetime_br
-    FROM  `dev-autopass-bi-001.temp.day_com_tranmt`
-    
-    `dev-autopass-bi-001.temp.ext_com_tranmt` 
-    --${ref("ext_com_tranmt")}
-        
--- teste
+        ctm_value,
+        ctm_receivedvalue,
+        ctm_datetime_br,
+        CURRENT_TIMESTAMP() AS dataform_updated_at
+    FROM  
+            ${ref("bronze_com_tranmt")}
+    WHERE ctm_id IS NOT NULL
 )
 
-select * from raw_data
+SELECT 
+    *
+    
+FROM raw_data
+
+${when(incremental(), `
+    WHERE 
+        -- Filtro usando o SELF para pegar apenas o que é mais novo que o máximo da história
+        TIMESTAMP(ctm_datetime_tz) > (SELECT COALESCE(MAX(TIMESTAMP(ctm_datetime_tz)), TIMESTAMP('1900-01-01')) FROM ${self()})
+        OR TIMESTAMP(ctm_createdat) > (SELECT COALESCE(MAX(TIMESTAMP(ctm_createdat)), TIMESTAMP('1900-01-01')) FROM ${self()})
+        OR TIMESTAMP(ctm_updatedat) > (SELECT COALESCE(MAX(TIMESTAMP(ctm_updatedat)), TIMESTAMP('1900-01-01')) FROM ${self()})
+`)}
+
+--Garante que o lote de entrada não tenha duplicados
+QUALIFY ROW_NUMBER() OVER(PARTITION BY ctm_id ORDER BY ctm_updatedat DESC, ctm_datetime_tz DESC) = 1

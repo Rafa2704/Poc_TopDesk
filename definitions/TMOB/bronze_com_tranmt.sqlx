@@ -1,0 +1,40 @@
+config {
+    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    schema: "tmp",
+    name: "bronze_com_tranmt",
+    description: "Camada Bronze: Dados vindo diariamente ta tabela de trnsações do tmob",
+    tags: ["tmob"],
+}
+
+
+SELECT
+  ctm_id,
+  cm_id,
+  ctt_id,
+  cs_id,
+  dv_id,
+  ctm_status,
+
+  TIMESTAMP(NULLIF(TRIM(ctm_datetime_tz), '')) AS ctm_datetime_tz,
+  TIMESTAMP(NULLIF(TRIM(ctm_confirm_datetime_tz), '')) AS ctm_confirm_datetime_tz,
+  ctm_externalid,
+  TIMESTAMP(NULLIF(TRIM(ctm_createdat), '')) AS ctm_createdat,
+  TIMESTAMP(NULLIF(TRIM(ctm_updatedat), '')) AS ctm_updatedat,
+
+  ctm_createdby,
+  ctm_updatedby,
+  ctm_tef_receipt,
+  ctm_legacy_id,
+
+  SAFE_CAST(ctm_value AS NUMERIC) AS ctm_value,
+  SAFE_CAST(ctm_receivedvalue AS NUMERIC) AS ctm_receivedvalue,
+
+  DATETIME(
+    TIMESTAMP(NULLIF(TRIM(ctm_datetime_tz), '')),
+    'America/Sao_Paulo'
+  ) AS ctm_datetime_br,
+
+  CURRENT_TIMESTAMP() AS dataform_updated_at
+
+FROM `dev-autopass-bi-001.temp.day_com_tranmt`
+WHERE ctm_id IS NOT NULL
