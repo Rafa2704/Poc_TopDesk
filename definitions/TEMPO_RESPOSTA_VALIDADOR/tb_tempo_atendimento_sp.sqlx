@@ -1,0 +1,156 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    name: "tb_tempo_atendimento_sp",
+    description: "Tabela criada pra monitorar o tempo de cada transação ate liberar a catraca ",
+    tags: ["tmob"],
+    bigquery: {
+        partitionBy: "dt_sp",
+    }
+}
+
+WITH operadores AS (
+  SELECT
+    cd_to_transport_operator,
+    nm_to_transport_operator
+  FROM `prd-autopass-bi-001.his.tb_his_mrd_tmb001_to_transport_operator`
+  WHERE cd_to_transport_operator IN ('2','115','1','3','4','122')
+),
+
+linhas AS (
+  SELECT
+    cd_to_line,
+    ds_to_line_long
+  FROM `prd-autopass-bi-001.his.tb_his_mrd_tmb001_to_line`
+),
+
+servicos AS (
+  SELECT
+    tt.cd_trn_trip,
+    ts.nr_device_serial
+  FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_trn_trip` tt
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_trn_service` ts
+    ON tt.cd_trn_service = ts.cd_trn_service
+),
+
+base_uso AS (
+
+  -- CARTAO
+  SELECT
+    'CARTAO' AS Tipo,
+    CAST(tu.cd_trn_usage_media AS STRING) AS Id,
+    tu.dt_usage AS dt_usage,
+    tu.tm_usage AS tm_usage,
+    tu.cd_trn_trip,
+    tu.cd_to_line,
+    tu.cd_to_transport_operator,
+    mtp.ds_med_transit_product AS Produto,
+    CASE
+      WHEN tu.cd_to_issuer = '60' THEN 'BU'
+      ELSE CAST(mtp.nm_display AS STRING)
+    END AS Aplicacao,
+    SAFE_DIVIDE(tu.vl_usage, 100) AS Valor_Catracada,
+    1 AS Qtd_Catracadas,
+    tu.qt_elapsed_time AS Tempo
+  FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_trn_usage_media` tu
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_med_transit_product` mtp
+    ON tu.cd_med_transit_product = mtp.cd_product
+  WHERE tu.dt_usage >= '2025-09-01' 
+
+  UNION ALL
+
+  -- QRCODE
+  SELECT
+    'QRCODE' AS Tipo,
+    CAST(tu.cd_trn_usage_qrcode AS STRING) AS Id,
+    tu.dt_usage AS dt_usage,
+    tu.tm_usage AS tm_usage,
+    tu.cd_trn_trip,
+    tu.cd_to_line,
+    tu.cd_to_transport_operator,
+    CAST(tu.cd_qr_product AS STRING) AS Produto,
+    qp.ds_qr_product AS Aplicacao,
+    SAFE_DIVIDE(tu.vl_usage, 100) AS Valor_Catracada,
+    1 AS Qtd_Catracadas,
+    tu.qt_elapsed_time AS Tempo
+  FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_trn_usage_qrcode` tu
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_qr_product` qp
+    ON tu.cd_qr_product = qp.cd_qr_product
+  WHERE tu.dt_usage >= '2025-09-01'
+
+  UNION ALL
+
+  -- EMV
+  SELECT
+    'EMV' AS Tipo,
+    CAST(tu.cd_trn_usage_emv AS STRING) AS Id,
+    tu.dt_usage AS dt_usage,
+    tu.tm_usage AS tm_usage,
+    tu.cd_trn_trip,
+    tu.cd_to_line,
+    tu.cd_to_transport_operator,
+    ep.ds_emv_product AS Produto,
+    ep.ds_brand AS Aplicacao,
+    SAFE_DIVIDE(tu.vl_usage, 100) AS Valor_Catracada,
+    1 AS Qtd_Catracadas,
+    tu.qt_elapsed_time AS Tempo
+  FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_trn_usage_emv` tu
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_emv_product` ep
+    ON tu.cd_emv_product = ep.cd_emv_product
+  WHERE tu.dt_usage >= '2025-09-01'
+),
+
+base_final AS (
+  SELECT
+    bu.Tipo,
+    bu.Id,
+    bu.dt_usage AS Data_uso,
+    EXTRACT(HOUR FROM bu.tm_usage) AS Hora_uso,
+    sv.nr_device_serial AS Validador,
+    bu.Produto,
+    bu.Aplicacao,
+    ln.ds_to_line_long AS Nome_Linha,
+    op.nm_to_transport_operator AS Empresa,
+    bu.Valor_Catracada,
+    bu.Qtd_Catracadas,
+    bu.Tempo,
+    TIMESTAMP(DATETIME(bu.dt_usage, bu.tm_usage), 'America/Sao_Paulo') AS ts_sp,
+    DATE(TIMESTAMP(DATETIME(bu.dt_usage, bu.tm_usage), 'America/Sao_Paulo')) AS dt_sp
+  FROM base_uso bu
+  JOIN operadores op
+    ON bu.cd_to_transport_operator = op.cd_to_transport_operator
+  JOIN linhas ln
+    ON bu.cd_to_line = ln.cd_to_line
+  LEFT JOIN servicos sv
+    ON bu.cd_trn_trip = sv.cd_trn_trip
+)
+
+SELECT
+  Tipo,
+  Id,
+  Data_uso,
+  Hora_uso,
+  Validador,
+  Produto,
+  Aplicacao,
+  Nome_Linha,
+  Empresa,
+  Valor_Catracada,
+  Qtd_Catracadas,
+  Tempo,
+  ts_sp,
+  dt_sp,
+  CASE
+    WHEN Tempo < 700 THEN 'Atendido'
+    ELSE 'Não Atendido'
+  END AS Cenario700,
+  CASE
+    WHEN Tempo < 1000 THEN 'Atendido'
+    ELSE 'Não Atendido'
+  END AS Cenario1000,
+  CASE
+    WHEN Tempo < 1300 THEN 'Atendido'
+    ELSE 'Não Atendido'
+  END AS Cenario1300
+FROM base_final
+--WHERE dt_sp BETWEEN DATE '2025-09-01' AND DATE '2025-09-30'
