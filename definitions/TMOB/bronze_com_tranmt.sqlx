@@ -36,5 +36,6 @@ SELECT
 
   CURRENT_TIMESTAMP() AS dataform_updated_at
 
-FROM `dev-autopass-bi-001.temp.day_com_tranmt`
+FROM `dev-autopass-bi-001.tmp.commercial_com_tranmt`
+--`dev-autopass-bi-001.temp.day_com_tranmt`
 WHERE ctm_id IS NOT NULL
