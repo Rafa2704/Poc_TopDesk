@@ -4,7 +4,8 @@ config {
     name: "changes_all_text",
     description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema",
     tags: ["topdesk"],
-}
+}   
+--TESTE
 
 SELECT
   -- Usamos o CAST em todas as colunas para garantir o tipo STRING
