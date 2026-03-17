@@ -17,6 +17,7 @@ WITH base_tipada AS (
     -- Identificadores
     CAST(id AS STRING) AS id,
     CAST(typeId AS STRING) AS typeId,
+    changeNumber,
     CAST(categoryId AS STRING) AS categoryId,
     CAST(subcategoryId AS STRING) AS subcategoryId,
     CAST(impactId AS STRING) AS impactId,
