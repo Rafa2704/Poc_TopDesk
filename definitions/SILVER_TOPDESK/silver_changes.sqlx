@@ -86,9 +86,12 @@ WITH base_tipada AS (
 
   FROM ${ref("changes_all_text")}
   --`dev-autopass-bi-001.tmp.ext_changes_full`
-)
+),
 
-SELECT * FROM base_tipada
+base_filtrada as (
+SELECT * 
+
+FROM base_tipada
 
 ${when(incremental(), `
   WHERE modificationDate >= (
@@ -96,3 +99,15 @@ ${when(incremental(), `
     FROM ${self()}
   ) - INTERVAL 5 DAY
 `)}
+),
+base_deduplicada AS (
+  SELECT *
+  FROM base_filtrada
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY id
+    ORDER BY modificationDate DESC, creationDate DESC
+  ) = 1
+)
+
+SELECT * 
+FROM base_deduplicada
