@@ -85,5 +85,6 @@ SELECT
   `typeId`,
   `urgencyId`
 
-FROM ${ref("tb_day_trs_tpd001_incidents")}
+FROM `dev-autopass-bi-001.day.tb_day_trs_tpd001_incidents`
+--${ref("tb_day_trs_tpd001_incidents")}
 
