@@ -1,0 +1,16 @@
+config {
+    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    schema: "his",
+    name: "tb_his_mrd_tpd001_subcategories",
+    description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema",
+    tags: ["topdesk"],
+}
+
+
+SELECT 
+        status ,
+        id ,
+        name ,
+        "order",
+        mainCategoryId
+FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_subcategories

@@ -1,0 +1,23 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tpd001_changedetails",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(creationDate)",
+  },
+  tags: ["topdesk"],
+}
+
+
+SELECT 
+        archivingReasonId,
+        assetId,
+        briefDescription,
+        changeNumber,
+        DATETIME(SAFE_CAST(`creationDate` AS TIMESTAMP), "America/Sao_Paulo") AS creationDate,
+        externalNumber,
+        id,
+        requesterName
+FROM dev-autopass-bi-001.day.tb_day_trs_tpd001_changedetails
