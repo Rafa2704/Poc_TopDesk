@@ -24,7 +24,7 @@ SELECT
   SAFE_CAST(`completionDate` AS TIMESTAMP) AS completionDate,
 
   SAFE_CAST(`costs` AS FLOAT64) AS costs,
-  DATETIME(SAFE_CAST(`creationDate` AS TIMESTAMP), "America/Sao_Paulo") AS creationDate,
+  SAFE_CAST(`creationDate` AS TIMESTAMP) AS creationDate,
   `creatorId`,
   `deescalated`,
   `departmentId`,
