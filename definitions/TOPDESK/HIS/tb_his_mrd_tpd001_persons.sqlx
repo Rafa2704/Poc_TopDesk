@@ -1,0 +1,41 @@
+config {
+    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    schema: "his",
+    name: "tb_his_mrd_tpd001_persons",
+    description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema",
+    tags: ["topdesk"],
+}
+
+
+
+SELECT 
+    branchId,
+        budgetHolderId,
+        contractEndDate,
+        contractStartDate,
+        creationDate,
+        dateOfHire,
+        departmentId,
+        departmentWhenPlainText,
+        email,
+        employeeNumber,
+        endOfProbationaryPeriod,
+        extraAId,
+        extraBId,
+        firstName,
+        id,
+        isManager,
+        jobTitle,
+        locationId,
+        loginName,
+        managerId,
+        mobileNumber,
+        modificationDate,
+        name,
+        networkLoginName,
+        privateMobileNumber,
+        status,
+        surName,
+        telephoneNumber,
+        terminationOfEmployment
+FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_persons
