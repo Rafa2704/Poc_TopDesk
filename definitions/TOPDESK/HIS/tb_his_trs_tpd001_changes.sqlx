@@ -32,7 +32,7 @@ CAST(closureDate AS TIMESTAMP) AS closureDate,
 coordinatorId,
 CAST(costs AS FLOAT64) AS costs,
 
-CAST(creationDate AS TIMESTAMP) AS creationDate,
+SAFE_CAST(creationDate AS TIMESTAMP) AS creationDate,
 creatorId,
 
 currentPhase,
