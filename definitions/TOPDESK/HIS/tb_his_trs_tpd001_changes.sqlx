@@ -4,7 +4,7 @@ config {
   name: "tb_his_trs_tpd001_changes",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   bigquery: {
-    partitionBy: "DATE(creationDate, 'America/Sao_Paulo')",
+    partitionBy: "DATE(creationDate)",
   },
   tags: ["topdesk"],
 }
@@ -32,7 +32,7 @@ CAST(closureDate AS TIMESTAMP) AS closureDate,
 coordinatorId,
 CAST(costs AS FLOAT64) AS costs,
 
-SAFE_CAST(creationDate AS TIMESTAMP) AS creationDate,
+DATETIME(SAFE_CAST(`creationDate` AS TIMESTAMP), "America/Sao_Paulo") AS creationDate,
 creatorId,
 
 currentPhase,
