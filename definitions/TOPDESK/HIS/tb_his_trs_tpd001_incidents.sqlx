@@ -5,11 +5,11 @@ config {
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   uniqueKey: ["id"],
   bigquery: {
-    partitionBy: "DATE(creationDate)",
+    partitionBy: "DATE(creationDate, 'America/Sao_Paulo')",
   },
   tags: ["topdesk"],
 }
-
+--teste
 SELECT
   `archivingReasonId`,
   `branchId`,

@@ -4,7 +4,7 @@ config {
   name: "tb_his_trs_tpd001_changes",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   bigquery: {
-    partitionBy: "DATE(creationDate)",
+    partitionBy: "DATE(creationDate, 'America/Sao_Paulo')",
   },
   tags: ["topdesk"],
 }
