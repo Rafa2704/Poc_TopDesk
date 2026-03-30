@@ -1,0 +1,360 @@
+{
+  "tables": [
+    {
+      "name": "Incidents",
+      "endpoint": "/odata/Incidents",
+      "date_field": ["callDate" , "modificationDate"],
+      "incremental": true
+    },
+
+    {
+      "name": "IncidentDetails",
+      "endpoint": "/odata/IncidentDetails",
+      "date_field": "creationDate",
+      "incremental": true
+    },
+    
+    {
+      "name": "Changes",
+      "endpoint": "/odata/Changes",
+      "date_field": "plannedStartDate",
+      "incremental": true
+    },
+    {
+      "name": "Problems",
+      "endpoint": "/odata/Problems",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQATMList",
+      "endpoint": "/odata/AssetEQATMList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQBloqueioDeTerminalList",
+      "endpoint": "/odata/AssetEQBloqueioDeTerminalList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQPOSPRODATAList",
+      "endpoint": "/odata/AssetEQPOSPRODATAList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQTDIList",
+      "endpoint": "/odata/AssetEQTDIList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQValidadorDeBloqueiosList",
+      "endpoint": "/odata/AssetEQValidadorDeBloqueiosList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQValidadorOnibusList",
+      "endpoint": "/odata/AssetEQValidadorOnibusList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQValidadorOnlineList",
+      "endpoint": "/odata/AssetEQValidadorOnlineList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaBDPRDHMLList",
+      "endpoint": "/odata/AssetInfraestruturaBDPRDHMLList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaDatacenterAscentyOsascoList",
+      "endpoint": "/odata/AssetInfraestruturaDatacenterAscentyOsascoList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaDatacenterAscentyVinhedoList",
+      "endpoint": "/odata/AssetInfraestruturaDatacenterAscentyVinhedoList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaDatacenterCCOPresidenteAltinoList",
+      "endpoint": "/odata/AssetInfraestruturaDatacenterCCOPresidenteAltinoList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaDatacenterCCOVergueiroList",
+      "endpoint": "/odata/AssetInfraestruturaDatacenterCCOVergueiroList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaDatacenterCMTCTMList",
+      "endpoint": "/odata/AssetInfraestruturaDatacenterCMTCTMList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaDatacenterTHRTheraList",
+      "endpoint": "/odata/AssetInfraestruturaDatacenterTHRTheraList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaNuvemAzureList",
+      "endpoint": "/odata/AssetInfraestruturaNuvemAzureList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaNuvemDatabaseOracleCloudList",
+      "endpoint": "/odata/AssetInfraestruturaNuvemDatabaseOracleCloudList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaSAMBOXList",
+      "endpoint": "/odata/AssetInfraestruturaSAMBOXList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaServidoresAWSList",
+      "endpoint": "/odata/AssetInfraestruturaServidoresAWSList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaServidoresFisicosHMLList",
+      "endpoint": "/odata/AssetInfraestruturaServidoresFisicosHMLList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaServidoresFisicosProducaoList",
+      "endpoint": "/odata/AssetInfraestruturaServidoresFisicosProducaoList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaServidoresVirtuaisHMLList",
+      "endpoint": "/odata/AssetInfraestruturaServidoresVirtuaisHMLList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetInfraestruturaServidoresVirtuaisProducaoList",
+      "endpoint": "/odata/AssetInfraestruturaServidoresVirtuaisProducaoList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRedesETelecomFirewallSDWANList",
+      "endpoint": "/odata/AssetRedesETelecomFirewallSDWANList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRedesETelecomLinkDeDadosList",
+      "endpoint": "/odata/AssetRedesETelecomLinkDeDadosList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRedesETelecomNobreakEnergiaLocalList",
+      "endpoint": "/odata/AssetRedesETelecomNobreakEnergiaLocalList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRedesETelecomSH2000List",
+      "endpoint": "/odata/AssetRedesETelecomSH2000List",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRedesETelecomSwitchList",
+      "endpoint": "/odata/AssetRedesETelecomSwitchList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRedesETelecomVivoModem4GList",
+      "endpoint": "/odata/AssetRedesETelecomVivoModem4GList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetSDGaragemList",
+      "endpoint": "/odata/AssetSDGaragemList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ChangeDetails",
+      "endpoint": "/odata/ChangeDetails",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ChangeImpacts",
+      "endpoint": "/odata/ChangeImpacts",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ChangePriorities",
+      "endpoint": "/odata/ChangePriorities",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ChangeProcessingStatuses",
+      "endpoint": "/odata/ChangeProcessingStatuses",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ChangeTypes",
+      "endpoint": "/odata/ChangeTypes",
+      "date_field": null,
+      "incremental": false
+    },
+
+    {
+      "name": "IncidentOptionalFirstTabSearchlist4Items",
+      "endpoint": "/odata/IncidentOptionalFirstTabSearchlist4Items",
+      "date_field": null,
+      "incremental": false
+    },
+   
+    {
+      "name": "IncidentOptionalSecondTabSearchlist4Items",
+      "endpoint": "/odata/IncidentOptionalSecondTabSearchlist4Items",
+      "date_field": null,
+      "incremental": false
+    },
+  
+    {
+      "name": "OperatorOperatorGroupLinks",
+      "endpoint": "/odata/OperatorOperatorGroupLinks",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Persons",
+      "endpoint": "/odata/Persons",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ProblemCauses",
+      "endpoint": "/odata/ProblemCauses",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ProblemDetails",
+      "endpoint": "/odata/ProblemDetails",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ProblemProcessingStatuses",
+      "endpoint": "/odata/ProblemProcessingStatuses",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "ProblemUrgencies",
+      "endpoint": "/odata/ProblemUrgencies",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Subcategories",
+      "endpoint": "/odata/Subcategories",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Departments",
+      "endpoint": "/odata/Departments",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetEQPOSQRCodeList",
+      "endpoint": "/odata/AssetEQPOSQRCodeList",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetRoomAssignments",
+      "endpoint": "/odata/AssetRoomAssignments",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "AssetBranchAssignments",
+      "endpoint": "/odata/AssetBranchAssignments",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "OperatorGroups",
+      "endpoint": "/odata/OperatorGroups",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Locations",
+      "endpoint": "/odata/Locations",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Operators",
+      "endpoint": "/odata/Operators",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Categories",
+      "endpoint": "/odata/Categories",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "IncidentPriorities",
+      "endpoint": "/odata/IncidentPriorities",
+      "date_field": null,
+      "incremental": false
+    },
+    {
+      "name": "Branches",
+      "endpoint": "/odata/Branches",
+      "date_field": null,
+      "incremental": false
+    },
+ 
+ 
+    {
+      "name": "IncidentProcessingStatuses",
+      "endpoint": "/odata/IncidentProcessingStatuses",
+      "date_field": null,
+      "incremental": false
+    }
+  ]
+}
+

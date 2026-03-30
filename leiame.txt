@@ -1,0 +1,34 @@
+Informações sobre extração incremental das tabelas:
+
+    "Incidents",
+    "endpoint": "/odata/Incidents",
+    "date_field": "callDate" e "modificationDate"
+    
+      "name": "IncidentDetails",
+      "endpoint": "/odata/IncidentDetails",
+      "date_field": "creationDate",
+      "incremental": true
+
+    
+   
+      "name": "Changes",
+      "endpoint": "/odata/Changes",
+      "date_field": "creationDate", e "modificationDate"
+      "incremental": true
+   
+      "name": "Problems",
+      "endpoint": "/odata/Problems",
+      "date_field": "creationDate",
+      "incremental": true
+
+      ### vamos entrar no projeto e no bucket :
+      gcloud config set project dev-autopass-bi-001
+      
+      # vamos entrar no bucket:
+      gcloud storage ls gs://autopass-datalake-topdesk
+
+      # vamos listar conteudo da pasta tabelas
+      gcloud storage ls gs://autopass-datalake-topdesk/tabelas/
+
+      # vamos substituir um arquivo dentro do bucket 
+      gsutil cp tabelas.json gs://autopass-datalake-topdesk/tabelas/tabelas.json

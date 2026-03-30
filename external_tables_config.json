@@ -1,0 +1,14 @@
+[
+  {
+    "table_id": "ext_incidents_full",
+    "prefix": "landing/incidents/"
+  },
+  {
+    "table_id": "ext_incidentdetails_full",
+    "prefix": "landing/incidentdetails/"
+  },
+  {
+    "table_id": "ext_changes_full",
+    "prefix": "landing/changes/"
+  }
+]

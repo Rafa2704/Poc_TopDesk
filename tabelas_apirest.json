@@ -1,0 +1,27 @@
+{
+  "tables": [
+
+    {
+      "name": "operatorChanges",
+      "endpoint": "/tas/api/operatorChanges",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "change_id",
+        "number",
+        "creationDate",
+        "lastModificationDate",
+        "briefDescription",
+        "status_name",
+        "requester_name",
+        "coordinator_name",
+        "category_name",
+        "subcategory_name",
+        "optionalFields1_json",
+        "raw_json"
+      ]
+    }
+
+  ]
+}
+

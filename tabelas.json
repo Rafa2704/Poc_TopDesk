@@ -1,0 +1,274 @@
+{
+  "tables": [
+    {
+      "name": "Incidents",
+      "endpoint": "/odata/Incidents",
+      "date_field": ["callDate" , "modificationDate"],
+      "incremental": true ,
+      "schema": [
+        "archivingReasonId","branchId","budgetHolderId","callDate","categoryId","closed",
+        "closureCodeId","closureDate","completed","completionDate","costs","creationDate",
+        "creatorId","deescalated","departmentId","durationId","entryTypeId","escalated",
+        "escalationReasonId","expectedTimeSpent_inSeconds","feedbackRating","id","impactId",
+        "inProgressDuration_inSeconds","incidentNumber","itemCosts","linkedBranchId",
+        "linkedBranchName","linkedLocationId","majorIncident","majorIncidentId",
+        "modificationDate","modifierId","objectCosts","onHold","onHoldDate","operatorGroupId",
+        "operatorId","priorityId","processingStatusId","reporterId","responded","responseDate",
+        "responseTargetDate","serviceId","slaTargetDate","slaUsed","status","subcategoryId",
+        "supplierId","targetDate","totalCosts","totalDuration_inSeconds","typeId","urgencyId"
+      ]
+    },
+    {
+      "name": "IncidentDetails",
+      "endpoint": "/odata/IncidentDetails",
+      "date_field": "creationDate",
+      "incremental": true,
+      "schema": [
+        "assetId","briefDescription","concerning","creationDate","email","externalNumber",
+        "id","incidentNumber","objectId","reporterName"
+      ]
+    },
+    {
+      "name": "Changes",
+      "endpoint": "/odata/Changes",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "approveImplManagerGroup","approveImplManagerId","authorizationDate","authorizingOperatorId",
+        "branchId","budgetHolderId","callDate","callerBranchId","cancellationDate","categoryId",
+        "changeNumber","changeType","closed","closureDate","coordinatorId","costs","creationDate",
+        "creatorId","currentPhase","currentPlannedCosts","currentPlannedTimeSpent_inSeconds",
+        "departmentId","emergencyChange","estimatedCosts","estimatedTimeSpent_inSeconds",
+        "evalChangeCanBeAuthorized","extensiveChangeImplementationDate","id","impactId",
+        "modificationDate","modifierId","operatorGroupId","operatorId","originalIncidentId",
+        "originalPlannedCosts","originalPlannedTimeSpent_inSeconds","plannedAuthorizationDate",
+        "plannedFinalDate","plannedImplementationDate","plannedStartDate","preliminaryRFCManagerGroup",
+        "preliminaryRFCManagerId","priorityId","processingStatusId","progressChangeCanBeAuthorized",
+        "realizedDate","rejected","rejectionDate","requestChangeCanBeAuthorized","requesterId",
+        "simpleChangeImplementationDate","startDate","started","status","subcategoryId",
+        "submissionDate","supplierId","templateId","timeTaken_inSeconds","typeId","versionId",
+        "withEvaluation"
+      ]
+    },
+    {
+      "name": "IncidentProcessingStatuses",
+      "endpoint": "/odata/IncidentProcessingStatuses",
+      "date_field": null,
+      "incremental": false,
+      "schema": [ "archive" , "id" , "name" , "order"]
+    },
+    {
+      "name": "Categories",
+      "endpoint": "/odata/Categories",
+      "date_field": null,
+      "incremental": false,
+      "schema": [ "status" , "id" , "name" , "order"]
+    },
+    {
+      "name": "Subcategories",
+      "endpoint": "/odata/Subcategories",
+      "date_field": null,
+      "incremental": false,
+      "schema": [ "status" , "id" , "name" , "order", "mainCategoryId"]
+    },
+
+    {
+      "name": "AssetEQATMList",
+      "endpoint": "/odata/AssetEQATMList",
+      "date_field": null,
+      "incremental": false,
+      "schema": [ "Archived", "ArchivedReasonId","CreationDate","Id", "ModificationDate","ObjectId","Status", "TemplateId"]
+    },
+
+     {
+      "name": "AssetEQPOSQRCodeList",
+      "endpoint": "/odata/AssetEQPOSQRCodeList",
+      "date_field": null,
+      "incremental": false,
+      "schema": [ "Archived" , "ArchivedReasonId","CreationDate","Id","ModificationDate","ObjectId","Status","TemplateId"]
+    },
+
+    {
+  "name": "Problems",
+  "endpoint": "/odata/Problems",
+  "date_field": null,
+  "incremental": false,
+  "schema": [
+    "actualDuration_inSeconds","archivingReasonId","categoryId","closed","closureDate","completed","completionDate",
+    "costs","creationDate","durationId","estimatedCosts","estimatedTimeSpent_inSeconds","id","impactId","managerId","modificationDate","operatorGroupId",
+    "operatorId","priorityId","processingStatusId","registrationDate","remainingCosts","remainingTimeSpent_inSeconds","status",
+    "subcategoryId","targetDate","totalCosts","typeId","urgencyId"]
+},
+
+    {
+      "name": "ChangeDetails",
+      "endpoint": "/odata/ChangeDetails",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "archivingReasonId",
+        "assetId",
+        "briefDescription",
+        "changeNumber",
+        "creationDate",
+        "externalNumber",
+        "id",
+        "requesterName"
+      ]
+    },
+    {
+      "name": "Branches",
+      "endpoint": "/odata/Branches",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "VATnumber",
+        "accountManagerId",
+        "city",
+        "countryId",
+        "creationDate",
+        "customerReferenceNumber",
+        "extraAId",
+        "extraBId",
+        "headBranchId",
+        "id",
+        "mainContactId",
+        "modificationDate",
+        "name",
+        "serviceWindowId",
+        "status"
+      ]
+    },
+    {
+      "name": "Departments",
+      "endpoint": "/odata/Departments",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "id",
+        "name",
+        "order"
+      ]
+    },
+    {
+      "name": "OperatorGroups",
+      "endpoint": "/odata/OperatorGroups",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "branchId",
+        "budgetHolderId",
+        "creationDate",
+        "id",
+        "modificationDate",
+        "name"
+      ]
+    },
+    {
+      "name": "Operators",
+      "endpoint": "/odata/Operators",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "branchId",
+        "budgetHolderId",
+        "creationDate",
+        "departmentId",
+        "email",
+        "employeeNumber",
+        "id",
+        "loginName",
+        "mobileNumber",
+        "modificationDate",
+        "name",
+        "status",
+        "telephoneNumber"
+      ]
+    },
+    {
+      "name": "ChangeProcessingStatuses",
+      "endpoint": "/odata/ChangeProcessingStatuses",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "id",
+        "name",
+        "order"
+      ]
+    },
+    {
+      "name": "Persons",
+      "endpoint": "/odata/Persons",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "branchId",
+        "budgetHolderId",
+        "contractEndDate",
+        "contractStartDate",
+        "creationDate",
+        "dateOfHire",
+        "departmentId",
+        "departmentWhenPlainText",
+        "email",
+        "employeeNumber",
+        "endOfProbationaryPeriod",
+        "extraAId",
+        "extraBId",
+        "firstName",
+        "id",
+        "isManager",
+        "jobTitle",
+        "locationId",
+        "loginName",
+        "managerId",
+        "mobileNumber",
+        "modificationDate",
+        "name",
+        "networkLoginName",
+        "privateMobileNumber",
+        "status",
+        "surName",
+        "telephoneNumber",
+        "terminationOfEmployment"
+      ]
+    },
+    {
+      "name": "ChangePriorities",
+      "endpoint": "/odata/ChangePriorities",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "id",
+        "name",
+        "order"
+      ]
+    },
+    {
+      "name": "ChangeImpacts",
+      "endpoint": "/odata/ChangeImpacts",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "id",
+        "name",
+        "order"
+      ]
+    },
+    {
+      "name": "ChangeTypes",
+      "endpoint": "/odata/ChangeTypes",
+      "date_field": null,
+      "incremental": false,
+      "schema": [
+        "id",
+        "name",
+        "order"
+      ]
+    }
+
+    
+
+  ]
+}
+
