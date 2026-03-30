@@ -1,0 +1,7 @@
+config {
+  type: "declaration",
+  database: "dev-autopass-bi-001",
+  schema: "his",                             
+  name: "tb_his_silver_top001_vendas_vt",    
+  description: "Tabela histórica de vendas"
+}
