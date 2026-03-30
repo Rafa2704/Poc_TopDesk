@@ -1,0 +1,184 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_first_event",
+    }
+}
+
+WITH 
+-- =========================================================================
+-- 1. BASE DE CARTÕES IMPRESSOS 
+-- =========================================================================
+Cartoes_Impressos AS (
+  SELECT 
+    nr_card, -- cartao original
+    REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+    cd_system_source
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_tmb001_card_emission`
+  WHERE dt_print >= '2025-01-01' 
+    AND ds_print_status = 'IMPRESSO'
+    AND nr_card IS NOT NULL
+),
+
+-- =========================================================================
+-- 2. BLOCO DE RECARGAS 
+
+-- =========================================================================
+BASE_VENDAS AS (
+  SELECT 
+    SUBSTR(fd.cd_card_external, 1, 2) || '.' || SUBSTR(fd.cd_card_external, 3, 2) || '.' || SUBSTR(fd.cd_card_external, 5, 8) || '-' || SUBSTR(fd.cd_card_external, 13, 1) AS nr_card,
+    fe.dt_create AS dt_venda,
+    fe.tm_create AS hr_venda,
+    CAST(CONCAT(fe.dt_create, ' ', fe.tm_create) AS DATETIME) AS dh_venda,
+    'REDE DE VENDAS' AS canal,
+    p.nm_product AS sub_tipo,
+    SUM(fe.vl_recharge) AS valor
+  FROM `prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry` fe
+  LEFT OUTER JOIN `prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry_detail` fd ON fd.cd_financial_entry = fe.cd_financial_entry
+  LEFT OUTER JOIN `prd-autopass-bi-001.his.tb_his_mrd_bar001_dealer` d ON fe.cd_dealer = d.cd_dealer
+  LEFT OUTER JOIN `prd-autopass-bi-001.his.tb_his_mrd_bar001_product` p ON fe.cd_product = p.cd_product
+  LEFT OUTER JOIN `prd-autopass-bi-001.his.tb_his_mrd_bar001_payment_type` pt ON fe.cd_payment_type = pt.cd_payment_type
+  LEFT OUTER JOIN `prd-autopass-bi-001.his.tb_his_mrd_bar001_terminal` t ON fe.cd_terminal = t.cd_terminal
+  WHERE ((fe.cd_transaction_type IN ('SALE', 'SALE_MOBILE') AND t.cd_terminal_type IN ('POS', 'MSD') AND fe.cd_issuer <> '18' AND fe.cd_status = 'CONFIRMED') OR (d.nm_dealer = 'PAKMAN' AND fe.cd_issuer = '18'))
+    AND fe.dt_create >= '2025-01-01'
+  GROUP BY ALL 
+),
+
+VENDAS_UNIFICADAS AS (
+  -- VT PEDIDO
+  SELECT 
+  REGEXP_REPLACE(mm.nr_card, r'-.*', '') AS cartao_join
+  , cro.dt_release AS dt_venda
+  , cro.tm_release AS hr_venda
+  , CAST(CONCAT( cro.dt_release, ' ',  cro.tm_release) AS DATETIME) dh_venda
+  , 'VT_PEDIDO' AS canal
+  , 'VT' AS sub_tipo, SUM(crod.vl_recharge_order_detail) / 100.0 AS valor
+  FROM `his.tb_his_trs_tmb001_com_recharge_order` cro 
+  JOIN `his.tb_his_trs_tmb001_com_recharge_order_detail` crod ON cro.cd_com_recharge_order = crod.cd_com_recharge_order 
+  JOIN `his.tb_his_mrd_tmb001_med_media` mm ON crod.nr_csn = mm.nr_csn 
+  LEFT JOIN  ${ref("tb_his_silver_top001_vendas_vt")} VT ON VT.cd_sales_order = cro.cd_com_recharge_order AND VT.cd_sales_order IS NOT NULL
+  WHERE cro.dt_release >= '2025-01-01' GROUP BY ALL
+  UNION ALL
+  -- WHATSAPP
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join
+  , dt_create AS dt_venda
+  , TIME '00:00:00' AS hr_venda
+  , CAST(dt_create AS DATETIME) dh_venda
+  , 'WHATSAPP' AS canal, nm_product AS sub_tipo
+  , SUM(vl_recharge) AS valor 
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_credit_sale_whatsapp` WHERE dt_create >= '2025-01-01' GROUP BY ALL
+  UNION ALL
+  -- ATM AUT / LEGADO
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join, 
+  DATE(TIMESTAMP(CONCAT(dt_transaction, ' ', tm_transaction)), "America/Sao_Paulo") AS dt_venda,
+  TIME(TIMESTAMP(CONCAT(dt_transaction, ' ', tm_transaction)), "America/Sao_Paulo") AS hr_venda,
+  DATETIME(TIMESTAMP(CONCAT(dt_transaction, ' ', tm_transaction)), "America/Sao_Paulo") AS dh_venda,
+  'ATM' AS canal, ds_product AS sub_tipo, SUM(vl_transaction_receive) AS valor 
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_aut001_credit_sale_atm` WHERE dt_transaction >= '2025-01-01' GROUP BY ALL
+  UNION ALL
+  -- APP TOP
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join
+  , dt_create AS dt_venda
+  , TIME '00:00:00' AS hr_venda
+  , CAST(dt_create AS DATETIME) dh_venda
+  , CASE WHEN nm_dealer = 'VOUD' THEN 'VOUD' ELSE 'APP TOP' END AS canal, nm_product AS sub_tipo, SUM(vl_recharge) AS valor 
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_credit_sale_app` WHERE dt_create >= '2025-01-01' AND nm_product IN ('TOP COMUM', 'TOP ESCOLAR') GROUP BY ALL
+  UNION ALL 
+  -- REDE DE VENDAS
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join, dt_venda, hr_venda, dh_venda , canal, sub_tipo, SUM(valor) AS valor FROM BASE_VENDAS GROUP BY ALL 
+  UNION ALL
+  -- ATM TMOB TOP
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join, 
+    dt_transaction_br AS dt_venda,
+    tm_transaction_br AS hr_venda,
+    CAST(CONCAT(dt_transaction_br, ' ', tm_transaction_br) AS DATETIME) AS dh_venda, 'ATM' AS canal, ds_product AS sub_tipo, SUM(vl_transaction) AS valor
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_tmb001_credit_sale_atm` WHERE dt_transaction_br >= '2025-01-01' GROUP BY ALL
+  UNION ALL
+  -- POS MUNICIPAL SCHOOL TOP
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join, 
+   dt_transaction AS dt_venda,
+    tm_transaction AS hr_venda,
+    CAST(CONCAT(dt_transaction, ' ', tm_transaction) AS DATETIME) AS dh_venda,
+    'POS' AS canal, ds_product AS sub_tipo, SUM(vl_amount) AS valor
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_top001_credit_sale_pos_municipal_school` WHERE dt_transaction >= '2025-01-01' GROUP BY ALL
+  UNION ALL
+  -- POS MUNICIPAL SCHOOL TMOB
+  SELECT REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join, 
+  dt_transaction AS dt_venda,
+    tm_transaction AS hr_venda,
+    CAST(CONCAT(dt_transaction, ' ', tm_transaction) AS DATETIME) AS dh_venda, 'POS' AS canal, ds_product AS sub_tipo, SUM(vl_transaction) AS valor
+  FROM `prd-autopass-bi-001.itg.vw_itg_trs_tmb001_credit_sale_pos_municipal_school` WHERE dt_transaction >= '2025-01-01' GROUP BY ALL
+),
+
+-- =========================================================================
+-- 3. PRIMEIRA VENDA E O PRIMEIRO USO
+-- =========================================================================
+
+Primeira_Venda AS (
+  SELECT 
+    cartao_join,
+    dt_venda AS dt_primeira_compra,
+    hr_venda  as tm_primeira_compra,
+    dh_venda AS dh_primeira_compra,
+    sub_tipo AS produto_compra
+  FROM VENDAS_UNIFICADAS
+  QUALIFY ROW_NUMBER() OVER(PARTITION BY cartao_join ORDER BY dh_venda ASC) = 1
+),
+
+Primeiro_Uso AS (
+  SELECT
+    REGEXP_REPLACE(nr_card, r'-.*', '') AS cartao_join,
+    dt_card_usage dt_primeiro_uso,
+    tm_card_usage tm_primeiro_uso,
+    CAST(CONCAT(dt_card_usage, ' ', tm_card_usage) AS DATETIME) AS dh_primeiro_uso,
+    ds_product AS produto_uso
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`
+  WHERE dt_card_usage >= '2025-01-01' 
+  QUALIFY ROW_NUMBER() OVER(PARTITION BY REGEXP_REPLACE(nr_card, r'-.*', '') ORDER BY CAST(CONCAT(dt_card_usage, ' ', tm_card_usage) AS DATETIME) ASC) = 1
+)
+
+-- =========================================================================
+-- 4. FINAL
+-- =========================================================================
+SELECT 
+  C.nr_card,
+  V.dt_primeira_compra dt_first_sale,
+  V.tm_primeira_compra tm_first_sale,
+  V.dh_primeira_compra dh_first_sale,
+  U.dt_primeiro_uso AS dt_first_usage,
+  U.tm_primeiro_uso AS tm_first_usage,
+  U.dh_primeiro_uso AS dh_first_usage,
+
+  DATE(LEAST(V.dh_primeira_compra, U.dh_primeiro_uso)) AS dt_first_event,
+  TIME(LEAST(V.dh_primeira_compra, U.dh_primeiro_uso)) AS hr_first_event,
+  LEAST(V.dh_primeira_compra, U.dh_primeiro_uso) AS dh_first_event,
+
+  -- TIPO do primeiro acontecimento
+  CASE 
+    WHEN V.dh_primeira_compra IS NULL AND U.dh_primeiro_uso IS NULL THEN NULL
+    WHEN V.dh_primeira_compra IS NOT NULL AND U.dh_primeiro_uso IS NULL THEN 'VENDA'
+    WHEN U.dh_primeiro_uso IS NOT NULL AND V.dh_primeira_compra IS NULL THEN 'USO'
+    WHEN V.dh_primeira_compra <= U.dh_primeiro_uso THEN 'VENDA'
+    ELSE 'USO'
+  END AS ds_first_event,
+
+  -- Produto
+  CASE 
+    WHEN V.dh_primeira_compra IS NULL AND U.dh_primeiro_uso IS NULL THEN NULL
+    WHEN V.dh_primeira_compra IS NOT NULL AND U.dh_primeiro_uso IS NULL THEN V.produto_compra
+    WHEN U.dh_primeiro_uso IS NOT NULL AND V.dh_primeira_compra IS NULL THEN U.produto_uso
+    WHEN V.dh_primeira_compra <= U.dh_primeiro_uso THEN V.produto_compra
+    ELSE U.produto_uso
+  END AS ds_product_first_event,
+   CURRENT_TIMESTAMP() ts_processing,
+  'AUT001' cd_company,
+  CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+  SESSION_USER() cd_created_by,
+  cd_system_source cd_system_source
+
+FROM Cartoes_Impressos C
+LEFT JOIN Primeira_Venda V ON C.cartao_join = V.cartao_join
+LEFT JOIN Primeiro_Uso U ON C.cartao_join = U.cartao_join
