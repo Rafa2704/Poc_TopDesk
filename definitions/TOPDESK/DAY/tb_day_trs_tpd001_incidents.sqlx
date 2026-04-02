@@ -5,11 +5,12 @@ config {
   description: "Camada Day: dados tipados e enriquecidos com metadados de controle",
   uniqueKey: ["id"],
   bigquery: {
-    partitionBy: "DATE(creationDate, 'America/Sao_Paulo')",
+    partitionBy: "creationDate",
   },
   tags: ["topdesk"],
 }
 
+WITH BASE AS (
 SELECT
   -- Campos originais tipados
   `archivingReasonId`,
@@ -23,7 +24,10 @@ SELECT
   SAFE_CAST(`completed` AS BOOL) AS completed,
   SAFE_CAST(`completionDate` AS TIMESTAMP) AS completionDate,
   SAFE_CAST(`costs` AS FLOAT64) AS costs,
+
   SAFE_CAST(`creationDate` AS TIMESTAMP) AS creationDate,
+
+  
   `creatorId`,
   SAFE_CAST(`deescalated` AS BOOL) AS deescalated,
   `departmentId`,
@@ -74,3 +78,69 @@ SELECT
   SESSION_USER() AS usuario_processamento
 
 FROM ${ref("tb_ext_trs_tpd001_incidents")}
+)
+
+SELECT 
+        archivingReasonId,
+        branchId,
+        budgetHolderId,
+        callDate,
+        categoryId,
+        closed,
+        closureCodeId,
+        closureDate,
+        completed,	
+        completionDate,	
+        costs,
+
+        
+        DATE(SAFE_CAST(`creationDate` AS TIMESTAMP), 'America/Sao_Paulo') AS creationDate,
+        TIME(SAFE_CAST(`creationDate` AS TIMESTAMP), 'America/Sao_Paulo') AS creationTime,
+        creatorId,
+        deescalated,
+        departmentId,
+        durationId,
+        entryTypeId,
+        escalated,
+        escalationReasonId,
+        expectedTimeSpent_inSeconds,
+        feedbackRating,
+        id,
+        impactId,
+        inProgressDuration_inSeconds,
+        incidentNumber,
+        itemCosts,
+        linkedBranchId,
+        linkedBranchName,
+        linkedLocationId,
+        majorIncident,
+        majorIncidentId,
+        modificationDate,
+        modifierId	,
+        objectCosts,
+        onHold,
+        onHoldDate,
+        operatorGroupId	,
+        operatorId,
+        priorityId,
+        processingStatusId,
+        reporterId,
+        responded,
+        responseDate,
+        responseTargetDate,
+        serviceId,
+        slaTargetDate,
+        slaUsed,
+        status,
+        subcategoryId,
+        supplierId	,
+        targetDate	,
+        totalCosts,
+        totalDuration_inSeconds	,
+        typeId,
+        urgencyId
+        origem,
+        dt_processamento,
+        usuario_processamento
+
+FROM BASE 
