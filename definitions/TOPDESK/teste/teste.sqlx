@@ -1,26 +1,10 @@
 config {
-    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    type: "table",
     schema: "his",
     name: "teste",
-    description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema",
+    description: "Teste de deploy DEV para PRD",
     tags: ["topdesk"],
 }
 
-
-SELECT 
-        VATnumber,
-        accountManagerId,
-        city,
-        countryId,
-        creationDate,
-        customerReferenceNumber,
-        extraAId,
-        extraBId,
-        headBranchId,
-        id,
-        mainContactId,
-        modificationDate,
-        name,
-        serviceWindowId,
-        status
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_branches
+SELECT 'teste' AS ddd
+FROM UNNEST([1])
