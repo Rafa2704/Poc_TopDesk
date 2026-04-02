@@ -6,5 +6,6 @@ config {
     tags: ["topdesk"],
 }
 
-SELECT 'teste' AS ddd
+SELECT 'teste' AS ddd,
+"outro teste" as teste2
 FROM UNNEST([1])
