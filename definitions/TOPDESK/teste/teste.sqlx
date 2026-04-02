@@ -1,0 +1,10 @@
+config {
+    type: "table",
+    schema: "his",
+    name: "teste",
+    description: "Teste de deploy DEV para PRD",
+    tags: ["topdesk"],
+}
+
+SELECT 'teste' AS ddd
+FROM UNNEST([1])
