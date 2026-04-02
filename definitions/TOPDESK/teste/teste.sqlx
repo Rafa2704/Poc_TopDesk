@@ -7,20 +7,5 @@ config {
 }
 
 
-SELECT 
-        VATnumber,
-        accountManagerId,
-        city,
-        countryId,
-        creationDate,
-        customerReferenceNumber,
-        extraAId,
-        extraBId,
-        headBranchId,
-        id,
-        mainContactId,
-        modificationDate,
-        name,
-        serviceWindowId,
-        status
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_branches
+select 'teste' as ddd
+from 1
