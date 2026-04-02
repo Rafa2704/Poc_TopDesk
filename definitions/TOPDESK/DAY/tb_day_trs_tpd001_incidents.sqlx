@@ -138,7 +138,7 @@ SELECT
         totalCosts,
         totalDuration_inSeconds	,
         typeId,
-        urgencyId
+        urgencyId,
         origem,
         dt_processamento,
         usuario_processamento
