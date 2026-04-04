@@ -1,4 +1,4 @@
-defaultProject: prd-autopass-ed-001
+defaultProject: dev-autopass-bi-001
 defaultDataset: dataform
 defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.37
