@@ -4,9 +4,6 @@ config {
   name: "tb_his_mrd_tpd001_incidentprocessingstatuses",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   uniqueKey: ["id"],
-  bigquery: {
-    partitionBy: "DATE(creationDate)",
-  },
   tags: ["topdesk"],
 }
 
