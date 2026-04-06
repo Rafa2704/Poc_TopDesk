@@ -10,7 +10,7 @@ SELECT
   CAST(id      AS STRING) AS id,
   CAST(name    AS STRING) AS name,
   CAST(`order`   AS STRING)  AS order_incid_pro_statues,
-  CAST(archive AS BOOL)   AS archive,
+  CAST(archive AS STRING)   AS archive,
     -- Campos de controle
   "TPD" AS origem,
   CURRENT_TIMESTAMP() AS dt_processamento,
