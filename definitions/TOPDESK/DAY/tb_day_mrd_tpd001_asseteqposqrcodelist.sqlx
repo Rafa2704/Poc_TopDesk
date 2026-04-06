@@ -1,0 +1,25 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_asseteqposqrcodelist",
+  tags: ["topdesk"],
+  description: "Lista de assets POS QRCode do TOPdesk"
+}
+
+SELECT
+  CAST(Id               AS STRING)    AS id,
+  CAST(ObjectId         AS STRING)    AS object_id,
+  CAST(TemplateId       AS STRING)    AS template_id,
+  CAST(Status           AS STRING)    AS status,
+  CAST(Archived         AS BOOL)      AS archived,
+  CAST(ArchivedReasonId AS STRING)    AS archived_reason_id,
+  CAST(CreationDate     AS TIMESTAMP) AS creation_date,
+  CAST(ModificationDate AS TIMESTAMP) AS modification_date,
+      -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM  ${ref("tb_ext_mrd_tpd001_asseteqposqrcodelist")}
+
+

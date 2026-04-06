@@ -1,0 +1,44 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_persons",
+  tags: ["topdesk"],
+  description: "Lookup de persons (utilizadores) do TOPdesk"
+}
+
+SELECT
+  CAST(id                        AS STRING)    AS id,
+  CAST(firstName                 AS STRING)    AS first_name,
+  CAST(surName                   AS STRING)    AS sur_name,
+  CAST(name                      AS STRING)    AS name,
+  CAST(email                     AS STRING)    AS email,
+  CAST(loginName                 AS STRING)    AS login_name,
+  CAST(networkLoginName          AS STRING)    AS network_login_name,
+  CAST(jobTitle                  AS STRING)    AS job_title,
+  CAST(employeeNumber            AS STRING)    AS employee_number,
+  CAST(telephoneNumber           AS STRING)    AS telephone_number,
+  CAST(mobileNumber              AS STRING)    AS mobile_number,
+  CAST(privateMobileNumber       AS STRING)    AS private_mobile_number,
+  CAST(departmentWhenPlainText   AS STRING)    AS department_when_plain_text,
+  CAST(status                    AS STRING)    AS status,
+  CAST(isManager                 AS BOOL)      AS is_manager,
+  CAST(branchId                  AS STRING)    AS branch_id,
+  CAST(budgetHolderId            AS STRING)    AS budget_holder_id,
+  CAST(departmentId              AS STRING)    AS department_id,
+  CAST(locationId                AS STRING)    AS location_id,
+  CAST(managerId                 AS STRING)    AS manager_id,
+  CAST(extraAId                  AS STRING)    AS extra_a_id,
+  CAST(extraBId                  AS STRING)    AS extra_b_id,
+  CAST(dateOfHire                AS DATE)      AS date_of_hire,
+  CAST(contractStartDate         AS DATE)      AS contract_start_date,
+  CAST(contractEndDate           AS DATE)      AS contract_end_date,
+  CAST(endOfProbationaryPeriod   AS DATE)      AS end_of_probationary_period,
+  CAST(terminationOfEmployment   AS DATE)      AS termination_of_employment,
+  CAST(creationDate              AS TIMESTAMP) AS creation_date,
+  CAST(modificationDate          AS TIMESTAMP) AS modification_date,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_persons")}

@@ -1,9 +1,8 @@
 config {
-  type: "incremental",
+  type: "table",
   schema: "day",
   name: "tb_day_trs_tpd001_incidents",
   description: "Camada Day: dados tipados e enriquecidos com metadados de controle",
-  uniqueKey: ["id"],
   bigquery: {
     partitionBy: "creationDate",
   },

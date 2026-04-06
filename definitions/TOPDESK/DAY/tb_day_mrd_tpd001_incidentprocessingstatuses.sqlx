@@ -1,0 +1,19 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_incidentprocessingstatuses",
+  tags: ["topdesk"],
+  description: "Lookup de status de processamento de incidents"
+}
+
+SELECT
+  CAST(id      AS STRING) AS id,
+  CAST(name    AS STRING) AS name,
+  CAST('order'   AS INT64)  AS order_incid_pro_statues,
+  CAST(archive AS BOOL)   AS archive,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_incidentprocessingstatuses")}
