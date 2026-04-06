@@ -4,10 +4,7 @@ config {
   name: "tb_day_trs_tpd001_problems",
   tags: ["topdesk"],
   description: "Problems do TOPdesk com cast de tipos",
-  bigquery: {
-    partitionBy: "DATE(registration_date)",
-    clusterBy: ["status"]
-  }
+
 }
 
 SELECT

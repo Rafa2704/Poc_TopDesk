@@ -5,7 +5,7 @@ config {
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   uniqueKey: ["id"],
   bigquery: {
-    partitionBy: "creationDate",
+    partitionBy: "DATE(creationDate)",
   },
   tags: ["topdesk"],
 }
@@ -85,6 +85,7 @@ SELECT
 --   `typeId`,
 --   `urgencyId`
 
-FROM dev-autopass-bi-001.his.tb_his_trs_tpd001_incidents
---${ref("tb_day_trs_tpd001_incidents")}
+FROM 
+--dev-autopass-bi-001.his.tb_his_trs_tpd001_incidents
+${ref("tb_day_trs_tpd001_incidents")}
 
