@@ -85,9 +85,9 @@ SELECT
         completed,	
         completionDate,	
         costs,
-
+        creationDate,
         
-        DATE(SAFE_CAST(`creationDate` AS TIMESTAMP), 'America/Sao_Paulo') AS creationDate,
+        DATE(SAFE_CAST(`creationDate` AS TIMESTAMP), 'America/Sao_Paulo') AS dt_creation,
         TIME(SAFE_CAST(`creationDate` AS TIMESTAMP), 'America/Sao_Paulo') AS creationTime,
         creatorId,
         deescalated,
