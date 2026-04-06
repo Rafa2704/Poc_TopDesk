@@ -23,4 +23,4 @@ SELECT
         name,
         serviceWindowId,
         status
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_branches
+FROM ${ref("tb_day_mrd_tpd001_branches")}

@@ -8,10 +8,11 @@ config {
 
 
 SELECT 
+        
         branchId,
         budgetHolderId,
         creationDate,
         id,
         modificationDate,
         name
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_operatorgroups
+FROM  ${ref("tb_day_mrd_tpd001_operatorgroups")}

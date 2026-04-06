@@ -38,4 +38,4 @@ SELECT
         surName,
         telephoneNumber,
         terminationOfEmployment
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_persons
+FROM ${ref("tb_day_mrd_tpd001_persons")}

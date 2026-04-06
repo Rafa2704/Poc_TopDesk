@@ -11,6 +11,6 @@ SELECT
         status ,
         id ,
         name ,
-        `order`,
+        order_subcategories,
         mainCategoryId
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_subcategories
+FROM ${ref("tb_day_mrd_tpd001_subcategories")}
