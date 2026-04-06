@@ -11,78 +11,79 @@ config {
 }
 --teste
 SELECT
-  `archivingReasonId`,
-  `branchId`,
-  `budgetHolderId`,
+*
+--   `archivingReasonId`,
+--   `branchId`,
+--   `budgetHolderId`,
 
-  SAFE_CAST(`callDate` AS TIMESTAMP) AS callDate,
-  `categoryId`,
-  `closed`,
-  `closureCodeId`,
-  SAFE_CAST(`closureDate` AS TIMESTAMP) AS closureDate,
-  `completed`,
-  SAFE_CAST(`completionDate` AS TIMESTAMP) AS completionDate,
+--   SAFE_CAST(`callDate` AS TIMESTAMP) AS callDate,
+--   `categoryId`,
+--   `closed`,
+--   `closureCodeId`,
+--   SAFE_CAST(`closureDate` AS TIMESTAMP) AS closureDate,
+--   `completed`,
+--   SAFE_CAST(`completionDate` AS TIMESTAMP) AS completionDate,
 
-  SAFE_CAST(`costs` AS FLOAT64) AS costs,
-   creationDate,
-  `creatorId`,
-  `deescalated`,
-  `departmentId`,
-  `durationId`,
-  `entryTypeId`,
-  `escalated`,
-  `escalationReasonId`,
+--   SAFE_CAST(`costs` AS FLOAT64) AS costs,
+--    creationDate,
+--   `creatorId`,
+--   `deescalated`,
+--   `departmentId`,
+--   `durationId`,
+--   `entryTypeId`,
+--   `escalated`,
+--   `escalationReasonId`,
 
-  SAFE_CAST(`expectedTimeSpent_inSeconds` AS INT64) AS expectedTimeSpent_inSeconds,
-  SAFE_CAST(`feedbackRating` AS FLOAT64) AS feedbackRating,
+--   SAFE_CAST(`expectedTimeSpent_inSeconds` AS INT64) AS expectedTimeSpent_inSeconds,
+--   SAFE_CAST(`feedbackRating` AS FLOAT64) AS feedbackRating,
 
-  `id`,
-  `impactId`,
+--   `id`,
+--   `impactId`,
 
-  SAFE_CAST(`inProgressDuration_inSeconds` AS INT64) AS inProgressDuration_inSeconds,
+--   SAFE_CAST(`inProgressDuration_inSeconds` AS INT64) AS inProgressDuration_inSeconds,
 
-  `incidentNumber`,
-  SAFE_CAST(`itemCosts` AS FLOAT64) AS itemCosts,
+--   `incidentNumber`,
+--   SAFE_CAST(`itemCosts` AS FLOAT64) AS itemCosts,
 
-  `linkedBranchId`,
-  `linkedBranchName`,
-  `linkedLocationId`,
-  `majorIncident`,
-  `majorIncidentId`,
+--   `linkedBranchId`,
+--   `linkedBranchName`,
+--   `linkedLocationId`,
+--   `majorIncident`,
+--   `majorIncidentId`,
 
-  SAFE_CAST(`modificationDate` AS TIMESTAMP) AS modificationDate,
+--   SAFE_CAST(`modificationDate` AS TIMESTAMP) AS modificationDate,
 
-  `modifierId`,
-  SAFE_CAST(`objectCosts` AS FLOAT64) AS objectCosts,
+--   `modifierId`,
+--   SAFE_CAST(`objectCosts` AS FLOAT64) AS objectCosts,
 
-  `onHold`,
-  SAFE_CAST(`onHoldDate` AS TIMESTAMP) AS onHoldDate,
+--   `onHold`,
+--   SAFE_CAST(`onHoldDate` AS TIMESTAMP) AS onHoldDate,
 
-  `operatorGroupId`,
-  `operatorId`,
-  `priorityId`,
-  `processingStatusId`,
-  `reporterId`,
-  `responded`,
+--   `operatorGroupId`,
+--   `operatorId`,
+--   `priorityId`,
+--   `processingStatusId`,
+--   `reporterId`,
+--   `responded`,
 
-  SAFE_CAST(`responseDate` AS TIMESTAMP) AS responseDate,
-  SAFE_CAST(`responseTargetDate` AS TIMESTAMP) AS responseTargetDate,
+--   SAFE_CAST(`responseDate` AS TIMESTAMP) AS responseDate,
+--   SAFE_CAST(`responseTargetDate` AS TIMESTAMP) AS responseTargetDate,
 
-  `serviceId`,
-  SAFE_CAST(`slaTargetDate` AS TIMESTAMP) AS slaTargetDate,
+--   `serviceId`,
+--   SAFE_CAST(`slaTargetDate` AS TIMESTAMP) AS slaTargetDate,
 
-  `slaUsed`,
-  `status`,
-  `subcategoryId`,
-  `supplierId`,
+--   `slaUsed`,
+--   `status`,
+--   `subcategoryId`,
+--   `supplierId`,
 
-  SAFE_CAST(`targetDate` AS TIMESTAMP) AS targetDate,
+--   SAFE_CAST(`targetDate` AS TIMESTAMP) AS targetDate,
 
-  SAFE_CAST(`totalCosts` AS FLOAT64) AS totalCosts,
-  SAFE_CAST(`totalDuration_inSeconds` AS INT64) AS totalDuration_inSeconds,
+--   SAFE_CAST(`totalCosts` AS FLOAT64) AS totalCosts,
+--   SAFE_CAST(`totalDuration_inSeconds` AS INT64) AS totalDuration_inSeconds,
 
-  `typeId`,
-  `urgencyId`
+--   `typeId`,
+--   `urgencyId`
 
 FROM dev-autopass-bi-001.his.tb_his_trs_tpd001_incidents
 --${ref("tb_day_trs_tpd001_incidents")}

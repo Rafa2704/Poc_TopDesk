@@ -5,7 +5,7 @@ config {
   tags: ["topdesk"],
   description: "Detalhes dos incidents do TOPdesk com cast de tipos",
   bigquery: {
-    partitionBy: "DATE(creation_date)"
+    partitionBy: "DATE(creationDate)"
   }
 }
 
