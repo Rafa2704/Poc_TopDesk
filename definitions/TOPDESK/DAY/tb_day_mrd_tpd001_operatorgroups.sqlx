@@ -9,10 +9,10 @@ config {
 SELECT
   CAST(id               AS STRING)    AS id,
   CAST(name             AS STRING)    AS name,
-  CAST(branchId         AS STRING)    AS branch_id,
-  CAST(budgetHolderId   AS STRING)    AS budget_holder_id,
-  CAST(creationDate     AS TIMESTAMP) AS creation_date,
-  CAST(modificationDate AS TIMESTAMP) AS modification_date,
+  CAST(branchId         AS STRING)    AS branchId,
+  CAST(budgetHolderId   AS STRING)    AS budgetHolderId,
+  CAST(creationDate     AS TIMESTAMP) AS creationDate,
+  CAST(modificationDate AS TIMESTAMP) AS modificationDate,
     -- Campos de controle
   "TPD" AS origem,
   CURRENT_TIMESTAMP() AS dt_processamento,

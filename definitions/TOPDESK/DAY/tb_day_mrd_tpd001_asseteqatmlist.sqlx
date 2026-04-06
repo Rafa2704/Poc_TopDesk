@@ -8,13 +8,13 @@ config {
 
 SELECT
   CAST(Id               AS STRING)    AS id,
-  CAST(ObjectId         AS STRING)    AS object_id,
-  CAST(TemplateId       AS STRING)    AS template_id,
+  CAST(ObjectId         AS STRING)    AS ObjectId,
+  CAST(TemplateId       AS STRING)    AS TemplateId,
   CAST(Status           AS STRING)    AS status,
   CAST(Archived         AS STRING)      AS archived,
-  CAST(ArchivedReasonId AS STRING)    AS archived_reason_id,
-  CAST(CreationDate     AS TIMESTAMP) AS creation_date,
-  CAST(ModificationDate AS TIMESTAMP) AS modification_date,
+  CAST(ArchivedReasonId AS STRING)    AS ArchivedReasonId,
+  CAST(CreationDate     AS TIMESTAMP) AS CreationDate,
+  CAST(ModificationDate AS TIMESTAMP) AS ModificationDate,
     -- Campos de controle
   "TPD" AS origem,
   CURRENT_TIMESTAMP() AS dt_processamento,

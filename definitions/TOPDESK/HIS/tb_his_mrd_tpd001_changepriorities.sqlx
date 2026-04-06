@@ -10,5 +10,5 @@ config {
 SELECT 
         id,
         name,
-        `order`
-FROM dev-autopass-bi-001.day.tb_day_mrd_tpd001_changepriorities
+        order_changes_priorities
+FROM ${ref("tb_day_mrd_tpd001_changepriorities")}
