@@ -10,7 +10,7 @@ SELECT
   CAST(id             AS STRING) AS id,
   CAST(name           AS STRING) AS name,
   CAST(status         AS STRING) AS status,
-  CAST('order'          AS INT64)  AS order_subcategories,
+  CAST(`order`          AS STRING)  AS order_subcategories,
   CAST(mainCategoryId AS STRING) AS main_category_id,
     -- Campos de controle
   "TPD" AS origem,

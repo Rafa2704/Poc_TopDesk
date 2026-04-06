@@ -9,7 +9,7 @@ config {
 SELECT
   CAST(id    AS STRING) AS id,
   CAST(name  AS STRING) AS name,
-  CAST('order' AS INT64)  AS order_changes_types,
+  CAST(`order` AS STRING)  AS order_changes_types,
     -- Campos de controle
   "TPD" AS origem,
   CURRENT_TIMESTAMP() AS dt_processamento,

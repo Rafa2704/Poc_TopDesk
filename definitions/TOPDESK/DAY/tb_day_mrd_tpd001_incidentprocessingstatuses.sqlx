@@ -9,7 +9,7 @@ config {
 SELECT
   CAST(id      AS STRING) AS id,
   CAST(name    AS STRING) AS name,
-  CAST('order'   AS INT64)  AS order_incid_pro_statues,
+  CAST(`order`   AS STRING)  AS order_incid_pro_statues,
   CAST(archive AS BOOL)   AS archive,
     -- Campos de controle
   "TPD" AS origem,
