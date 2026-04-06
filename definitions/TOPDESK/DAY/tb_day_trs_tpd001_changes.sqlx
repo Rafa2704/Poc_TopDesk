@@ -1,0 +1,89 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_changes",
+  tags: ["topdesk"],
+  description: "Changes do TOPdesk com cast de tipos",
+  bigquery: {
+    partitionBy: "DATE(call_date)",
+    clusterBy: ["status", "change_type"]
+  }
+}
+
+SELECT
+  CAST(id                                    AS STRING)    AS id,
+  CAST(changeNumber                          AS STRING)    AS change_number,
+  CAST(changeType                            AS STRING)    AS change_type,
+  CAST(status                                AS STRING)    AS status,
+  CAST(currentPhase                          AS STRING)    AS current_phase,
+
+  -- Datas
+  CAST(callDate                              AS TIMESTAMP) AS call_date,
+  CAST(creationDate                          AS TIMESTAMP) AS creation_date,
+  CAST(modificationDate                      AS TIMESTAMP) AS modification_date,
+  CAST(authorizationDate                     AS TIMESTAMP) AS authorization_date,
+  CAST(cancellationDate                      AS TIMESTAMP) AS cancellation_date,
+  CAST(closureDate                           AS TIMESTAMP) AS closure_date,
+  CAST(extensiveChangeImplementationDate     AS TIMESTAMP) AS extensive_change_implementation_date,
+  CAST(plannedAuthorizationDate              AS TIMESTAMP) AS planned_authorization_date,
+  CAST(plannedFinalDate                      AS TIMESTAMP) AS planned_final_date,
+  CAST(plannedImplementationDate             AS TIMESTAMP) AS planned_implementation_date,
+  CAST(plannedStartDate                      AS TIMESTAMP) AS planned_start_date,
+  CAST(realizedDate                          AS TIMESTAMP) AS realized_date,
+  CAST(rejectionDate                         AS TIMESTAMP) AS rejection_date,
+  CAST(simpleChangeImplementationDate        AS TIMESTAMP) AS simple_change_implementation_date,
+  CAST(startDate                             AS TIMESTAMP) AS start_date,
+  CAST(submissionDate                        AS TIMESTAMP) AS submission_date,
+
+  -- Flags booleanas
+  CAST(closed                                AS BOOL)      AS closed,
+  CAST(emergencyChange                       AS BOOL)      AS emergency_change,
+  CAST(evalChangeCanBeAuthorized             AS BOOL)      AS eval_change_can_be_authorized,
+  CAST(progressChangeCanBeAuthorized         AS BOOL)      AS progress_change_can_be_authorized,
+  CAST(rejected                              AS BOOL)      AS rejected,
+  CAST(requestChangeCanBeAuthorized          AS BOOL)      AS request_change_can_be_authorized,
+  CAST(started                               AS BOOL)      AS started,
+  CAST(withEvaluation                        AS BOOL)      AS with_evaluation,
+
+  -- FKs
+  CAST(approveImplManagerGroup               AS STRING)    AS approve_impl_manager_group,
+  CAST(approveImplManagerId                  AS STRING)    AS approve_impl_manager_id,
+  CAST(authorizingOperatorId                 AS STRING)    AS authorizing_operator_id,
+  CAST(branchId                              AS STRING)    AS branch_id,
+  CAST(budgetHolderId                        AS STRING)    AS budget_holder_id,
+  CAST(callerBranchId                        AS STRING)    AS caller_branch_id,
+  CAST(categoryId                            AS STRING)    AS category_id,
+  CAST(coordinatorId                         AS STRING)    AS coordinator_id,
+  CAST(creatorId                             AS STRING)    AS creator_id,
+  CAST(departmentId                          AS STRING)    AS department_id,
+  CAST(impactId                              AS STRING)    AS impact_id,
+  CAST(modifierId                            AS STRING)    AS modifier_id,
+  CAST(operatorGroupId                       AS STRING)    AS operator_group_id,
+  CAST(operatorId                            AS STRING)    AS operator_id,
+  CAST(originalIncidentId                    AS STRING)    AS original_incident_id,
+  CAST(preliminaryRFCManagerGroup            AS STRING)    AS preliminary_rfc_manager_group,
+  CAST(preliminaryRFCManagerId               AS STRING)    AS preliminary_rfc_manager_id,
+  CAST(priorityId                            AS STRING)    AS priority_id,
+  CAST(processingStatusId                    AS STRING)    AS processing_status_id,
+  CAST(requesterId                           AS STRING)    AS requester_id,
+  CAST(subcategoryId                         AS STRING)    AS subcategory_id,
+  CAST(supplierId                            AS STRING)    AS supplier_id,
+  CAST(templateId                            AS STRING)    AS template_id,
+  CAST(typeId                                AS STRING)    AS type_id,
+  CAST(versionId                             AS STRING)    AS version_id,
+
+  -- Custos e durações
+  CAST(costs                                 AS FLOAT64)   AS costs,
+  CAST(currentPlannedCosts                   AS FLOAT64)   AS current_planned_costs,
+  CAST(estimatedCosts                        AS FLOAT64)   AS estimated_costs,
+  CAST(originalPlannedCosts                  AS FLOAT64)   AS original_planned_costs,
+  CAST(currentPlannedTimeSpent_inSeconds     AS INT64)     AS current_planned_time_spent_seconds,
+  CAST(estimatedTimeSpent_inSeconds          AS INT64)     AS estimated_time_spent_seconds,
+  CAST(originalPlannedTimeSpent_inSeconds    AS INT64)     AS original_planned_time_spent_seconds,
+  CAST(timeTaken_inSeconds                   AS INT64)     AS time_taken_seconds,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_changes")}

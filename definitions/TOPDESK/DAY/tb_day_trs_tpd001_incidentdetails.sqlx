@@ -1,0 +1,30 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_incidentdetails",
+  tags: ["topdesk"],
+  description: "Detalhes dos incidents do TOPdesk com cast de tipos",
+  bigquery: {
+    partitionBy: "DATE(creation_date)"
+  }
+}
+
+SELECT
+  CAST(id             AS STRING)    AS id,
+  CAST(incidentNumber AS STRING)    AS incident_number,
+  CAST(creationDate   AS TIMESTAMP) AS creation_date,
+  CAST(briefDescription AS STRING)  AS brief_description,
+  CAST(concerning     AS STRING)    AS concerning,
+  CAST(email          AS STRING)    AS email,
+  CAST(externalNumber AS STRING)    AS external_number,
+  CAST(assetId        AS STRING)    AS asset_id,
+  CAST(objectId       AS STRING)    AS object_id,
+  CAST(reporterName   AS STRING)    AS reporter_name,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_incidentdetails")}
+
+

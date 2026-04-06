@@ -1,0 +1,22 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_operatorgroups",
+  tags: ["topdesk"],
+  description: "Lookup de grupos de operadores do TOPdesk"
+}
+
+SELECT
+  CAST(id               AS STRING)    AS id,
+  CAST(name             AS STRING)    AS name,
+  CAST(branchId         AS STRING)    AS branch_id,
+  CAST(budgetHolderId   AS STRING)    AS budget_holder_id,
+  CAST(creationDate     AS TIMESTAMP) AS creation_date,
+  CAST(modificationDate AS TIMESTAMP) AS modification_date,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_operatorgroups")}
+

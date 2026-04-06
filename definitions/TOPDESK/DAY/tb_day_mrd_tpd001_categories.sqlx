@@ -1,0 +1,21 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_categories",
+  tags: ["topdesk"],
+  description: "Lookup de categorias do TOPdesk"
+}
+
+SELECT
+  CAST(id     AS STRING) AS id,
+  CAST(name   AS STRING) AS name,
+  CAST(status AS STRING) AS status,
+  CAST('order'  AS INT64)  AS order_categoria,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+
+
+FROM  ${ref("tb_ext_mrd_tpd001_categories")}
