@@ -1,8 +1,9 @@
 config {
-  type: "table",
+  type: "incremental",
   schema: "his",
   name: "tb_his_trs_tpd001_changes",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
   bigquery: {
     partitionBy: "DATE(creationDate)",
   },
@@ -96,4 +97,4 @@ CAST(timeTaken_inSeconds AS FLOAT64) AS timeTaken_inSeconds,
 typeId,
 versionId,
 withEvaluation
-FROM dev-autopass-bi-001.day.tb_day_trs_tpd001_changes
+FROM ${ref("tb_day_trs_tpd001_changes")}
