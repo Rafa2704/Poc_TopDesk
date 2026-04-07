@@ -1,0 +1,24 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tpd001_assetroomassignments",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  tags: ["topdesk"],
+}
+
+
+
+SELECT
+assetId,
+    effectiveBranchId,
+    id,
+    inheritanceParentId,
+    roomId,
+    typeId,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_day_mrd_tpd001_assetroomassignments")}

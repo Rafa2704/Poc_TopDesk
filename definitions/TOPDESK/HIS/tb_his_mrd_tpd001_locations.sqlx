@@ -1,0 +1,34 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tpd001_locations",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  tags: ["topdesk"],
+}
+
+
+
+SELECT 
+    branchId,
+    budgetHolderId,
+    capacity,
+    creationDate,
+    functionalUseTypeId,
+    id,
+    issueable,
+    modificationDate,
+    name,
+    reservable,
+    reservableInSSP,
+    roomNumber,
+    roomTypeId,
+    specification,
+    status,
+    statusId,
+        -- Campos de controle
+    origem,
+    dt_processamento,
+    usuario_processamento
+
+FROM ${ref("tb_day_mrd_tpd001_locations")}
