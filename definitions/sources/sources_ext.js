@@ -17,7 +17,9 @@ const tables = [
   "tb_ext_trs_tpd001_changes",
   "tb_ext_trs_tpd001_incidentdetails",
   "tb_ext_trs_tpd001_incidents",
-  "tb_ext_trs_tpd001_problems"
+  "tb_ext_trs_tpd001_problems",
+  "tb_ext_mrd_tpd001_locations",
+  "tb_ext_mrd_tpd001_assetroomassignments"
 ];
 
 tables.forEach(table => {
