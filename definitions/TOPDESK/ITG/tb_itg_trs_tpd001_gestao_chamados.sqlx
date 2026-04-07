@@ -1,0 +1,103 @@
+config {
+  type: "table",
+  schema: "itg",
+  name: "tb_itg_trs_tpd001_gestao_chamados",
+  tags: ["topdesk"],
+  description: "Lista de assets ATM do TOPdesk",
+  bigquery: {
+    partitionBy: "DATE(data_abertura)",
+  },
+}
+
+
+
+SELECT
+  "Mudança"                                              AS tipo,
+  CAST(ch.creationDate AS TIMESTAMP)                     AS data_abertura,
+  CAST(ch.simpleChangeImplementationDate AS TIMESTAMP)   AS data_fechamento,
+  ch.changeNumber                                        AS chamado,
+  ct.name                                                AS categoria,
+  sbc.name                                               AS subcategoria,
+  CONCAT(ct.name, '>', sbc.name)                         AS categoria_total,
+  chd.briefDescription                                   AS descricao,
+  CASE
+    WHEN cps.name IN ('Em Aberto', 'Aguardando Implementação', 'Aguardando aprovação', 'Aguardando desenvolvimento') THEN 'Aberto'
+    WHEN cps.name IN ('Em atendimento', 'Aprovada')                                                                  THEN 'Em Andamento'
+    WHEN cps.name IN ('Implementada', 'Resolvido', 'Fechado')                                                        THEN 'Fechado'
+    WHEN cps.name IN ('Cancelado', 'Cancelada', 'Reprovada (Gestão de Mudanças)')                                    THEN 'Cancelado/Reprovado'
+    ELSE cps.name
+  END                                                    AS status,
+  chd.requesterName                                      AS solicitante,
+  og.name                                                AS grupo_operador,
+  op.name                                                AS operador
+FROM ${ref("tb_his_trs_tpd001_changes")} ch
+--prd-autopass-ed-001.his.tb_his_trs_tpd001_changes ch
+LEFT JOIN ${ref("tb_his_trs_tpd001_changedetails")} chd
+--prd-autopass-ed-001.his.tb_his_trs_tpd001_changedetails chd
+  ON ch.id = chd.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_categories")} ct
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_categories ct
+  ON ch.categoryId = ct.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_subcategories")} sbc
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_subcategories sbc
+  ON ch.subcategoryId = sbc.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_changeprocessingstatuses")} cps
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_changeprocessingstatuses cps
+  ON ch.processingStatusId = cps.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_operatorgroups")} og
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_operatorgroups og
+  ON og.id = ch.operatorGroupId
+LEFT JOIN ${ref("tb_his_mrd_tpd001_operators")} op
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_operators op
+  ON op.id = ch.operatorid
+WHERE ch.creationDate >= '2025-01-01'
+  -- AND (
+  --   ct.name LIKE '%TI > Analytics%'
+  --   OR ct.name LIKE '%TI > Dados%'
+  -- )
+
+UNION ALL
+
+SELECT
+  "Incidente"                                            AS tipo,
+  CAST(inc.creationDate AS TIMESTAMP)                    AS data_abertura,
+  CAST(inc.closureDate AS TIMESTAMP)                     AS data_fechamento,
+  inc.incidentNumber                                     AS chamado,
+  ct.name                                                AS categoria,
+  sbc.name                                               AS subcategoria,
+  CONCAT(ct.name, '>', sbc.name)                         AS categoria_total,
+  incd.briefDescription                                  AS descricao,
+  CASE
+    WHEN cps.name IN ('Em Aberto', 'Aguardando Implementação', 'Aguardando aprovação', 'Aguardando desenvolvimento') THEN 'Aberto'
+    WHEN cps.name IN ('Em atendimento', 'Aprovada')                                                                  THEN 'Em Andamento'
+    WHEN cps.name IN ('Implementada', 'Resolvido', 'Fechado')                                                        THEN 'Fechado'
+    WHEN cps.name IN ('Cancelado', 'Cancelada', 'Reprovada (Gestão de Mudanças)')                                    THEN 'Cancelado/Reprovado'
+    ELSE cps.name
+  END                                                    AS status,
+  incd.reporterName                                      AS solicitante,
+  og.name                                                AS grupo_operador,
+  op.name                                                AS operador
+FROM ${ref("tb_his_trs_tpd001_incidents")} inc
+--prd-autopass-ed-001.his.tb_his_trs_tpd001_incidents inc
+LEFT JOIN prd-autopass-ed-001.his.tb_his_trs_tpd001_incidentdetails incd
+  ON inc.id = incd.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_categories")} ct
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_categories ct
+  ON inc.categoryId = ct.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_subcategories")} sbc
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_subcategories sbc
+  ON inc.subcategoryId = sbc.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_incidentprocessingstatuses")} cps
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_incidentprocessingstatuses cps
+  ON inc.processingStatusId = cps.id
+LEFT JOIN ${ref("tb_his_mrd_tpd001_operatorgroups")} og
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_operatorgroups og
+  ON og.id = inc.operatorGroupId
+LEFT JOIN ${ref("tb_his_mrd_tpd001_operators")} op
+--prd-autopass-ed-001.his.tb_his_mrd_tpd001_operators op
+  ON op.id = inc.operatorid
+WHERE inc.creationDate >= '2025-01-01'
+  -- AND (
+  --   ct.name LIKE '%TI > Analytics%'
+  --   OR ct.name LIKE '%TI > Dados%'
+  -- )
