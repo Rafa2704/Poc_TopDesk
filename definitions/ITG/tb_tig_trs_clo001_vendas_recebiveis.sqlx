@@ -4,7 +4,7 @@ config {
   name: "tb_tig_trs_clo001_vendas_recebiveis",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   bigquery: {
-    partitionBy: "DATE(Ref_Mes_Ano)",
+    partitionBy: "Ref_Mes_Ano",
   },
   tags: ["itg"],
 }
@@ -131,4 +131,3 @@ SELECT
 FROM Dados_Originais_Limpos
 
 GROUP BY 1, 2, 3, 4, 5, 6, 7
-ORDER BY 1, 2, 3

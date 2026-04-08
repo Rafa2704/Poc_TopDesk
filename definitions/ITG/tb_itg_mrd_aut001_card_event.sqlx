@@ -2,7 +2,6 @@ config {
     type: "table", 
     schema: "itg",
     description: "Tabela itg de vendas por cartão ",
-    tags: ["itg"],
     bigquery: {
         partitionBy: "dt_first_event",
     }
