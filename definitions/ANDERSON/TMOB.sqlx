@@ -1,0 +1,54 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela do anderson ",
+    
+    bigquery: {
+        partitionBy: "transaction_date",
+    }
+}
+
+
+
+
+SELECT
+    'RECHARGE_ORBI'                             AS origem,
+    sm.model                                    AS stp_desc,
+    stt.stt_code                                AS samttp_id,
+    stt.stt_description                         AS samttp_desc,
+    CASE
+        WHEN CAST(sat.sat_code AS INT64) IN (0,1,2,4) THEN 'D'
+        WHEN CAST(sat.sat_code AS INT64) = 3           THEN 'C'
+        ELSE 'N/A'
+    END                                         AS samttp_dc,
+    sat.sat_description                         AS samttp_comment,
+    CAST(smf.sstf_value    AS NUMERIC) / 100    AS csad_amount,
+    smf.sstf_transactioncounter                 AS csad_ctc,
+    CAST(smf.sstf_transactioncounter AS INT64) - 1 AS csad_ctc_old,
+    smf.sstf_token                              AS csad_crypt_rec,
+    CAST(smf.sstf_balance  AS NUMERIC) / 100    AS csad_balance,
+    (CAST(smf.sstf_balance AS NUMERIC) + CAST(smf.sstf_value AS NUMERIC)) / 100 AS csad_balance_old,
+    smf.sstf_samissuer                          AS iss_id,
+    smf.sstf_samtype                            AS stp_id,
+    smf.sstf_samsequence                        AS sam_snr,
+    smf.sstf_samcsn                             AS sam_intsnr,
+    smf.sstf_samserie                           AS crs_id,
+    smf.sstf_mediaproduct                       AS media_product,
+    DATETIME(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S%Ez', smf.sstf_date), 'America/Sao_Paulo') AS transaction_date,
+    COALESCE(mmpr.vl_media_product_recharge, ct.vl_transaction) /100  AS transaction_value,
+    case
+   when mmpr.fl_active = 1 then 'A'
+   when ct.fl_active = 1 and ct.fl_process = 1 and ct.fl_error = 0 then 'A'
+   else 'I'
+  end as transaction_status
+FROM `dev-autopass-bi-001.temp.sam_samtransactionfull` smf
+INNER JOIN `dev-autopass-bi-001.temp.SamMedia`            sm  ON smf.sstf_samcsn = sm.csn
+INNER JOIN `dev-autopass-bi-001.temp.sam_typetransaction` stt ON smf.stt_code    = stt.stt_code
+INNER JOIN `dev-autopass-bi-001.temp.sam_actiontype`      sat ON smf.sat_code    = sat.sat_code
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_med_media_product_recharge` mmpr on mmpr.cd_recharge_token = smf.sstf_token  --and smf.sstf_samcsn = mmpr."samCsn"
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_med_media` mm on smf.sstf_mediacsn = mm.nr_csn
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_med_media_product` mmp on mmp.cd_med_media = mm.cd_med_media and smf.sstf_mediaproduct = mmp.cd_med_transit_product
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_med_media_transaction` mmt 
+on mmt.cd_med_media_product = mmp.cd_med_media_product and CAST(smf.sstf_mediacounter AS NUMERIC) + 1 = CAST(mmt.nr_tsn AS NUMERIC)
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_com_transaction` ct on mmt.cd_com_transaction_internal = ct.cd_com_transaction_internal
+ 
