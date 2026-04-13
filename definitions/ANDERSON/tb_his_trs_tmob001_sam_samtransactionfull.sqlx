@@ -6,7 +6,7 @@ config {
   bigquery: {
     partitionBy: "DATE(sstf_date)",
   },
-  tags: ["topdesk"],
+  tags: ["tmob"],
 }
 SELECT 
 sstf_id,
