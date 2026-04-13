@@ -2,7 +2,8 @@ config {
   type: "table",
   schema: "day",
   name: "tb_day_trs_tmob001_sam_samtransactionfull",
-  description: "Lista de assets ATM do TOPdesk"
+  description: "Lista de assets ATM do TOPdesk",
+  tags: ["tmob"],
 }
 
 
