@@ -27,7 +27,7 @@ SELECT
   t.bq_table,
   t.tipo  AS tipo_origem,
   t.sql,
-  l.dataflow_name,
+  t.dataflow,
   l.dataflow_workspace,
   l.dataset_name,
   l.dataset_workspace,
