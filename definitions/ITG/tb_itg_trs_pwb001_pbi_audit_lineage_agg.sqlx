@@ -1,0 +1,30 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+   
+}
+
+
+
+
+SELECT
+  t.bq_project,
+  t.bq_dataset,
+  t.bq_table,
+  t.tipo  AS tipo_origem,
+  t.sql,
+  l.dataflow_name,
+  l.dataflow_workspace,
+  l.dataset_name,
+  l.dataset_workspace,
+  l.report_name,
+  l.report_workspace,
+  t.extracted_at
+FROM ${ref("tb_his_trs_pwb001_pbi_audit_dataflows")} t
+-- prd-autopass-ed-001.tb_his_trs_pwb001_pbi_audit_dataflows  t
+LEFT JOIN ${ref("tb_his_trs_pwb001_pbi_audit_lineage")} l
+--prd-autopass-ed-001.his.tb_his_trs_pwb001_pbi_audit_lineage l
+
+  ON l.dataflow_name = t.dataflow
+WHERE TRUE 
