@@ -1,0 +1,90 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela do anderson ",
+    
+    bigquery: {
+        partitionBy: "CAC_TRANDATE",
+    }
+}
+
+
+pre_operations {
+  DECLARE DATA_MINIMA DEFAULT (
+  SELECT 
+ MIN(dt_credit_serie_account) AS DATA_MINIMA
+ FROM `prd-autopass-bi-001.his.tb_his_trs_top001_card_account` CAC
+INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_credit_serie_account` CSAM ON CSAM.cd_credit_serie = CAC.cd_credit_serie
+			AND CSAM.cd_credit_serie_account = CAC.cd_credit_serie_account
+WHERE TRUE 
+AND CAC.dt_transaction >= '2025-12-29'
+AND CSAM.cd_sam_transaction_type = '9'
+   
+  );
+
+}
+WITH CRIANDO_SAMTRANTYPES AS (
+  SELECT *
+  FROM UNNEST([
+    STRUCT('0' AS SAMTTP_ID, 'CREDIT_TRANSACTION' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('1' AS SAMTTP_ID, 'DEBIT_TRANSACTION' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('2' AS SAMTTP_ID, 'CANCEL_TRANSACTION' AS SAMTTP_DESC, 'I' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('3' AS SAMTTP_ID, 'MIGRATE_TRANSACTION' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('4' AS SAMTTP_ID, 'XCREDIT_TRANSACTION' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, 'EMISSÃO DE CRÉDITOS' AS SAMTTP_COMMONDESC, 'Emissão de créditos durante geração de dinheiro em SAM M0' AS SAMTTP_COMMENT),
+    STRUCT('5' AS SAMTTP_ID, 'XDEBIT_TRANSACTION' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('6' AS SAMTTP_ID, 'XCANCEL_TRANSACTION' AS SAMTTP_DESC, 'I' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('7' AS SAMTTP_ID, 'PURGE_TRANSACTION' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('8' AS SAMTTP_ID, 'LOAD_TRANSACTION' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, 'CRÉDITO DE TRANSFERÊNCIA' AS SAMTTP_COMMONDESC, 'Operação de crédito de dinheiro em um chip SAM ou cartão MIFARE oriunda de um chip SAM M0/M1' AS SAMTTP_COMMENT),
+    STRUCT('9' AS SAMTTP_ID, 'LDEBIT_TRANSACTION' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, 'DÉBITO PARA TRANSFERÊNCIA' AS SAMTTP_COMMONDESC, 'Operação de débito de dinheiro em um chip SAM para crédito em chip SAM ou cartão MIFARE' AS SAMTTP_COMMENT),
+    STRUCT('10' AS SAMTTP_ID, 'CDEBIT_TRANSACTION' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('11' AS SAMTTP_ID, 'CANCELAMENTO VENDA' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('12' AS SAMTTP_ID, 'RECARGA TANQUE CHEIO' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('14' AS SAMTTP_ID, 'ESTORNO DE VENDA' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('15' AS SAMTTP_ID, 'ESTORNO P/TRANSF.' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('16' AS SAMTTP_ID, 'TANQUE CHEIO' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('17' AS SAMTTP_ID, 'ESTORNO DE ULTIMA M2' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT),
+    STRUCT('20' AS SAMTTP_ID, 'QRCODECRED' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, 'CRÉDITO QRCODE' AS SAMTTP_COMMONDESC, 'Operação de crédito de dinheiro em um QRCode oriunda de um chip SAM M1' AS SAMTTP_COMMENT),
+    STRUCT('21' AS SAMTTP_ID, 'QRCODEREVALIDATE' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, 'REVALIDACAO QRCODE' AS SAMTTP_COMMONDESC, 'Operação de revalidação em um QRCode oriunda de um chip SAM M1' AS SAMTTP_COMMENT),
+    STRUCT('23' AS SAMTTP_ID, 'CREDABT' AS SAMTTP_DESC, 'C' AS SAMTTP_DC, 'CREDITO ABT' AS SAMTTP_COMMONDESC, 'Registro para justificativa de perda/não utilização de um criptograma gerado pelos chips SAM M1' AS SAMTTP_COMMENT),
+    STRUCT('98' AS SAMTTP_ID, 'ESTORNO ENTREG CRIPT' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, 'PERDA DE CRIPTOGRAMA' AS SAMTTP_COMMONDESC, 'Registro para justificativa de perda/não utilização de um criptograma gerado pelos chips SAM M1' AS SAMTTP_COMMENT),
+    STRUCT('99' AS SAMTTP_ID, 'ESTORNO_TRANSACTION' AS SAMTTP_DESC, 'D' AS SAMTTP_DC, CAST(NULL AS STRING) AS SAMTTP_COMMONDESC, CAST(NULL AS STRING) AS SAMTTP_COMMENT)
+  ])
+),
+SAMTRANTYPES as (
+SELECT * FROM CRIANDO_SAMTRANTYPES
+)
+
+SELECT 'CREDENDIADAS_LEGADO'                AS ORIGEM,
+	   ST.ds_sam_type                       AS STP_DESC,
+	   STT.SAMTTP_ID,
+	   STT.SAMTTP_DESC,
+	   STT.SAMTTP_DC,
+	   STT.SAMTTP_COMMENT,
+	   CSAM.vl_amount    /100.0             AS CSAD_AMOUNT,
+	   CSAM.nr_ctc                          as CSAD_CTC,
+	   CSAM.nr_ctc_old                      AS CSAD_CTC_OLD,
+	   CSAM.ds_recharge_crypt               AS CSAD_CRYPT_REC,
+	   CSAM.vl_balance /100.0               AS CSAD_BALANCE,
+	   CSAM.vl_balance_old /100.0           AS CSAD_BALANCE_OLD,
+	   S.cd_issuer 			                AS ISS_ID,
+	   S.cd_sam_type 		                AS STP_ID,
+	   S.cd_sam 				            AS SAM_SNR,
+	   S.nr_sam_serial 	                    AS SAM_INTSNR,
+	   CAC.cd_credit_serie                  AS CRS_ID,
+	   CAC.cd_application                   AS APP_ID,
+	   CAC.dt_transaction                   AS CAC_TRANDATE,
+	   CAC.vl_amount    /100.0              AS CAC_TRANVALUE,
+	   CAC.cd_status                        AS CAC_STATUS
+  FROM `prd-autopass-bi-001.his.tb_his_trs_top001_card_account` CAC
+  INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_credit_serie_account` CSAM ON CSAM.cd_credit_serie = CAC.cd_credit_serie
+											AND CSAM.cd_credit_serie_account = CAC.cd_credit_serie_account
+  INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_sam` S 	ON S.cd_issuer = CSAM.cd_card_key_1
+											AND S.cd_sam_type = CSAM.cd_card_key_2
+											AND S.cd_sam = CSAM.cd_card_key_3
+  INNER JOIN SAMTRANTYPES STT 				ON STT.SAMTTP_ID = CSAM.cd_sam_transaction_type
+  INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_sam_type` ST ON ST.cd_sam_type = CSAM.cd_card_key_2
+
+ WHERE TRUE 
+    AND CAC.dt_transaction >= '2025-12-29'
+    AND dt_credit_serie_account >= DATA_MINIMA
+    AND CSAM.cd_sam_transaction_type = '9'
