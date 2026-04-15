@@ -20,7 +20,10 @@ const tables = [
   "tb_ext_trs_tpd001_problems",
   "tb_ext_mrd_tpd001_locations",
   "tb_ext_mrd_tpd001_assetroomassignments",
-  "tb_ext_trs_mdb001_debit_transaction_m1_98"
+  "tb_ext_trs_mdb001_debit_transaction_m1_98",
+  "tb_ext_mrd_tpd001_asseteqatmdetaillist",
+  "tb_ext_mrd_tpd001_asseteqposqrcodedetaillist"
+
 ];
 
 tables.forEach(table => {

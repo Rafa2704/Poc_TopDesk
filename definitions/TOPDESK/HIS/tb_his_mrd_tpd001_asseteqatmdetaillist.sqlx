@@ -1,0 +1,15 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tpd001_asseteqatmdetaillist",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(creationDate)",
+  },
+  tags: ["topdesk"],
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_mrd_tpd001_asseteqatmdetaillist")}

@@ -8,7 +8,7 @@ config {
 
 SELECT 
     _id                                                         AS id,
-    PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', date)              AS data,
+    TIMESTAMP(PARSE_DATETIME('%Y-%m-%d %H:%M:%E6S', date), 'America/Sao_Paulo') AS data,
     ip,
     port,
     SAFE_CAST(amount AS FLOAT64)                                AS amount,
