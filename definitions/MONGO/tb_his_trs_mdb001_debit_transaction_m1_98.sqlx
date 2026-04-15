@@ -1,0 +1,15 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_mdb001_debit_transaction_m1_98",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(data)",
+  },
+  tags: ["mongo"],
+}
+
+SELECT 
+*
+ FROM ${ref("tb_day_trs_mdb001_debit_transaction_m1_98")}

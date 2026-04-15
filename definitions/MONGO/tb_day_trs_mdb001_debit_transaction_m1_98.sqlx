@@ -1,0 +1,53 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_mdb001_debit_transaction_m1_98",
+  tags: ["mongo"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT 
+    _id                                                         AS id,
+    TIMESTAMP(PARSE_DATETIME('%Y-%m-%d %H:%M:%E6S', date), 'America/Sao_Paulo') AS data,
+    ip,
+    port,
+    SAFE_CAST(amount AS FLOAT64)                                AS amount,
+    cryptogram,
+    signature,
+    debitType,
+    csn,
+    issuer,
+    df,
+    snr,
+    type,
+    versionRelease,
+    serie,
+    samGroup,
+
+    -- previousPurse
+    JSON_VALUE(previousPurse, '$.balance')                      AS previousPurse_balance,
+    JSON_VALUE(previousPurse, '$.ctc')                          AS previousPurse_ctc,
+    JSON_VALUE(previousPurse, '$.ltc')                          AS previousPurse_ltc,
+    JSON_VALUE(previousPurse, '$.tt')                           AS previousPurse_tt,
+
+    -- currentPurse
+    JSON_VALUE(currentPurse, '$.balance')                       AS currentPurse_balance,
+    JSON_VALUE(currentPurse, '$.ctc')                           AS currentPurse_ctc,
+    JSON_VALUE(currentPurse, '$.ltc')                           AS currentPurse_ltc,
+    JSON_VALUE(currentPurse, '$.tt')                            AS currentPurse_tt,
+
+    -- request
+    JSON_VALUE(request, '$.debitType')                          AS request_debitType,
+    JSON_VALUE(request, '$.amount')                             AS request_amount,
+    JSON_VALUE(request, '$.counter')                            AS request_counter,
+    JSON_VALUE(request, '$.appCode')                            AS request_appCode,
+    JSON_VALUE(request, '$.csn')                                AS request_csn,
+    JSON_VALUE(request, '$.tagType')                            AS request_tagType,
+    JSON_VALUE(request, '$.transactionType')                    AS request_transactionType,
+
+        -- Campos de controle
+  "mdb001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_mdb001_debit_transaction_m1_98")}
