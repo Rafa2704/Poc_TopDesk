@@ -1,0 +1,29 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_asseteqposqrcodedetaillist",
+  tags: ["topdesk"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT
+    Archived,
+    ArchivedReasonId,
+    CAST(CreationDate AS TIMESTAMP) AS CreationDate,
+    Id,
+    CAST(ModificationDate AS TIMESTAMP) AS ModificationDate,
+    Name,
+    Status,
+    TemplateId,
+    empresa1,
+    idpos,
+    localidade3,
+    modelo1,
+    specification,
+    specification2,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_asseteqposqrcodedetaillist")}
