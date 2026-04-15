@@ -72,6 +72,7 @@ SELECT 'QR_CODE_LEGADO' AS ORIGEM,
 	   PEQRC.cd_credit_serie    AS CRS_ID,
 	   PEQRC.cd_application     AS PEQR_APPID,
 	   PEQRC.dt_emission        AS PEQR_EMISSIONDATE,
+       PEQRC.tm_emission        AS TIME_EMISSIONDATE,
 	   PEQRC.vl_unit_price      AS PEQR_PRODPRICE,
 	   PEQRC.cd_status          AS PEQR_STATUS
   FROM `prd-autopass-bi-001.his.tb_his_trs_top001_pos_external_qrcode` PEQRC

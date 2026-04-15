@@ -73,6 +73,7 @@ SELECT 'CREDENDIADAS_LEGADO'                AS ORIGEM,
 	   CAC.cd_credit_serie                  AS CRS_ID,
 	   CAC.cd_application                   AS APP_ID,
 	   CAC.dt_transaction                   AS CAC_TRANDATE,
+       CAC.tm_transaction                   AS CAC_TIMEDATE,
 	   CAC.vl_amount    /100.0              AS CAC_TRANVALUE,
 	   CAC.cd_status                        AS CAC_STATUS
   FROM `prd-autopass-bi-001.his.tb_his_trs_top001_card_account` CAC
