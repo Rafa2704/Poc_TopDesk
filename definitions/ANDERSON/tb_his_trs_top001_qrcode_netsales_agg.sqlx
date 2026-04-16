@@ -2,6 +2,7 @@ config {
     type: "table", 
     schema: "tmp",
     description: "Tabela do anderson ",
+    tags: ["m1"],
     
     bigquery: {
         partitionBy: "CAC_TRANDATE",
