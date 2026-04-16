@@ -8,6 +8,7 @@ config {
   },
  tags: ["m1"],
 }
+WITH BASE AS (
 SELECT 
 sstf_id,
 sat_code,
@@ -37,3 +38,9 @@ sstf_createdat,
 sstf_updatedat,
 sstf_blameuser
 FROM   ${ref("tb_day_trs_tmob001_sam_samtransactionfull")}
+)
+
+SELECT 
+*
+FROM BASE 
+WHERE DATE(sstf_date) >= '2025-12-29'
