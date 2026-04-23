@@ -28,6 +28,7 @@ SELECT
   t.tipo  AS tipo_origem,
   t.sql,
   t.dataflow,
+  t.query_m,
   l.dataflow_workspace,
   l.dataset_name,
   l.dataset_workspace,
