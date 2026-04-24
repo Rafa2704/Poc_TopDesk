@@ -1,0 +1,13 @@
+
+config {
+  type: "table",
+  database: "prd-autopass-ed-001",
+  schema: "itg",
+  name: "tb_itg_card_usage",
+  dependencies: ["tb_his_mrd_top001_line_detail"]
+}
+
+SELECT
+  *
+FROM
+  ${ref('tb_his_mrd_top001_line_detail')}
