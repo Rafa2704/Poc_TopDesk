@@ -46,7 +46,7 @@ pre_operations {
         SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
         FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
       )
-      AND dt_card_usage >= '2026-04-01'
+    --   AND dt_card_usage >= '2026-04-20'
     )
   `)}
 }
@@ -57,7 +57,7 @@ WITH B_CLE AS (
     cd_device_log_file,
     ANY_VALUE(cd_transport_provider) AS cd_transport_provider
   FROM ${ref('tb_his_trs_top001_clearing_payment')}
-  WHERE dt_card_usage >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 YEAR)
+  WHERE dt_card_usage >= DATE_SUB(CURRENT_DATE(), INTERVAL 4 day)
   GROUP BY 1, 2
 ),
 
@@ -71,7 +71,7 @@ incremental_dates AS (
       `SELECT TIMESTAMP("1900-01-01 00:00:00+00")`
     )}
   )
-  AND dt_card_usage >= '2026-04-01'
+ -- AND dt_card_usage >= '2026-04-20'
 )
 
 SELECT
@@ -99,7 +99,9 @@ SELECT
   tp.ds_transport_provider                                                             AS nm_company,
   tp.ds_name_card                                                                      AS nm_card_company,
   a.ds_short                                                                           AS ds_product,
-  core.fn_classificar_mascara_produto(a.ds_short)                                     AS ds_product_agg,
+
+  core.fn_classificar_mascara_produto(core.fn_classificar_mascara_aplicacao(a.ds_short))  AS ds_mascara_aplicacao,
+  core.fn_classificar_mascara_aplicacao(a.ds_short)                                     AS ds_product_agg,
   --core.fn_aut001_application_format(a.ds_short)                                       AS ds_product_agg,
   IFNULL(c.ds_consortium, 'MUNICIPAL')                                                AS ds_consortium,
   CASE
