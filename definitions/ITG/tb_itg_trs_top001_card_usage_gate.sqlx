@@ -1,13 +1,218 @@
+-- definitions/ITG/tb_itg_trs_top001_card_usage_gate.sqlx
 
 config {
-  type: "table",
+  type: "incremental",
   database: "prd-autopass-ed-001",
   schema: "itg",
-  name: "tb_itg_card_usage",
-  dependencies: ["tb_his_mrd_top001_line_detail"]
+  name: "tb_itg_trs_top001_card_usage_gate",
+  bigquery: {
+    partitionBy: "dt_card_usage",
+    clusterBy: ["cd_card_usage_internal", "cd_issuer", "cd_transport_provider", "cd_application"]
+  },
+  uniqueKey: ["cd_card_usage_internal"],
+  dependencies: [
+    "tb_his_trs_top001_card_usage",
+    "tb_his_trs_top001_usage_data_trip",
+    "tb_his_trs_top001_usage_data_service",
+    "tb_his_trs_top001_usage_data_file",
+    "tb_his_trs_top001_process_batch",
+    "tb_his_trs_top001_clearing_payment",
+    "tb_his_mrd_top001_transport_provider",
+    "tb_his_mrd_top001_transport_provider_consortium",
+    "tb_his_mrd_top001_consortium",
+    "tb_his_mrd_top001_application",
+    "tb_his_mrd_top001_line_detail",
+    "tb_his_mrd_top001_line",
+    "tb_his_mrd_top001_line_direction",
+    "tb_his_trs_top001_device_log_file",
+    "tb_his_trs_top001_clearing",
+    "tb_his_trs_top001_hot_list_single",
+    "tb_his_mrd_top001_card",
+    "tb_his_mrd_top001_card_user",
+    "tb_his_mrd_top001_user",
+    "tb_his_mrd_top001_user_document",
+    "tb_itg_trs_top001_card_emission"
+  ]
 }
 
+-- Bloco de pre_operations: DELETE nas datas afetadas pelo delta (só roda em modo incremental)
+pre_operations {
+  ${when(incremental(), `
+    DELETE FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
+    WHERE dt_card_usage IN (
+      SELECT DISTINCT dt_card_usage
+      FROM ${ref('tb_his_trs_top001_card_usage')}
+      WHERE ts_processing > (
+        SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
+        FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
+      )
+      AND dt_card_usage >= '2026-04-01'
+    )
+  `)}
+}
+
+WITH B_CLE AS (
+  SELECT
+    cd_process_batch,
+    cd_device_log_file,
+    ANY_VALUE(cd_transport_provider) AS cd_transport_provider
+  FROM ${ref('tb_his_trs_top001_clearing_payment')}
+  WHERE dt_card_usage >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 YEAR)
+  GROUP BY 1, 2
+),
+
+incremental_dates AS (
+  SELECT DISTINCT dt_card_usage
+  FROM ${ref('tb_his_trs_top001_card_usage')}
+  WHERE ts_processing > (
+    ${when(incremental(),
+      `SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
+       FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\``,
+      `SELECT TIMESTAMP("1900-01-01 00:00:00+00")`
+    )}
+  )
+  AND dt_card_usage >= '2026-04-01'
+)
+
 SELECT
-  *
-FROM
-  ${ref('tb_his_mrd_top001_line_detail')}
+  usage.cd_card_usage_internal,
+  usage.cd_card_usage_type,
+  usage.dt_card_usage,
+  usage.tm_card_usage,
+  usage.cd_issuer,
+  usage.cd_transport_provider,
+  usage.cd_application,
+  usage.cd_line_detail,
+  core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card)   AS nr_card,
+  udoc.nr_registered_number                                                            AS nr_registered_number,
+  cusr.cd_user,
+  usage.cd_boarding_status,
+  usage.vl_fare,
+  usage.cd_process_batch,
+  usage.cd_device_log_file,
+  IFNULL(usage.cd_clearing, dlf.cd_clearing)                                          AS cd_clearing,
+  cl.dt_process_start                                                                  AS dt_process_start_clearing,
+  u3.cd_vehicle,
+  pb.dt_registration,
+  pb.tm_registration,
+  usage.cd_issuer_application,
+  tp.ds_transport_provider                                                             AS nm_company,
+  tp.ds_name_card                                                                      AS nm_card_company,
+  a.ds_short                                                                           AS ds_product,
+  core.fn_classificar_mascara_produto(a.ds_short)                                     AS ds_product_agg,
+  --core.fn_aut001_application_format(a.ds_short)                                       AS ds_product_agg,
+  IFNULL(c.ds_consortium, 'MUNICIPAL')                                                AS ds_consortium,
+  CASE
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5'                             THEN 'INTERMUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT'                                THEN 'BNT'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA'               THEN 'INTERMUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE'               THEN 'INTERMUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS'                THEN 'INTERMUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE'                 THEN 'INTERMUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'                             THEN 'MUNICIPAL'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU'                           THEN 'RTO'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                    THEN 'OUTROS'
+    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                THEN 'CONSÓRCIO NÃO ESPECIFICADO'
+    ELSE 'VERIFICAR'
+  END                                                                                  AS ds_consortium_group,
+  CASE
+    WHEN ds_consortium = 'CPTM'  THEN 'TRILHO'
+    WHEN ds_consortium = 'METRO' THEN 'TRILHO'
+    WHEN ds_consortium = 'BNT'   THEN 'TRILHO'
+    ELSE 'PNEU'
+  END                                                                                  AS ds_modal,
+  ld.ds_long                                                                           AS nm_station,
+  core.fn_aut001_nm_station_format(ld.ds_long)                                        AS nm_station_agg,
+  lm.ds_long                                                                           AS nm_line,
+  l.ds_line_direction,
+  usr.dt_print                                                                         AS dt_emission,
+  usr.tm_print                                                                         AS tm_emission,
+  CASE
+    WHEN LPAD(TRIM(usage.cd_card_design), 2, '0') = '07' THEN 'PURO TRANSPORTE'
+    WHEN usage.cd_card_design = '17'                      THEN 'HÍBRIDO'
+    ELSE 'OUTROS'
+  END                                                                                  AS ds_card,
+  CASE WHEN card.cd_status = 'H' THEN card.dt_registration ELSE NULL END              AS dt_hot_list,
+  CASE WHEN card.cd_status = 'H' THEN hls.cd_hot_list_reason ELSE NULL END            AS cd_hot_list_reason,
+  CASE
+    WHEN card.cd_status = 'H'
+     AND card.dt_registration || ' ' || card.tm_registration
+      <= usage.dt_card_usage   || ' ' || usage.tm_card_usage THEN 1
+    ELSE 0
+  END                                                                                  AS fl_hot_list,
+  CASE WHEN usage.cd_clearing IS NULL THEN 0 ELSE 1 END                               AS fl_sag,
+  usage.ts_processing                                                                  AS ts_processing_usage,
+  CURRENT_TIMESTAMP()                                                                  AS ts_processing,
+  usage.cd_company,
+  CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64)                AS nr_load_control,
+  SESSION_USER()                                                                       AS cd_created_by,
+  usage.cd_system_source
+
+FROM (
+  SELECT cardu.*
+  FROM ${ref('tb_his_trs_top001_card_usage')} cardu
+  WHERE cardu.dt_card_usage IN (SELECT dt_card_usage FROM incremental_dates)
+) usage
+
+INNER JOIN ${ref('tb_his_trs_top001_usage_data_trip')} u1
+  ON usage.cd_usage_data_trip = u1.cd_usage_data_trip
+LEFT  JOIN ${ref('tb_his_mrd_top001_line_direction')} l
+  ON u1.cd_line_direction = l.cd_line_direction
+INNER JOIN ${ref('tb_his_trs_top001_usage_data_service')} u2
+  ON u1.cd_usage_data_service = u2.cd_usage_data_service
+INNER JOIN ${ref('tb_his_trs_top001_usage_data_file')} u3
+  ON u2.cd_usage_data_file = u3.cd_usage_data_file
+INNER JOIN ${ref('tb_his_trs_top001_process_batch')} pb
+  ON u3.cd_process_batch = pb.cd_process_batch
+LEFT  JOIN B_CLE b
+  ON usage.cd_process_batch = b.cd_process_batch
+ AND usage.cd_device_log_file = b.cd_device_log_file
+LEFT  JOIN ${ref('tb_his_mrd_top001_transport_provider')} tp
+  ON COALESCE(NULLIF(usage.cd_transport_provider, '0'), b.cd_transport_provider, usage.cd_transport_provider) = tp.cd_transport_provider
+LEFT  JOIN ${ref('tb_his_mrd_top001_transport_provider_consortium')} tpc
+  ON usage.cd_transport_provider = tpc.cd_transport_provider
+LEFT  JOIN ${ref('tb_his_mrd_top001_consortium')} c
+  ON tpc.cd_consortium = c.cd_consortium
+LEFT  JOIN ${ref('tb_his_mrd_top001_application')} a
+  ON usage.cd_issuer_application = a.cd_issuer
+ AND usage.cd_application = a.cd_application
+LEFT  JOIN ${ref('tb_his_mrd_top001_line_detail')} ld
+  ON usage.cd_line_detail = ld.cd_line_detail
+LEFT  JOIN ${ref('tb_his_mrd_top001_line')} lm
+  ON ld.cd_line = lm.cd_line
+LEFT  JOIN ${ref('tb_his_trs_top001_device_log_file')} dlf
+  ON usage.cd_process_batch = dlf.cd_process_batch
+ AND usage.cd_device_log_file = dlf.cd_device_log_file
+LEFT  JOIN ${ref('tb_his_trs_top001_clearing')} cl
+  ON COALESCE(usage.cd_clearing, dlf.cd_clearing) = cl.cd_clearing
+LEFT  JOIN ${ref('tb_itg_trs_top001_card_emission')} usr
+  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = usr.nr_card
+LEFT  JOIN ${ref('tb_his_trs_top001_hot_list_single')} hls
+  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = core.fn_aut001_card_format(hls.cd_issuer, hls.cd_card_design, hls.cd_card)
+ AND hls.cd_status = 'A'
+LEFT  JOIN ${ref('tb_his_mrd_top001_card')} card
+  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = core.fn_aut001_card_format(card.cd_issuer, card.cd_card_design, card.cd_card)
+LEFT  JOIN ${ref('tb_his_mrd_top001_card_user')} cusr
+  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = core.fn_aut001_card_format(cusr.cd_issuer, cusr.cd_card_design, cusr.cd_card)
+LEFT  JOIN (
+  SELECT cd_user, nr_registered_number
+  FROM (
+    SELECT
+      udoc.cd_user,
+      udoc.nr_registered_number,
+      u.dt_birth AS dt_nascimento,
+      RANK() OVER (PARTITION BY udoc.cd_user ORDER BY udoc.cd_user_document DESC) AS rank1
+    FROM ${ref('tb_his_mrd_top001_user')} u
+    LEFT JOIN ${ref('tb_his_mrd_top001_user_document')} udoc
+      ON u.cd_user = udoc.cd_user
+    WHERE udoc.cd_status = 'A'
+      AND udoc.cd_document_type_usage = '6'
+  )
+  WHERE rank1 = 1
+) udoc
+  ON cusr.cd_user = udoc.cd_user
+
+WHERE usage.cd_card_usage_type IN ('1', '5')
+  AND IFNULL(usage.nr_part_fare, '1') = '1'
