@@ -7,8 +7,7 @@ config {
 }
 
 
-CREATE OR REPLACE TABLE `prd-autopass-ed-001.day.tb_day_trs_tmb001_atm_dinheiro`
-AS
+
 SELECT
     cod_atm,
     estacao,
@@ -37,18 +36,17 @@ SELECT
     voucher_gerado,
     voucher_number,
 
-    -- VALORES (de '1.234,56' para NUMERIC)
-    CAST(valor AS NUMERIC) AS valor,
-    SAFE_CAST(valor_recebido AS NUMERIC) AS valor_recebido,
+    SAFE_CAST(REPLACE(REPLACE(valor,         '.', ''), ',', '.') AS NUMERIC) AS valor,
+    SAFE_CAST(REPLACE(REPLACE(valor_recebido,'.', ''), ',', '.') AS NUMERIC) AS valor_recebido,
 
     -- NOTAS
-    SAFE_CAST(nota_2   AS INT64) AS nota_2,
-    SAFE_CAST(nota_5   AS INT64) AS nota_5,
-    SAFE_CAST(nota_10  AS INT64) AS nota_10,
-    SAFE_CAST(nota_20  AS INT64) AS nota_20,
-    SAFE_CAST(nota_50  AS INT64) AS nota_50,
-    SAFE_CAST(nota_100 AS INT64) AS nota_100,
-    SAFE_CAST(nota_200 AS INT64) AS nota_200,
+    nota_2,
+    nota_5,
+    nota_10,
+    nota_20,
+    nota_50,
+    nota_100,
+    nota_200,
 
     -- STATUS
     status,

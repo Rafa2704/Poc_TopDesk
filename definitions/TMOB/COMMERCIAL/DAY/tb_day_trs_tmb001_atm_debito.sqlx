@@ -1,0 +1,45 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_atm_debito",
+  tags: ["commercial"],
+  description: "Tabela sumaria da query de vendas de atm em debito"
+}
+SELECT
+    -- IDENTIFICADORES
+    cod_atm,
+    estacao,
+    linha,
+    empresa,
+
+    -- DATAS
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', data_hora_trans) AS data_hora_trans,
+    PARSE_DATE('%d/%m/%Y', data_trans)                    AS data_trans,
+    hora_trans,
+
+    -- VALORES (converte '1.234,56' → NUMERIC)
+    SAFE_CAST(REPLACE(REPLACE(valor,          '.', ''), ',', '.') AS NUMERIC) AS valor,
+    SAFE_CAST(REPLACE(REPLACE(valor_recebido, '.', ''), ',', '.') AS NUMERIC) AS valor_recebido,
+
+    -- ADQUIRENTE
+    nsu_adquirente,
+    cod_aprov_adquirente,
+
+    -- PRODUTO
+    tipo_produto,
+    codigo_produto,
+    produto,
+    aplicacao,
+
+    -- IDs
+    idtrn,
+
+    -- STATUS
+    status_orbi,
+
+    -- Campos de controle
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_atm_debito")}
