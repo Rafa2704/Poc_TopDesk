@@ -1,0 +1,63 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_atm_dinheiro",
+  tags: ["commercial"],
+  description: "Tabela sumaria da query de vendas de atm em dinheiro"
+}
+
+
+CREATE OR REPLACE TABLE `prd-autopass-ed-001.day.tb_day_trs_tmb001_atm_dinheiro`
+AS
+SELECT
+    cod_atm,
+    estacao,
+    linha,
+    empresa,
+
+    -- TIMESTAMPS
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', abertura_servico)   AS abertura_servico,
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', fechamento_servico) AS fechamento_servico,
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', data_hora_trans)    AS data_hora_trans,
+    PARSE_DATE('%d/%m/%Y', data_trans)                       AS data_trans,
+    hora_trans,
+
+    -- PRODUTO
+    tipo_produto,
+    produto,
+    aplicacao,
+
+    -- IDs
+    idtrn,
+    ctm_datetime_tz,
+    external_id,
+    id_legado,
+
+    -- VOUCHER
+    voucher_gerado,
+    voucher_number,
+
+    -- VALORES (de '1.234,56' para NUMERIC)
+    CAST(valor AS NUMERIC) AS valor,
+    SAFE_CAST(valor_recebido AS NUMERIC) AS valor_recebido,
+
+    -- NOTAS
+    SAFE_CAST(nota_2   AS INT64) AS nota_2,
+    SAFE_CAST(nota_5   AS INT64) AS nota_5,
+    SAFE_CAST(nota_10  AS INT64) AS nota_10,
+    SAFE_CAST(nota_20  AS INT64) AS nota_20,
+    SAFE_CAST(nota_50  AS INT64) AS nota_50,
+    SAFE_CAST(nota_100 AS INT64) AS nota_100,
+    SAFE_CAST(nota_200 AS INT64) AS nota_200,
+
+    -- STATUS
+    status,
+
+    -- Campos de controle
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_atm_dinheiro")}
+
+
