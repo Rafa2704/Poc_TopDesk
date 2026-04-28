@@ -10,6 +10,28 @@ config {
   tags: ["commercial"],
 }
 
-SELECT 
-    *
- FROM ${ref("tb_day_trs_tmb001_atm_debito")}
+WITH dedup AS (
+    SELECT
+        *,
+        ROW_NUMBER() OVER (
+            PARTITION BY idtrn
+            ORDER BY (SELECT NULL)
+        ) AS rn
+    FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_atm_debito`
+    WHERE idtrn IN ('117596737', '101136687', '67214136', '153029686', '90605464', '114512833')
+),
+sem_duplicata AS (
+    SELECT * EXCEPT (rn) FROM dedup WHERE rn = 1
+),
+demais AS (
+    SELECT *
+    FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_atm_debito`
+    WHERE idtrn NOT IN ('117596737', '101136687', '67214136', '153029686', '90605464', '114512833')
+),
+final as (
+SELECT * FROM sem_duplicata
+UNION ALL
+SELECT * FROM demais
+)
+
+select * from final 
