@@ -2,30 +2,23 @@ config {
   type: "incremental",
   schema: "his",
   name: "tb_his_trs_tmb001_atm_dinheiro",
-  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
-  uniqueKey: ["idtrn"],
+  description: "Tabela de incidentes persistida via Delete + Reinsert (3 dias)",
   bigquery: {
     partitionBy: "data_trans",
   },
   tags: ["commercial"],
 }
 
-WITH source AS (
-  SELECT 
-    *,
-    ROW_NUMBER() OVER (
-      PARTITION BY idtrn 
-      ORDER BY data_trans  
-    ) AS rn
-  FROM 
-  --prd-autopass-ed-001.his.tb_his_trs_tmb001_atm_dinheiro
-  ${ref("tb_day_trs_tmb001_atm_dinheiro")}
+pre_operations {
+  ${ when(incremental(), `
+    DELETE FROM ${self()}
+    WHERE data_trans >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
+  `) }
+}
 
-  -- Filtro incremental: só processa registros novos/alterados
-  ${ when(incremental(), `WHERE data_trans > (SELECT MAX(data_trans) FROM ${self()})`) }
-)
+SELECT *
+FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}
 
-SELECT 
-  * EXCEPT (rn)
-FROM source
-WHERE rn = 1  
+${ when(incremental(), `
+  WHERE data_trans >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
+`) }
