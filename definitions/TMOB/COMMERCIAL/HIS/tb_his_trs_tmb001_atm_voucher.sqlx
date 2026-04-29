@@ -5,7 +5,7 @@ config {
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   uniqueKey: ["idtrn"],
   bigquery: {
-    partitionBy: "data_trans",
+    partitionBy: "data_uso",
   },
   tags: ["commercial"],
 }
