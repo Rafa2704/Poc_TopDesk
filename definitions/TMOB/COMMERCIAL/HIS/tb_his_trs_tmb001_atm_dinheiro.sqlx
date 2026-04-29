@@ -17,7 +17,9 @@ WITH source AS (
       PARTITION BY idtrn 
       ORDER BY data_trans  
     ) AS rn
-  FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}
+  FROM 
+  --prd-autopass-ed-001.his.tb_his_trs_tmb001_atm_dinheiro
+  ${ref("tb_day_trs_tmb001_atm_dinheiro")}
 
   -- Filtro incremental: só processa registros novos/alterados
   ${ when(incremental(), `WHERE data_trans > (SELECT MAX(data_trans) FROM ${self()})`) }
@@ -26,4 +28,4 @@ WITH source AS (
 SELECT 
   * EXCEPT (rn)
 FROM source
-WHERE rn = 1  -- mantém apenas 1 linha por idtrn
+WHERE rn = 1  
