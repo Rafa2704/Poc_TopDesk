@@ -10,6 +10,20 @@ config {
   tags: ["commercial"],
 }
 
+WITH source AS (
+  SELECT 
+    *,
+    ROW_NUMBER() OVER (
+      PARTITION BY idtrn 
+      ORDER BY data_trans  
+    ) AS rn
+  FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}
+
+  -- Filtro incremental: só processa registros novos/alterados
+  ${ when(incremental(), `WHERE data_trans > (SELECT MAX(data_trans) FROM ${self()})`) }
+)
+
 SELECT 
-    *
- FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}
+  * EXCEPT (rn)
+FROM source
+WHERE rn = 1  -- mantém apenas 1 linha por idtrn
