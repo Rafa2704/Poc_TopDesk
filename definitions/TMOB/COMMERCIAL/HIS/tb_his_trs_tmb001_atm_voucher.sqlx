@@ -3,7 +3,7 @@ config {
   schema: "his",
   name: "tb_his_trs_tmb001_atm_voucher",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
-  uniqueKey: ["idtrn"],
+  uniqueKey: ["pvc_id"],
   bigquery: {
     partitionBy: "data_uso",
   },
