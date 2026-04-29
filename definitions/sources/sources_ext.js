@@ -26,7 +26,8 @@ const tables = [
   "tb_ext_trs_tmob001_sam_samtransactionfull",
   "tb_ext_trs_mdb003_debit_transaction_m1_238",
   "tb_ext_trs_tmb001_atm_dinheiro",
-  "tb_ext_trs_tmb001_atm_debito"
+  "tb_ext_trs_tmb001_atm_debito",
+  "tb_ext_trs_tmb001_atm_voucher"
 
 ];
 
