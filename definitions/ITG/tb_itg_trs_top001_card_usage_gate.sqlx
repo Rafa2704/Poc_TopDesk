@@ -2,7 +2,7 @@
 
 config {
   type: "incremental",
-  database: "prd-autopass-ed-001",
+  database: dataform.projectConfig.defaultDatabase,
   schema: "itg",
   name: "tb_itg_trs_top001_card_usage_gate",
   bigquery: {
