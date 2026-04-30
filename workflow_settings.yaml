@@ -3,4 +3,4 @@ defaultDataset: dataform
 defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.37
 vars:
-  source_project: prd-autopass-ed-001
+  source_project: dev-autopass-bi-001
