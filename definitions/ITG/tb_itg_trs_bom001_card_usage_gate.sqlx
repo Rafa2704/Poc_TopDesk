@@ -1,0 +1,125 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de card usage gate bom ",
+    tags: ["cardusagegate"],
+    bigquery: {
+        partitionBy: "dt_card_usage",
+    }
+}
+
+SELECT cu.cd_card_usage_internal cd_card_usage_internal
+, cu.cd_card_usage_type cd_card_usage_type -- Adicionada 2023-09-04: Tendo em vista a necessidade de saber se o registro veio da valid ou onboard.
+, cu.dt_card_usage dt_card_usage
+, cu.tm_card_usage tm_card_usage
+, cu.cd_issuer cd_issuer
+, cu.cd_transport_provider cd_transport_provider
+, cu.cd_application cd_application
+, cu.cd_line_detail cd_line_detail
+, core.fn_aut001_card_format(cu.cd_issuer, cu.cd_card_design, cu.cd_card) nr_card --NUMERO_CARTAO 
+, usr.nr_registered_number --02/08/24
+, cu.cd_boarding_status cd_boarding_status --fl_integration --flag integração
+, cu.vl_fare vl_fare
+, cu.cd_process_batch cd_process_batch -- Adicionada 2023-09-04: Adicionado esse campo apra facilitar futuros dashs que usam esse campo.
+, cu.cd_device_log_file cd_device_log_file -- Adicionada 2023-09-04: Adicionado esse campo apra facilitar futuros dashs que usam esse campo.
+--, dlf.cd_clearing cd_clearing --Modificado: 2023-08-31 - Alterou a origem deste campo para o da tabela device_log_file
+, IFNULL(cu.cd_clearing, dlf.cd_clearing) cd_clearing --Modificado: 2023-08-30 - Alterou a origem deste campo para o da tabela device_log_file --Alterado 11/10/2023
+, cl.dt_process_start dt_process_start --Adicionado: 2023-08-31 - Adicionado campo novo com a data do clearing
+, u3.cd_vehicle cd_vehicle ---Modificado: 2023-08-31 - Alterou a origem deste campo para o da tabela usage_data_file
+, pb.dt_registration dt_registration
+, pb.tm_registration tm_registration
+-- , NULL ds_message_error --msg erro --  ---Modificado: 2023-09-04 - Não existe na tabela card_usage
+-- , 'his.tb_his_trs_bom001_card_usage_valid' nm_source_table --> Modificado: 2023-08-31 Como não tem mais o union não faz mais sentido manter esse campo
+, cu.cd_issuer_application cd_issuer_application
+, tp.ds_transport_provider nm_company --AS EMPRESA
+, tp.ds_name_card nm_card_company --incluido em 19/07
+,a.displayName as ds_product
+,a.produto_agrupado
+,a.valorado
+,a.repasse_clearing
+,a.comissionamento
+--, a.ds_short ds_product --PRODUTO
+, IFNULL(c.ds_consortium, 'MUNICIPAL') ds_consortium --CONSORCIO --alterado 31/08/2023
+,CASE
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT' THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS' THEN 'MUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU' THEN 'RTO'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS' THEN 'OUTROS'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL THEN 'CONSÓRCIO NÃO ESPECIFICADO'
+ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
+,CASE 
+  WHEN ds_consortium = "CPTM" THEN "TRILHO" 
+  WHEN ds_consortium = "METRO" THEN "TRILHO"
+  WHEN ds_consortium = "BNT" THEN "TRILHO" 
+  ELSE  "PNEU" 
+END ds_modal  --incluido  em 03/06/2024
+, ld.ds_long nm_station --ESTACAO
+, lm.ds_long nm_line --LINHA
+, l.ds_line_direction ds_line_direction
+, CASE WHEN card.cd_status = 'H' THEN card.dt_registration ELSE NULL END dt_hot_list --change hotlist 17/10/2023
+, CASE WHEN card.cd_status = 'H' THEN hls.cd_hot_list_reason ELSE NULL END cd_hot_list_reason --change hotlist 17/10/2023
+, CASE  
+    WHEN card.cd_status = 'H' and card.dt_registration||' '||card.tm_registration <= cu.dt_card_usage||' '||cu.tm_card_usage THEN 1
+    ELSE 0
+  END fl_hot_list  --change hotlist 17/10/2023
+, CASE WHEN clp.cd_card IS NULL THEN 0 ELSE 1 END fl_sag --Adicionado 19/10/2023   
+, CURRENT_TIMESTAMP() ts_processing
+, cu.cd_company cd_company
+, CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control
+, SESSION_USER() cd_created_by
+, cu.cd_system_source
+FROM prd-autopass-bi-001.his.tb_his_trs_bom001_card_usage cu
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_usage_data_trip u1 
+ON cu.cd_usage_data_trip = u1.cd_usage_data_trip AND u1.dt_start >= '2022-01-01'
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line_direction l 
+ON u1.cd_line_direction = l.cd_line_direction
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_usage_data_service u2 
+ON u1.cd_usage_data_service = u2.cd_usage_data_service AND u2.dt_financial >= '2022-01-01'
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_usage_data_file u3 
+ON u2.cd_usage_data_file = u3.cd_usage_data_file AND u3.dt_file >= '2022-01-01'
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_process_batch pb 
+ON u3.cd_process_batch = pb.cd_process_batch
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider tp 
+ON cu.cd_transport_provider = tp.cd_transport_provider
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider_consortium tpc 
+ON cu.cd_transport_provider = tpc.cd_transport_provider
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_consortium c 
+ON tpc.cd_consortium = c.cd_consortium
+
+
+LEFT OUTER JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` a 
+ON cu.cd_issuer_application = a.toIssuerCode AND cu.cd_application = a.code  -- NOVA DIMENSAO 
+-- Alterado 31/08/2023 a chave de JOIN cu.cd_issuer -> cu.cd_issuer_application --his.tb_his_mrd_bom001_application a 
+
+
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line_detail ld 
+ON cu.cd_line_detail = ld.cd_line_detail
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line lm 
+ON ld.cd_line = lm.cd_line
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_device_log_file dlf --Adicionado: 2023-08-31 - JOIN com a device_log_file, para pegar o cd_clearing
+ON cu.cd_process_batch = dlf.cd_process_batch AND cu.cd_device_log_file = dlf.cd_device_log_file AND dlf.dt_connection >= '2022-01-01'
+--left outer join his.tb_his_trs_bom001_clearing cl --Adicionado: 2023-08-31 - JOIN com a clearing, para pegar o dt_process_start
+--on dlf.cd_clearing = cl.cd_clearing
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_clearing cl --Adicionado: 2023-08-31 - JOIN com a clearing, para pegar o dt_process_start
+ON IFNULL(cu.cd_clearing,dlf.cd_clearing) = cl.cd_clearing --Alterado 11/10/2023
+LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_hot_list_single hls
+ON core.fn_aut001_card_format(cu.cd_issuer, cu.cd_card_design, cu.cd_card) = core.fn_aut001_card_format(hls.cd_issuer, hls.cd_card_design, hls.cd_card) AND hls.cd_status = 'A'
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_card card --incluido em 17/10/2023
+ON core.fn_aut001_card_format(cu.cd_issuer, cu.cd_card_design, cu.cd_card) = core.fn_aut001_card_format(card.cd_issuer, card.cd_card_design, card.cd_card)
+LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_clearing_payment clp --incluído em 19/10/2023
+ON clp.cd_clearing = cu.cd_clearing AND clp.cd_process_batch = cu.cd_process_batch AND clp.cd_device_log_file = cu.cd_device_log_file AND clp.cd_issuer = cu.cd_issuer AND clp.cd_card_design = cu.cd_card_design AND clp.cd_card = cu.cd_card AND clp.cd_card_usage = cu.cd_card_usage AND clp.nr_tsn = cu.nr_tsn AND clp.dt_card_usage >= '2022-01-01'
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_card_user cusr
+ON core.fn_aut001_card_format(cu.cd_issuer, cu.cd_card_design, cu.cd_card) = core.fn_aut001_card_format(cusr.cd_issuer, cusr.cd_card_design, cusr.cd_card)
+LEFT JOIN prd-autopass-bi-001.itg.vw_itg_mrd_bom001_user usr
+ON cusr.cd_user = usr.cd_user
+WHERE 1 = 1
+AND cu.cd_card_usage_type in ('1', '5')
+AND IFNULL(cu.nr_part_fare, '1') = '1'
+AND cu.dt_card_usage >= '2022-01-01'
