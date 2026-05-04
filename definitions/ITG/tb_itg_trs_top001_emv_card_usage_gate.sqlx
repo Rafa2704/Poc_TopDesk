@@ -4,7 +4,7 @@ config {
     description: "Tabela itg de card usagegate EMV ",
     tags: ["cardusagegate"],
     bigquery: {
-        partitionBy: "dt_usage",
+        partitionBy: "dt_card_usage",
     }
 }
 
