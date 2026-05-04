@@ -10,7 +10,7 @@ config {
     partitionBy: "dt_card_usage",
     clusterBy: ["cd_card_usage_internal", "cd_issuer", "cd_transport_provider", "cd_application"]
   },
-  uniqueKey: ["cd_card_usage_internal", "cd_card_usage_type"],
+
   dependencies: [
     "tb_his_trs_top001_card_usage",
     "tb_his_trs_top001_usage_data_trip",
