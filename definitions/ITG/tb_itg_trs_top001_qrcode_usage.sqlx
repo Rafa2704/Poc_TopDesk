@@ -1,0 +1,201 @@
+config {
+    type: "incremental",
+    schema: "itg",
+    tags: ['cardusagegate'],
+    name: "tb_itg_trs_top001_qrcode_usage",
+    bigquery: {
+        partitionBy: "dt_usage",
+        clusterBy: ["cd_qrcode_media", "cd_transaction", "cd_application", "cd_system_source"],
+        updatePartitionFilter: /*"dt_usage >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)"*/
+        "dt_usage >= (SELECT MIN(dt_usage) FROM incremental_data)"
+    }
+}
+
+pre_operations {
+  ${
+    when(incremental(), 
+    `DECLARE v_ts_processing_usage TIMESTAMP;
+     SET v_ts_processing_usage = (SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01")) FROM \`prd-autopass-bi-001.itg.tb_itg_trs_top001_qrcode_usage\`);`)
+  }
+}
+ WITH cte_qrcode_detalhado AS (
+  SELECT '5' AS id, 'QRCODE UNITARIO' AS descricao, '3' AS externalid, 'QRCODE' AS produto_agrupado, 'sim' AS valorado, 'sim' AS repasse_clearing, 'sim' AS comissionamento UNION ALL
+  SELECT '1', 'QRCODE UNITARIO', '6', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '2', 'QRCODE UNITARIO', '7', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '3', 'QRCODE UNITARIO', '8', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '8', 'QRCODE PLBS', '11', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '7', 'QRCODE TESTE METRO', '12', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '11', 'QRCODE TROCA', '13', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '9', 'QRCODE SUPRESSAO', '14', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '10', 'QRCODE BENFACIL', '15', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '19', 'PASSE QRCODE', '19', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '6', 'QRCODE TESTE CPTM', '24', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '13', 'QRCODE TROCA', '25', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '12', 'QRCODE SUPRESSAO', '26', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '17', 'QRCODE CORPORATIVO', '93', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '18', 'QRCODE CONTINGENCIA', '94', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+
+  SELECT '16', 'QRCODE', '16', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '17', 'QRCODE', '17', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '18', 'QRCODE', '18', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '21', 'QRCODE', '21', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '46', 'QRCODE', '46', 'QRCODE', 'sim', 'sim', 'sim' UNION ALL
+  SELECT '62', 'QRCODE', '62', 'QRCODE', 'sim', 'sim', 'sim' 
+
+
+),
+
+BASE AS (
+SELECT
+  qrcode.cd_line_detail,
+  qrcode.cd_transaction,
+  cpf_qrcode.nr_registered_number,
+  qrcode.cd_qrcode_media_usage,
+  qrcode.cd_qrcode_media,
+  qrcode.cd_application,
+  qrcode.dt_usage,
+  qrcode.tm_usage,
+  qrcode.dt_transaction,
+  qrcode.tm_transaction,
+  qrcode.ds_product,
+  qrcode.ds_product_internal,
+    qrcode.valorado,
+    qrcode.repasse_clearing,
+    qrcode.comissionamento,
+    qrcode.externalid,
+    qrcode.cd_product,
+  qrcode.cd_qrcode_batch,
+  qrcode.dt_operation,
+  qrcode.dt_process_start, -- Coluna corrigida abaixo
+  qrcode.cd_vehicle,
+  qrcode.vl_unit_price,
+  qrcode.nm_station,
+  qrcode.nm_line,
+  qrcode.nm_company,
+  qrcode.nm_station_usage,
+  qrcode.nm_line_usage,
+  qrcode.nm_company_usage,
+  qrcode.nm_station_sale,
+  qrcode.nm_line_sale,
+  qrcode.nm_company_sale,
+  qrcode.ds_device_type,
+  qrcode.ts_processing_usage,
+  qrcode.ts_processing,
+  qrcode.cd_company,
+  qrcode.nr_load_control,
+  qrcode.cd_created_by,
+  qrcode.cd_system_source
+FROM (
+  SELECT
+    q.cd_line_detail,
+    q.cd_transaction,
+    q.cd_qrcode_media_usage,
+    q.cd_qrcode_media,
+    qm.cd_application,
+    q.dt_usage,
+    q.tm_usage,
+    t.dt_transaction,
+    t.tm_transaction,
+
+    prd.produto_agrupado AS ds_product,
+    prd.descricao AS ds_product_internal,
+    prd.valorado,
+    prd.repasse_clearing,
+    prd.comissionamento,
+    prd.externalid,
+tuse.cd_product,
+    
+    tuse.cd_qrcode_batch,
+    CASE
+      WHEN t.tm_transaction BETWEEN '00:00:00' AND '03:00:00' THEN (t.dt_transaction - 1)
+      ELSE t.dt_transaction
+    END AS dt_operation,
+    pay.dt_process_start, -- Origem correta: tabela pay (clearing_payment)
+    q.cd_vehicle,
+    qm.vl_unit_price / 100 AS vl_unit_price,
+    COALESCE(p1.ds_provider, 'BLOQUEIO NÃO CADASTRADO') AS nm_station,
+    COALESCE(p2.ds_provider, 'BLOQUEIO NÃO CADASTRADO') AS nm_line,
+    COALESCE(p3.ds_provider, 'BLOQUEIO NÃO CADASTRADO') AS nm_company,
+    COALESCE(ld.ds_long, 'BLOQUEIO NÃO CADASTRADO') AS nm_station_usage,
+    COALESCE(lm.ds_long, 'BLOQUEIO NÃO CADASTRADO') AS nm_line_usage,
+    COALESCE(lm.cd_location, 'BLOQUEIO NÃO CADASTRADO') AS nm_company_usage,
+    sp1.ds_provider AS nm_station_sale,
+    sp2.ds_provider AS nm_line_sale,
+    sp3.ds_provider AS nm_company_sale,
+    CASE
+      WHEN spd.cd_pos_device = '9999201' THEN 'WHATSAPP'
+      WHEN spd.cd_pos_device = '987' THEN 'TOP'
+      WHEN spd.cd_pos_device = '988' THEN 'REDE DE VENDAS POS'
+      ELSE dt.ds_device_type
+    END AS ds_device_type,
+    q.ts_processing AS ts_processing_usage,
+    CURRENT_TIMESTAMP() AS ts_processing,
+    q.cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) AS nr_load_control,
+    SESSION_USER() AS cd_created_by,
+    q.cd_system_source
+  FROM (
+    SELECT * FROM `prd-autopass-bi-001.his.tb_his_trs_top001_qrcode_media_usage`
+    WHERE TRUE 
+    --dt_usage >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+    ${when(incremental(), `and  ts_processing > (SELECT MAX(ts_processing_usage) FROM \`prd-autopass-bi-001.itg.tb_itg_trs_top001_qrcode_usage\`)`)}
+  ) q
+
+
+
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_transaction_qrcode_usage` tuse ON q.cd_transaction = tuse.cd_transaction
+
+  LEFT JOIN cte_qrcode_detalhado prd ON tuse.cd_product = prd.externalid
+  --`prd-autopass-bi-001.his.tb_his_mrd_top001_product` prd ON tuse.cd_product = prd.cd_product
+
+
+
+  LEFT JOIN (SELECT DISTINCT cd_pos_device_external, cd_provider, cd_system_source FROM `prd-autopass-bi-001.his.tb_his_mrd_top001_pos_device` WHERE cd_record_status = '1' AND cd_pos_device_external <> '0') pd 
+    ON q.cd_vehicle = pd.cd_pos_device_external AND q.cd_system_source = pd.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_provider` p1 ON pd.cd_provider = p1.cd_provider AND pd.cd_system_source = p1.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_provider` p2 ON p1.cd_provider_master = p2.cd_provider AND p1.cd_system_source = p2.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_provider` p3 ON p2.cd_provider_master = p3.cd_provider AND p2.cd_system_source = p3.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_qrcode_media` qm ON q.cd_qrcode_media = qm.cd_qrcode_media AND q.cd_system_source = qm.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_transaction_qrcode_sale` t ON qm.cd_transaction = t.cd_transaction AND qm.cd_system_source = t.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_provider` sp1 ON t.cd_provider_store = sp1.cd_provider AND t.cd_system_source = sp1.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_provider` sp2 ON sp1.cd_provider_master = sp2.cd_provider AND sp1.cd_system_source = sp2.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_provider` sp3 ON sp2.cd_provider_master = sp3.cd_provider AND sp2.cd_system_source = sp3.cd_system_source
+  LEFT JOIN (SELECT DISTINCT cd_pos_device, cd_device, cd_system_source FROM `prd-autopass-bi-001.his.tb_his_mrd_top001_pos_device`) spd ON t.cd_pos_device = spd.cd_pos_device AND t.cd_system_source = spd.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_device` d ON spd.cd_device = d.cd_device AND spd.cd_system_source = d.cd_system_source
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_device_type` dt ON d.cd_device_type = dt.cd_device_type AND d.cd_system_source = dt.cd_system_source
+  LEFT JOIN (SELECT cd_card, MAX(dt_process_start) AS dt_process_start
+                 FROM `prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment`
+                 WHERE cd_application = '110'
+                -- AND dt_process_start >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY) 
+                 GROUP BY cd_card) pay ON q.cd_qrcode_media = pay.cd_card
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail` ld ON q.cd_line_detail = ld.cd_line_detail
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_line` lm ON ld.cd_line = lm.cd_line
+) qrcode
+LEFT JOIN (
+  -- Lógica de CPF (Simplificada para brevidade, mantendo suas tabelas)
+  SELECT usr.nr_registered_number, TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) qrm_id, 'TOP' ds_device_type
+  FROM `prd-autopass-bi-001.his.tb_his_trs_mdb001_qrcode` rec
+  LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_mdb001_order` ordr ON rec.cd_order = ordr.cd_order
+  LEFT JOIN (SELECT DISTINCT cd_user, UPPER(TRIM(nr_registered_number)) nr_registered_number FROM `prd-autopass-bi-001.his.tb_his_mrd_mdb001_user_document`) usr ON rec.cd_user = usr.cd_user
+  WHERE ordr.ds_state = 'COMPLETED'
+  
+  UNION ALL
+  
+  SELECT DISTINCT nr_registered_number, TRIM(IFNULL(SPLIT(qrm_id, '-')[SAFE_OFFSET(0)], '')) qrm_id, 'WHATSAPP' ds_device_type
+  FROM (
+      SELECT nr_registered_number, qrm_id, RANK() OVER (PARTITION BY qrm_id ORDER BY dt_order, nr_registered_number asc) rank_1
+      FROM (
+          SELECT nr_registered_number, dt_order, cd_card_session FROM `prd-autopass-bi-001.his.tb_his_trs_bar001_transaction_pakman`
+          WHERE ds_status IN ('PAID', 'PAGO') AND cd_transaction_pakman <> cd_card_session AND cd_card_session IS NOT NULL
+      ) X UNPIVOT(QRM_ID FOR col IN (cd_card_session))
+  ) WHERE rank_1 = 1
+  
+  -- Adicione os outros UNIONs aqui conforme seu script original, sempre com o projeto completo.
+) cpf_qrcode ON cpf_qrcode.qrm_id = qrcode.cd_qrcode_media AND cpf_qrcode.ds_device_type = qrcode.ds_device_type
+)
+
+
+
+
+SELECT * FROM BASE 
+

@@ -1,0 +1,96 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de card usagegate EMV ",
+    tags: ["cardusagegate"],
+    bigquery: {
+        partitionBy: "dt_usage",
+    }
+}
+
+
+SELECT '-1' cd_card_usage_internal
+, e.dt_usage dt_card_usage
+, e.tm_usage tm_card_usage
+, e.cd_issuer cd_issuer
+, u3.cd_transport_provider cd_transport_provider
+, e.cd_application cd_application
+, u1.cd_line_detail cd_line_detail
+, '-1' nr_card --numero_cartao
+, '0' cd_boarding_status --fl_integration --flag_integracao
+, e.vl_fare vl_fare
+, e.cd_clearing cd_clearing
+, cl.dt_process_start 
+, u3.cd_vehicle cd_vehicle
+, pb.dt_registration dt_registration
+, pb.tm_registration tm_registration
+, NULL ds_message_error
+, 'tb_his_trs_top001_card_usage_onboard' nm_source_table
+, e.cd_issuer cd_issuer_application
+, tp.ds_transport_provider nm_company --as empresa
+, tp.ds_name_card nm_card_company --incluido em 22/07
+,a.displayName as ds_product
+,a.produto_agrupado
+,a.valorado
+,a.repasse_clearing
+,a.comissionamento
+--, a.ds_short ds_product --produto
+, IFNULL(c.ds_consortium, 'MUNICIPAL') ds_consortium --CONSORCIO --alterado 11/08/2023
+,CASE
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT' THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE' THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS' THEN 'MUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU' THEN 'RTO'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS' THEN 'OUTROS'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL THEN 'CONSÓRCIO NÃO ESPECIFICADO'
+ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
+,CASE 
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = "CPTM" THEN "TRILHO" 
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = "METRO" THEN "TRILHO"
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = "BNT" THEN "TRILHO" 
+  ELSE "PNEU" 
+END ds_modal  --incluido  em 03/06/2024 
+, ld.ds_long nm_station --estacao
+, lm.ds_long nm_line --linha
+, l.ds_line_direction ds_line_direction
+, CURRENT_TIMESTAMP() ts_processing
+, e.cd_company cd_company
+, CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control
+, SESSION_USER() cd_created_by
+, e.cd_system_source cd_system_source
+FROM prd-autopass-bi-001.his.tb_his_trs_top001_abt_emv_usage_data e
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_trip u1 
+ON e.cd_usage_data_trip = u1.cd_usage_data_trip AND e.cd_system_source = u1.cd_system_source
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line_direction l 
+ON u1.cd_line_direction = l.cd_line_direction AND u1.cd_system_source = l.cd_system_source
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_service u2 
+ON u1.cd_usage_data_service = u2.cd_usage_data_service AND u1.cd_system_source = u2.cd_system_source
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_file u3 
+ON u2.cd_usage_data_file = u3.cd_usage_data_file AND u2.cd_system_source = u3.cd_system_source
+INNER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_process_batch pb
+ON u3.cd_process_batch = pb.cd_process_batch AND u3.cd_system_source = pb.cd_system_source
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider tp 
+ON u3.cd_transport_provider = tp.cd_transport_provider AND u3.cd_system_source = tp.cd_system_source
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium tpc 
+ON u3.cd_transport_provider = tpc.cd_transport_provider AND u3.cd_system_source = tpc.cd_system_source
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_consortium c 
+ON tpc.cd_consortium = c.cd_consortium AND tpc.cd_system_source = c.cd_system_source
+
+-- LEFT OUTER JOIN his.tb_his_mrd_top001_application a
+-- ON e.cd_issuer = a.cd_issuer AND e.cd_application = a.cd_application AND e.cd_system_source = a.cd_system_source --alterado 11/08/2023
+LEFT OUTER JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` a 
+ON e.cd_issuer = a.toIssuerCode AND e.cd_application = a.code  
+
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail ld 
+ON u1.cd_line_detail = ld.cd_line_detail AND u1.cd_system_source = ld.cd_system_source
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line lm 
+ON ld.cd_line = lm.cd_line AND ld.cd_system_source = lm.cd_system_source
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_clearing cl 
+ON e.cd_clearing = cl.cd_clearing AND e.cd_system_source = cl.cd_system_source
+WHERE 1 = 1
