@@ -2,13 +2,14 @@ config {
     type: "table", 
     schema: "itg",
     description: "Tabela itg de vendas por cartão ",
-    tags: ["itg"],
+    tags: ["cardusagegate"],
     bigquery: {
         partitionBy: "dt_uso",
     }
 }
 
 
+--Value.NativeQuery(GoogleBigQuery.Database([BillingProject = "dev-autopass-bi-001"]){[Name = "dev-autopass-bi-001"]}[Data], "
 WITH union_catracadas as (
     SELECT
     'BOM' as origem
@@ -22,11 +23,16 @@ WITH union_catracadas as (
     ,ds_consortium as ds_consorcio
     ,ds_consortium_group as ds_abrangencia
     ,ds_modal as ds_modal
+
+
     ,ds_product as ds_produto
-    ,'' as produto_agrupado
-    ,'' as valorado
-    ,'' as repasse_clearing
-    ,'' as comissionamento
+    ,produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+
     ,nm_company as nm_empresa
     ,CASE 
       WHEN ds_modal = 'PNEU' THEN 'N/A' 
@@ -46,12 +52,17 @@ WITH union_catracadas as (
       ELSE nm_station
     END as nm_estacao_new 
     ,cd_boarding_status as cd_status_embarque
+    
     ,COUNT(dt_card_usage) qt_uso
     ,SUM(vl_fare) valor_uso
-    FROM prd-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_gate tese
+    FROM ${ref("tb_itg_trs_bom001_card_usage_gate")} tese
+    -- dev-autopass-bi-001.itg.tb_itg_trs_bom001_card_usage_gate tese
+    --dev-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_gate tese
     WHERE dt_card_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
     GROUP BY ALL
+
     union all
+
     SELECT
     'EMV' as origem
     ,ts_processing
@@ -64,11 +75,16 @@ WITH union_catracadas as (
     ,ds_consortium as ds_consorcio
     ,ds_consortium_group as ds_abrangencia
     ,ds_modal as ds_modal
+
     ,ds_product as ds_produto
-    ,'' as produto_agrupado
-    ,'' as valorado
-    ,'' as repasse_clearing
-    ,'' as comissionamento
+    ,produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+
+
     ,nm_company as nm_empresa
     ,CASE 
       WHEN ds_modal = 'PNEU' THEN 'N/A' 
@@ -91,11 +107,14 @@ WITH union_catracadas as (
     --,CONCAT(nm_line,nm_station) nm_estacao_linha
     ,COUNT(dt_card_usage) qt_uso
     ,SUM(vl_fare) valor_uso
-    FROM prd-autopass-bi-001.itg.vw_itg_trs_top001_emv_card_usage_gate tese
+    FROM ${ref("tb_itg_trs_top001_emv_card_usage_gate")} tese
+    --dev-autopass-bi-001.itg.tb_itg_trs_top001_emv_card_usage_gate tese
+    --dev-autopass-bi-001.itg.vw_itg_trs_top001_emv_card_usage_gate tese
     WHERE dt_card_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
     GROUP BY ALL
 
     union all
+
 
     SELECT
     'TOP' as origem
@@ -109,11 +128,17 @@ WITH union_catracadas as (
     ,ds_consortium as ds_consorcio
     ,ds_consortium_group as ds_abrangencia
     ,ds_modal as ds_modal
+
+
+
     ,ds_product as ds_produto
     ,produto_agrupado
     ,valorado
     ,repasse_clearing
     ,comissionamento
+
+
+
     ,nm_company as nm_empresa
     ,CASE 
       WHEN ds_modal = 'PNEU' THEN 'N/A' 
@@ -136,12 +161,14 @@ WITH union_catracadas as (
     --,CONCAT(nm_line,nm_station) nm_estacao_linha
     ,COUNT(dt_card_usage) qt_uso
     ,SUM(vl_fare) valor_uso
-    FROM  -- `dev-autopass-bi-001.tmp.top001_card_usage_gate_NEW` tese
-           --  `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`  tese
-             dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate  tese
+    FROM ${ref("tb_itg_trs_top001_card_usage_gate")} tese
+    -- dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate tese
+    --dev-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate tese
     WHERE dt_card_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
     GROUP BY ALL
+
     union all
+
     select
     'QRCODE' as origem
     ,ts_processing
@@ -151,38 +178,38 @@ WITH union_catracadas as (
     ,dt_usage as dt_uso
     ,dt_process_start as dt_clearing
     ,'N/A' ds_tipo_cartao
-    ,nm_company as ds_consorcio
+    ,nm_company_usage as ds_consorcio
     ,'N/A' as ds_abrangencia
     ,'TRILHO' as ds_modal
-    ,ds_product as ds_produto
-    ,'' as produto_agrupado
-    ,'' as valorado
-    ,'' as repasse_clearing
-    ,'' as comissionamento
-    ,TRIM(IFNULL(SPLIT(nm_company, '-')[SAFE_OFFSET(1)], nm_company)) nm_empresa
-    ,TRIM(IFNULL(SPLIT(nm_line, '-')[SAFE_OFFSET(1)], nm_line)) nm_linha
-    ,TRIM(IFNULL(SPLIT(nm_station, '-')[SAFE_OFFSET(1)], nm_station)) nm_estacao
 
-    ,TRIM(IFNULL(SPLIT(nm_company_usage, '-')[SAFE_OFFSET(1)], nm_company_usage)) nm_empresa_new
-    ,TRIM(IFNULL(SPLIT(nm_line_usage, '-')[SAFE_OFFSET(1)], nm_line_usage)) nm_linha_new
-    ,TRIM(nm_station_usage) nm_estacao_new
+
+    ,ds_product as ds_produto
+    ,ds_product_internal as produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+    ,TRIM(IFNULL(SPLIT(nm_company, '-')[SAFE_OFFSET(1)], nm_company)) nm_empresa_old
+    ,TRIM(IFNULL(SPLIT(nm_line, '-')[SAFE_OFFSET(1)], nm_line)) nm_linha_old
+    ,TRIM(IFNULL(SPLIT(nm_station, '-')[SAFE_OFFSET(1)], nm_station)) nm_estacao_old
+
+    ,TRIM(IFNULL(SPLIT(nm_company_usage, '-')[SAFE_OFFSET(1)], nm_company_usage)) nm_empresa --nm_empresa_new
+    ,TRIM(IFNULL(SPLIT(nm_line_usage, '-')[SAFE_OFFSET(1)], nm_line_usage)) nm_linha --nm_linha_new
+    ,TRIM(nm_station_usage) nm_estacao -- nm_estacao_new
     ,'N/A' as cd_status_embarque
     --,CONCAT(TRIM(IFNULL(SPLIT(nm_line, '-')[SAFE_OFFSET(1)], nm_line)),TRIM(IFNULL(SPLIT(nm_station, '-')[SAFE_OFFSET(1)], nm_station))) nm_estacao_linha
     ,count(cd_qrcode_media) as qt_uso
     ,sum(vl_unit_price) as valor_uso
-    from `prd-autopass-bi-001.itg.vw_itg_trs_top001_qrcode_usage`
+    from ${ref("tb_itg_trs_top001_qrcode_usage")} 
+    --`dev-autopass-bi-001.itg.tb_itg_trs_top001_qrcode_usage`
+    --`dev-autopass-bi-001.itg.vw_itg_trs_top001_qrcode_usage`
     where dt_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
     group by all
     ),
-
-
     finalizacao_union as (
     select
-    produto_agrupado
-    , valorado
-    , repasse_clearing
-    , comissionamento
-    ,origem
+    origem
     ,ts_processing
     ,ds_tipo_dispositivo
     ,cd_origem_sistema
@@ -205,101 +232,101 @@ WITH union_catracadas as (
     ,CONCAT(nm_linha_new,nm_estacao_new) nm_estacao_linha_new
     ,qt_uso
     ,valor_uso
-    ,CASE
-    WHEN ds_produto = 'AC ARUJA' THEN 'ESPECIAL'
-    WHEN ds_produto = 'AC COTIA' THEN 'ESPECIAL'
-    WHEN ds_produto = 'AC TABOAO' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ACOMP.' THEN 'ESPECIAL'
-    WHEN ds_produto = 'BOTOEIRAS' THEN 'PAGANTE DINHEIRO'
-    WHEN ds_produto = 'COMUM' THEN 'COMUM'
-    WHEN ds_produto = 'ESC ARUJA' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC COTIA' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC MT PREF' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC MT SEC EDU' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC PAULISTA' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC PL COTIA' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC PL RGS' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESC. TABOAO' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESP ARUJA' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESP ARUJA AC' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESP COTIA' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESP COTIA AC' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESP TABOAO' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESP TABOAO AC' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESP. C/AC' THEN 'ESPECIAL'
-    WHEN ds_produto = 'ESPECIAL' THEN 'ESPECIAL'
-    WHEN ds_produto = 'FUNCIONAL' THEN 'FUNCIONAL'
-    WHEN ds_produto = 'GRATUIDADE' THEN 'GRATUIDADE'
-    WHEN ds_produto = 'MAE COTIANA' THEN 'GRATUIDADE'
-    WHEN ds_produto = 'PGTE MOEDEIRA' THEN 'PAGANTE DINHEIRO'
-    WHEN ds_produto = 'SENIOR' THEN 'SENIOR'
-    WHEN ds_produto = 'SENIOR ARUJA' THEN 'SENIOR'
-    WHEN ds_produto = 'SENIOR COTIA' THEN 'SENIOR'
-    WHEN ds_produto = 'SENIOR PAULISTA' THEN 'SENIOR PAULISTA'
-    WHEN ds_produto = 'SENIOR RGS' THEN 'SENIOR'
-    WHEN ds_produto = 'V.T.' THEN 'VALE TRANSPORTE'
-    WHEN ds_produto = 'VT' THEN 'VALE TRANSPORTE'
-    WHEN ds_produto = 'V.T. GUARUPAS' THEN 'FUNCIONAL'
-    WHEN ds_produto = 'AGENTES TABOAO' THEN 'FUNCIONAL'
-    WHEN ds_produto = 'COLABORADOR' THEN 'FUNCIONAL'
-    WHEN ds_produto IN ('TESTE MOBI 8/9','TOP TESTE CPTM', 'TOP TESTE METRO', 'TOP TESTE VIA4', 'TESTE BNT', 'TESTE VIA MOBI') THEN 'TESTE'
-    WHEN ds_produto = 'SENIOR TABOAO' THEN 'SENIOR PAULISTA'
-    WHEN ds_produto = 'COMUM' THEN 'COMUM'
-    WHEN ds_produto = 'COMUM TOP' THEN 'COMUM'
-    WHEN ds_produto = 'COMUM VALONLINE' THEN 'COMUM'
-    WHEN ds_produto = 'ESC TABOAO ABASP' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR ARUJA' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR COTIA' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR TABOAO' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR TABOAO MUNI' THEN 'ESCOLAR'
-    WHEN ds_produto = 'ESCOLAR TOP' THEN 'ESCOLAR'
-    WHEN ds_produto = 'TOP COMUM' THEN 'COMUM'
-    WHEN ds_produto = 'TOP ESCOLAR' THEN 'ESCOLAR'
-    WHEN ds_produto = 'VT TOP' THEN 'VALE TRANSPORTE'
-    WHEN ds_produto = 'ESCOLAR DINH.' THEN 'ESCOLAR'	--tmob
-    WHEN ds_produto = 'VC D INTEG.' THEN 'COMUM'	--tmob
-    WHEN ds_produto = 'VC D TRILHO' THEN 'COMUM'	--tmob
-    WHEN ds_produto = 'VE D G TRI' THEN 'ESCOLAR'	--tmob
-    WHEN ds_produto = 'RESTITUICAO' THEN 'RESTITUICAO'	--tmob
-    WHEN ds_produto = 'VC M ONIBUS' THEN 'COMUM'	--tmob
-    WHEN ds_produto = 'FIDELIDADE 20' THEN 'COMUM'	--tmob
-    WHEN ds_produto = 'VALE TRANSPORTE TOP' THEN 'VALE TRANSPORTE'	--tmob
-    WHEN ds_produto = 'VC D ONIBUS' THEN 'COMUM'	--tmob
-    WHEN ds_produto = 'VC M TRILHO' THEN 'COMUM'	--tmob
-    WHEN ds_produto = 'FIDELIDADE 50' THEN 'COMUM'	--tmob
-    WHEN ds_produto in ('QR PLBS', 'QR SUPRESSAO', 'QR SUPRESSAO CPTM', 'QR TESTE METRO', 'QRCODE NEXT INTEG', 'LOTE UNITARIO', 'PRODUTO QRCODE', 'UNITARIO', 'UNITARIO OFFLINE', 'PRODUTO QRCODE A', 'QRCONTING')   THEN 'QR CODE'
-    WHEN ds_produto in ('ESP.', 'ESP. TABOAO AC', 'ACOMP TABOAO', 'ESPECIAL TABOAO') THEN 'ESPECIAL'
-    WHEN ds_produto in ('AGENTES', 'COLAB CPTM', 'FUNC GUARUPAS') THEN 'FUNCIONAL'
-    WHEN ds_produto in ('PGTE', 'PGTE GUARUPAS') THEN 'PAGANTE DINHEIRO'
-    WHEN ds_produto in ('EMV', 'EMV CREDITO', 'EMV DEBITO') THEN 'EMV'
-    WHEN ds_produto in ('VT-EXP') THEN 'VALE TRANSPORTE'
-    WHEN ds_produto in ('ESC.', 'PROF.')  THEN 'ESCOLAR'
-    WHEN ds_produto in ('QR TESTE CPTM', 'QR TESTE VIA4', 'QR TESTE VIAMOBI') THEN 'TESTE'
-    WHEN ds_produto = 'VC D TRILHO' THEN 'COMUM'
-      WHEN ds_produto = 'VC M ONIBUS L' THEN 'COMUM'
-      WHEN ds_produto = 'COMUM DINHEIRO' THEN 'COMUM'
-      WHEN ds_produto = 'VC M INTEG. L' THEN 'COMUM'
-      WHEN ds_produto = 'FIDELIDADE 10' THEN 'COMUM'
-      WHEN ds_produto = 'VC D ONIBUS' THEN 'COMUM'
-      WHEN ds_produto = 'VC M TRILHO L' THEN 'COMUM'
-      WHEN ds_produto = 'VC M INTEG.' THEN 'COMUM'
-      WHEN ds_produto = 'VC D INTEG. L' THEN 'COMUM'
-      WHEN ds_produto = 'FIDELIDADE 8' THEN 'COMUM'
-      WHEN ds_produto = 'VC M ONIBUS' THEN 'COMUM'
-      WHEN ds_produto = 'VD D G T L' THEN 'COMUM'
-      WHEN ds_produto = 'VD D G O L' THEN 'COMUM'
-      WHEN ds_produto = 'ABT' THEN 'ABT'
-      WHEN ds_produto = 'BENFACIL' THEN 'QR CODE'
-      WHEN ds_produto = 'EMPRESARIAL' THEN 'EMPRESARIAL'
-      WHEN ds_produto = 'QR METRA TRANSF' THEN 'QR CODE'
-      WHEN ds_produto = 'TOP TROCA' THEN 'TOP TROCA'
-      WHEN ds_produto = 'QRCODE' THEN 'QR CODE'
-      WHEN ds_produto = 'EDMONSON' THEN 'PAGANTE DINHEIRO'
-      WHEN ds_produto = 'TOP PROF. RGS' THEN 'ESCOLAR'
-    else ds_produto
-    end ds_mascara_produto
+    -- ,CASE
+    -- WHEN ds_produto = 'AC ARUJA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'AC COTIA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'AC TABOAO' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ACOMP.' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'BOTOEIRAS' THEN 'PAGANTE DINHEIRO'
+    -- WHEN ds_produto = 'COMUM' THEN 'COMUM'
+    -- WHEN ds_produto = 'ESC ARUJA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC COTIA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC MT PREF' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC MT SEC EDU' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC PAULISTA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC PL COTIA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC PL RGS' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC. TABOAO' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESP ARUJA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP ARUJA AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP COTIA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP COTIA AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP TABOAO' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP TABOAO AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP. C/AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESPECIAL' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'FUNCIONAL' THEN 'FUNCIONAL'
+    -- WHEN ds_produto = 'GRATUIDADE' THEN 'GRATUIDADE'
+    -- WHEN ds_produto = 'MAE COTIANA' THEN 'GRATUIDADE'
+    -- WHEN ds_produto = 'PGTE MOEDEIRA' THEN 'PAGANTE DINHEIRO'
+    -- WHEN ds_produto = 'SENIOR' THEN 'SENIOR'
+    -- WHEN ds_produto = 'SENIOR ARUJA' THEN 'SENIOR'
+    -- WHEN ds_produto = 'SENIOR COTIA' THEN 'SENIOR'
+    -- WHEN ds_produto = 'SENIOR PAULISTA' THEN 'SENIOR PAULISTA'
+    -- WHEN ds_produto = 'SENIOR RGS' THEN 'SENIOR'
+    -- WHEN ds_produto = 'V.T.' THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto = 'VT' THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto = 'V.T. GUARUPAS' THEN 'FUNCIONAL'
+    -- WHEN ds_produto = 'AGENTES TABOAO' THEN 'FUNCIONAL'
+    -- WHEN ds_produto = 'COLABORADOR' THEN 'FUNCIONAL'
+    -- WHEN ds_produto IN ('TESTE MOBI 8/9','TOP TESTE CPTM', 'TOP TESTE METRO', 'TOP TESTE VIA4', 'TESTE BNT', 'TESTE VIA MOBI') THEN 'TESTE'
+    -- WHEN ds_produto = 'COMUM' THEN 'COMUM'
+    -- WHEN ds_produto = 'COMUM TOP' THEN 'COMUM'
+    -- WHEN ds_produto = 'COMUM VALONLINE' THEN 'COMUM'
+    -- WHEN ds_produto = 'ESC TABOAO ABASP' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR ARUJA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR COTIA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR TABOAO' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR TABOAO MUNI' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR TOP' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'TOP COMUM' THEN 'COMUM'
+    -- WHEN ds_produto = 'TOP ESCOLAR' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'VT TOP' THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto = 'ESCOLAR DINH.' THEN 'ESCOLAR'	--tmob
+    -- WHEN ds_produto = 'VC D INTEG.' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VC D TRILHO' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VE D G TRI' THEN 'ESCOLAR'	--tmob
+    -- WHEN ds_produto = 'RESTITUICAO' THEN 'RESTITUICAO'	--tmob
+    -- WHEN ds_produto = 'VC M ONIBUS' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'FIDELIDADE 20' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VALE TRANSPORTE TOP' THEN 'VALE TRANSPORTE'	--tmob
+    -- WHEN ds_produto = 'VC D ONIBUS' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VC M TRILHO' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'FIDELIDADE 50' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto in ('QR PLBS', 'QR SUPRESSAO', 'QR SUPRESSAO CPTM', 'QR TESTE METRO', 'QRCODE NEXT INTEG', 'LOTE UNITARIO', 'PRODUTO QRCODE', 'UNITARIO', 'UNITARIO OFFLINE', 'PRODUTO QRCODE A', 'QRCONTING', 'QRCODE CORP')   THEN 'QR CODE'
+    -- WHEN ds_produto in ('ESP.', 'ESP. TABOAO AC', 'ACOMP TABOAO', 'ESPECIAL TABOAO') THEN 'ESPECIAL'
+    -- WHEN ds_produto in ('AGENTES', 'COLAB CPTM', 'FUNC GUARUPAS') THEN 'FUNCIONAL'
+    -- WHEN ds_produto in ('PGTE', 'PGTE GUARUPAS') THEN 'PAGANTE DINHEIRO'
+    -- WHEN ds_produto in ('EMV', 'EMV CREDITO', 'EMV DEBITO') THEN 'EMV'
+    -- WHEN ds_produto in ('VT-EXP') THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto in ('ESC.', 'PROF.')  THEN 'ESCOLAR'
+    -- WHEN ds_produto in ('QR TESTE CPTM', 'QR TESTE VIA4', 'QR TESTE VIAMOBI') THEN 'TESTE'
+    -- WHEN ds_produto = 'VC D TRILHO' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M ONIBUS L' THEN 'COMUM'
+    --   WHEN ds_produto = 'COMUM DINHEIRO' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M INTEG. L' THEN 'COMUM'
+    --   WHEN ds_produto = 'FIDELIDADE 10' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC D ONIBUS' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M TRILHO L' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M INTEG.' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC D INTEG. L' THEN 'COMUM'
+    --   WHEN ds_produto = 'FIDELIDADE 8' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M ONIBUS' THEN 'COMUM'
+    --   WHEN ds_produto = 'VD D G T L' THEN 'COMUM'
+    --   WHEN ds_produto = 'VD D G O L' THEN 'COMUM'
+    --   WHEN ds_produto = 'ABT' THEN 'ABT'
+    --   WHEN ds_produto = 'BENFACIL' THEN 'QR CODE'
+    --   WHEN ds_produto = 'EMPRESARIAL' THEN 'EMPRESARIAL'
+    --   WHEN ds_produto = 'QR METRA TRANSF' THEN 'QR CODE'
+    --   WHEN ds_produto = 'TOP TROCA' THEN 'TOP TROCA'
+    --   WHEN ds_produto = 'QRCODE' THEN 'QR CODE'
+    --   WHEN ds_produto = 'EDMONSON' THEN 'PAGANTE DINHEIRO' 
+    --   WHEN ds_produto = 'TOP PROF. RGS' THEN 'ESCOLAR' 
+    --   WHEN ds_produto = 'SENIOR TABOAO' THEN 'SENIOR PAULISTA' 
+   -- else 
+    ,ds_produto as ds_mascara_produto
     ,CASE
     WHEN nm_linha = '0-LINHA DEFAULT'THEN '0-LINHA DEFAULT'
     WHEN nm_linha = 'LINHA 0'THEN '0-LINHA DEFAULT'
@@ -551,15 +578,12 @@ WITH union_catracadas as (
     ELSE nm_estacao
     END nm_mascara_estacao --adicionado em 05/07/2024
     ,core.fn_aut001_nm_line_format(nm_linha_new) nm_mascara_linha_new --adicionado em 4/7
-    ,`dev-autopass-bi-001.core.fn_aut001_nm_station_format`( nm_estacao_new) nm_mascara_estacao_new  
+    ,core.fn_aut001_nm_station_format( nm_estacao_new) nm_mascara_estacao_new  
+    ,valorado
     from union_catracadas
     )
   select
-  produto_agrupado
-    , valorado
-    , repasse_clearing
-    , comissionamento
-    ,origem
+    origem
     ,ts_processing as dh_atualizacao
     ,cd_origem_sistema
     ,ds_tipo_dispositivo
@@ -588,31 +612,33 @@ WITH union_catracadas as (
     ,nm_mascara_linha_new
     ,nm_mascara_estacao
     ,nm_mascara_estacao_new
-    ,case
-    WHEN  ds_mascara_produto = 'ESPECIAL'	THEN 'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'FUNCIONAL' THEN	'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'ESCOLAR' THEN	'VALORADA'
-    WHEN  ds_mascara_produto = 'PAGANTE DINHEIRO' THEN	'PAGANTE DINHEIRO'
-    WHEN  ds_mascara_produto = 'GRATUIDADE' THEN	'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'SENIOR' THEN	'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'VALE TRANSPORTE' THEN	'VALORADA'
-    WHEN  ds_mascara_produto = 'COMUM' THEN	'VALORADA'
-    WHEN  ds_mascara_produto = 'QR CODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
-    WHEN  ds_mascara_produto = 'BU' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
-    WHEN ds_mascara_produto = 'EMV' THEN 'VALORADA'
-    WHEN  ds_mascara_produto = 'SENIOR PAULISTA' THEN	'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'TESTE' THEN	'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'QRCODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
-    WHEN  ds_mascara_produto = 'ABT' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
-    WHEN  ds_mascara_produto = 'BENFACIL' THEN 'VALORADA'
-    WHEN  ds_mascara_produto = 'EMPRESARIAL' THEN 'VALORADA'
-    WHEN  ds_mascara_produto = 'QR METRA TRANSF' THEN 'QR METRA TRANSF'
-    WHEN  ds_mascara_produto = 'TOP TROCA' THEN 'TOP TROCA'
-    WHEN  ds_mascara_produto = 'DESEMPREGADO' THEN 'NAO VALORADA'
-    WHEN  ds_mascara_produto = 'RAPOSO MUNI' THEN 'NAO VALORADA'
-    else 'N/A'
-    end ds_mascara_aplicacao,
+    -- ,case
+    -- WHEN  ds_mascara_produto = 'ESPECIAL'	THEN 'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'FUNCIONAL' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'ESCOLAR' THEN	'VALORADA'
+    -- WHEN  ds_mascara_produto = 'PAGANTE DINHEIRO' THEN	'PAGANTE DINHEIRO'
+    -- WHEN  ds_mascara_produto = 'GRATUIDADE' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'SENIOR' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'VALE TRANSPORTE' THEN	'VALORADA'
+    -- WHEN  ds_mascara_produto = 'COMUM' THEN	'VALORADA'
+    -- WHEN  ds_mascara_produto = 'QR CODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN  ds_mascara_produto = 'BU' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN ds_mascara_produto = 'EMV' THEN 'VALORADA'
+    -- WHEN  ds_mascara_produto = 'SENIOR PAULISTA' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'TESTE' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'QRCODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN  ds_mascara_produto = 'ABT' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN  ds_mascara_produto = 'BENFACIL' THEN 'VALORADA'
+    -- WHEN  ds_mascara_produto = 'EMPRESARIAL' THEN 'VALORADA'
+    -- WHEN  ds_mascara_produto = 'QR METRA TRANSF' THEN 'QR METRA TRANSF'
+    -- WHEN  ds_mascara_produto = 'TOP TROCA' THEN 'TOP TROCA'
+    -- WHEN  ds_mascara_produto = 'RAPOSO MUNI' THEN 'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'DESEMPREGADO' THEN 'NAO VALORADA'
+    -- else 'N/A'
+    --end
+    ,valorado AS ds_mascara_aplicacao,
     SHA256(CONCAT(COALESCE(nm_mascara_estacao, ''), COALESCE(nm_mascara_linha, ''))) AS cd_estacao_linha ,
     SHA256(CONCAT(COALESCE(nm_mascara_estacao_new , ''), COALESCE(nm_mascara_linha_new , ''))) AS cd_estacao_linha_new --adicionado em 13/12
   from finalizacao_union
-  group by all  
+  group by all 
+  -- ", null, [EnableFolding = true])
