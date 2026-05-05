@@ -45,6 +45,9 @@ SELECT
 
     -- STATUS
     status_orbi,
+    estacao,
+    linha,
+    empresa,
 
       -- Campos de controle
   "TMB001" AS origem,
