@@ -4,7 +4,7 @@ config {
   name: "tb_day_mrd_tpd001_asseteqatmlist",
      
   description: "Tabela diária tipada gerada a partir de tb_ext_mrd_tpd001_asseteqatmlist",
-  tags: ["day", "daily"],
+  tags: ["tpd001", "daily"],
   labels: {
     layer: "day",
     source: "ext"
