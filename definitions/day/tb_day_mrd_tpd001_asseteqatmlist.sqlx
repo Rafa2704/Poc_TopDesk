@@ -1,0 +1,28 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_asseteqatmlist",
+     
+  description: "Tabela diária tipada gerada a partir de tb_ext_mrd_tpd001_asseteqatmlist",
+  tags: ["day", "daily"],
+  labels: {
+    layer: "day",
+    source: "ext"
+  }
+}
+
+SELECT
+  CAST(Archived AS BOOL) AS Archived,
+  ArchivedReasonId,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', CreationDate) AS CreationDate,
+  Id,
+  SAFE.PARSE_TIMESTAMP('%Y-%m-%dT%H:%M:%E*SZ', ModificationDate) AS ModificationDate,
+  ObjectId,
+  Status,
+  TemplateId,
+
+     -- Campos de controle
+  "TPD001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_tpd001_asseteqatmlist")}
