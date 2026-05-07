@@ -22,7 +22,7 @@ const tables = [
 
 tables.forEach(table => {
   declare({
-    database: "prd-autopass-ed-001",
+    database: "dev-autopass-bi-001",
     schema: "ext",
     name: table
   });
