@@ -12,26 +12,26 @@ config {
   },
 
   dependencies: [
-    "tb_his_trs_top001_card_usage",
-    "tb_his_trs_top001_usage_data_trip",
-    "tb_his_trs_top001_usage_data_service",
-    "tb_his_trs_top001_usage_data_file",
-    "tb_his_trs_top001_process_batch",
-    "tb_his_trs_top001_clearing_payment",
-    "tb_his_mrd_top001_transport_provider",
-    "tb_his_mrd_top001_transport_provider_consortium",
-    "tb_his_mrd_top001_consortium",
-    "tb_his_mrd_top001_application",
-    "tb_his_mrd_top001_line_detail",
-    "tb_his_mrd_top001_line",
-    "tb_his_mrd_top001_line_direction",
-    "tb_his_trs_top001_device_log_file",
-    "tb_his_trs_top001_clearing",
-    "tb_his_trs_top001_hot_list_single",
-    "tb_his_mrd_top001_card",
-    "tb_his_mrd_top001_card_user",
-    "tb_his_mrd_top001_user",
-    "tb_his_mrd_top001_user_document",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_card_usage",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_trip",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_service",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_file",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_process_batch",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_consortium",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_application",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_line",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_line_direction",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_device_log_file",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_clearing",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_hot_list_single",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_card",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_card_user",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_user",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_user_document",
     "tb_itg_trs_top001_card_emission"
   ]
 }
@@ -39,13 +39,13 @@ config {
 -- Bloco de pre_operations: DELETE nas datas afetadas pelo delta (só roda em modo incremental)
 pre_operations {
   ${when(incremental(), `
-    DELETE FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
+    DELETE FROM \`dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate\`
     WHERE dt_card_usage IN (
       SELECT DISTINCT dt_card_usage
       FROM ${ref('tb_his_trs_top001_card_usage')}
       WHERE ts_processing > (
         SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
-        FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
+        FROM \`dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate\`
       )
        AND dt_card_usage >= '2025-01-01'
     )
@@ -68,7 +68,7 @@ incremental_dates AS (
   WHERE ts_processing > (
     ${when(incremental(),
       `SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
-       FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\``,
+       FROM \`dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate\``,
       `SELECT TIMESTAMP("1900-01-01 00:00:00+00")`
     )}
   )
