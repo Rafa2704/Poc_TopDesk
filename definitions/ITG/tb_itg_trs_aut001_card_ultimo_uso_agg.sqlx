@@ -1,0 +1,53 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "data_emissao",
+    }
+}
+
+WITH ultimo_uso AS (
+  SELECT 
+    LEFT(nr_card, 14) AS cartao_sem_digito,
+    MAX(dt_card_usage) AS dt_ultimo_uso
+  FROM ${ref('tb_itg_trs_top001_card_usage_gate')}
+  `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`
+  GROUP BY LEFT(nr_card, 14)
+),
+ 
+usuario AS (
+  SELECT
+    cd_usr_user,
+    dt_birth AS dt_nascimento
+  FROM `prd-autopass-bi-001.his.tb_his_mrd_tmb001_usr_user`
+)
+ 
+SELECT
+  emss.nr_card,
+  emss.dt_print AS data_emissao,
+  emss.ds_print_status AS status_impressao,
+  emss.nr_registered_number_cpf AS nr_cpf,
+  TO_HEX(SHA256(CAST(emss.nr_registered_number_cpf AS STRING))) AS nr_cpf_hash,
+  emss.cd_user,
+  usr.dt_nascimento,
+  DATE_DIFF(CURRENT_DATE(), usr.dt_nascimento, YEAR) AS idade,
+  emss.ds_card_status,
+  uso.dt_ultimo_uso AS dt_ultima_catracada,
+  DATE_DIFF(CURRENT_DATE(), uso.dt_ultimo_uso, DAY) AS dias_sem_uso,
+  CASE
+    WHEN uso.dt_ultimo_uso IS NULL THEN 'SEM USO NA BASE'
+    WHEN DATE_DIFF(CURRENT_DATE(), uso.dt_ultimo_uso, DAY) <= 60  THEN '0-60'
+    WHEN DATE_DIFF(CURRENT_DATE(), uso.dt_ultimo_uso, DAY) <= 120 THEN '61-120'
+    WHEN DATE_DIFF(CURRENT_DATE(), uso.dt_ultimo_uso, DAY) <= 150 THEN '121-150'
+    WHEN DATE_DIFF(CURRENT_DATE(), uso.dt_ultimo_uso, DAY) <= 180 THEN '151-180'
+    ELSE '180+'
+  END AS faixa_inatividade,
+  emss.ts_processing AS dh_atualizacao
+FROM `prd-autopass-bi-001.itg.tb_itg_trs_tmb001_card_emission` emss
+LEFT JOIN ultimo_uso uso
+  ON uso.cartao_sem_digito = LEFT(emss.nr_card, 14)
+LEFT JOIN usuario usr
+  ON usr.cd_usr_user = emss.cd_user
+WHERE emss.ds_card_status = 'ATIVO'
