@@ -56,7 +56,7 @@ SELECT cu.cd_card_usage_internal cd_card_usage_internal
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                           THEN 'OUTROS'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                       THEN 'MUNICIPAL'
   WHEN IFNULL(ds_consortium, 'MUNICIPAL') = 'MUNICIPAL'
-  AND nm_company = 'METRO - LINHA 17' 
+  AND tp.ds_transport_provider = 'METRO - LINHA 17' 
   THEN 'BNT'  
   ELSE                                                                                          'VERIFICAR'
 END AS ds_consortium_group
