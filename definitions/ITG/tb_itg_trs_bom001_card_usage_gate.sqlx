@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "itg",
     description: "Tabela itg de card usage gate bom ",
-    tags: ["cardusagegate"],
+    tags: ["itg"],
     bigquery: {
         partitionBy: "dt_card_usage",
     }

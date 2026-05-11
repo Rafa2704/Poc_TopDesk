@@ -4,7 +4,7 @@ config {
   type: "incremental",
   database: dataform.projectConfig.defaultDatabase,
   schema: "itg",
-  tags: ['cardusagegate'],
+  tags: ['itg'],
   name: "tb_itg_trs_top001_card_usage_gate",
   bigquery: {
     partitionBy: "dt_card_usage",

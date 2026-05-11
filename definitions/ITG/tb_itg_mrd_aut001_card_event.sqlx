@@ -22,7 +22,7 @@ Cartoes_Impressos AS (
     AND ds_print_status = 'IMPRESSO'
     AND nr_card IS NOT NULL
 ),
-
+--subu
 -- =========================================================================
 -- 2. BLOCO DE RECARGAS 
 
