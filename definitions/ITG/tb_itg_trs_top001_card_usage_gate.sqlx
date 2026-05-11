@@ -2,35 +2,36 @@
 
 config {
   type: "incremental",
-  database: "prd-autopass-ed-001",
+  database: dataform.projectConfig.defaultDatabase,
   schema: "itg",
+  tags: ['itg'],
   name: "tb_itg_trs_top001_card_usage_gate",
   bigquery: {
     partitionBy: "dt_card_usage",
     clusterBy: ["cd_card_usage_internal", "cd_issuer", "cd_transport_provider", "cd_application"]
   },
-  uniqueKey: ["cd_card_usage_internal"],
+
   dependencies: [
-    "tb_his_trs_top001_card_usage",
-    "tb_his_trs_top001_usage_data_trip",
-    "tb_his_trs_top001_usage_data_service",
-    "tb_his_trs_top001_usage_data_file",
-    "tb_his_trs_top001_process_batch",
-    "tb_his_trs_top001_clearing_payment",
-    "tb_his_mrd_top001_transport_provider",
-    "tb_his_mrd_top001_transport_provider_consortium",
-    "tb_his_mrd_top001_consortium",
-    "tb_his_mrd_top001_application",
-    "tb_his_mrd_top001_line_detail",
-    "tb_his_mrd_top001_line",
-    "tb_his_mrd_top001_line_direction",
-    "tb_his_trs_top001_device_log_file",
-    "tb_his_trs_top001_clearing",
-    "tb_his_trs_top001_hot_list_single",
-    "tb_his_mrd_top001_card",
-    "tb_his_mrd_top001_card_user",
-    "tb_his_mrd_top001_user",
-    "tb_his_mrd_top001_user_document",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_card_usage",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_trip",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_service",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_file",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_process_batch",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_consortium",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_application",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_line",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_line_direction",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_device_log_file",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_clearing",
+    "prd-autopass-bi-001.his.tb_his_trs_top001_hot_list_single",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_card",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_card_user",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_user",
+    "prd-autopass-bi-001.his.tb_his_mrd_top001_user_document",
     "tb_itg_trs_top001_card_emission"
   ]
 }
@@ -38,15 +39,15 @@ config {
 -- Bloco de pre_operations: DELETE nas datas afetadas pelo delta (só roda em modo incremental)
 pre_operations {
   ${when(incremental(), `
-    DELETE FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
+    DELETE FROM \`dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate\`
     WHERE dt_card_usage IN (
       SELECT DISTINCT dt_card_usage
       FROM ${ref('tb_his_trs_top001_card_usage')}
       WHERE ts_processing > (
         SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
-        FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\`
+        FROM \`dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate\`
       )
-    --   AND dt_card_usage >= '2026-04-20'
+       AND dt_card_usage >= '2025-01-01'
     )
   `)}
 }
@@ -67,11 +68,11 @@ incremental_dates AS (
   WHERE ts_processing > (
     ${when(incremental(),
       `SELECT COALESCE(MAX(ts_processing_usage), TIMESTAMP("1900-01-01 00:00:00+00"))
-       FROM \`prd-autopass-ed-001.itg.tb_itg_trs_top001_card_usage_gate\``,
+       FROM \`dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate\``,
       `SELECT TIMESTAMP("1900-01-01 00:00:00+00")`
     )}
   )
- -- AND dt_card_usage >= '2026-04-20'
+  AND dt_card_usage >= '2025-01-01'
 )
 
 SELECT
@@ -84,41 +85,63 @@ SELECT
   usage.cd_application,
   usage.cd_line_detail,
   core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card)   AS nr_card,
-  udoc.nr_registered_number                                                            AS nr_registered_number,
+  udoc.nr_registered_number                                                          AS nr_registered_number,
   cusr.cd_user,
   usage.cd_boarding_status,
   usage.vl_fare,
   usage.cd_process_batch,
   usage.cd_device_log_file,
   IFNULL(usage.cd_clearing, dlf.cd_clearing)                                          AS cd_clearing,
-  cl.dt_process_start                                                                  AS dt_process_start_clearing,
+  cl.dt_process_start                                                                 AS dt_process_start_clearing,
   u3.cd_vehicle,
   pb.dt_registration,
   pb.tm_registration,
   usage.cd_issuer_application,
   tp.ds_transport_provider                                                             AS nm_company,
   tp.ds_name_card                                                                      AS nm_card_company,
-  a.ds_short                                                                           AS ds_product,
+  a.displayName                                                                        AS ds_product,
+  a.produto_agrupado,
+  a.valorado,
+  a.repasse_clearing,
+  a.comissionamento,
 
-  core.fn_classificar_mascara_produto(core.fn_classificar_mascara_aplicacao(a.ds_short))  AS ds_mascara_aplicacao,
-  core.fn_classificar_mascara_aplicacao(a.ds_short)                                     AS ds_product_agg,
+#
+--   core.fn_classificar_mascara_produto(core.fn_classificar_mascara_aplicacao(a.ds_short))  AS ds_mascara_aplicacao,
+--   core.fn_classificar_mascara_aplicacao(a.ds_short)                                     AS ds_product_agg,
   --core.fn_aut001_application_format(a.ds_short)                                       AS ds_product_agg,
   IFNULL(c.ds_consortium, 'MUNICIPAL')                                                AS ds_consortium,
   CASE
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5'                             THEN 'INTERMUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT'                                THEN 'BNT'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA'               THEN 'INTERMUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE'               THEN 'INTERMUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS'                THEN 'INTERMUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE'                 THEN 'INTERMUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'                             THEN 'MUNICIPAL'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU'                           THEN 'RTO'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                    THEN 'OUTROS'
-    WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                THEN 'CONSÓRCIO NÃO ESPECIFICADO'
-    ELSE 'VERIFICAR'
-  END                                                                                  AS ds_consortium_group,
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'
+    AND tp.ds_transport_provider IN ('CPTM', 'METRO', 'VIA MOBILIDADE', 'VIAMOBILIDADE LINHAS 8 E 9') THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.'        THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5'                                    THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT'                                       THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA'                      THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE'                      THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS'                       THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE'                        THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'                                    THEN 'MUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU'                                  THEN 'RTO'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                           THEN 'OUTROS'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                       THEN 'MUNICIPAL'
+  ELSE                                                                                          'VERIFICAR'
+END AS ds_consortium_group,
+  -- CASE
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5'                             THEN 'INTERMUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT'                                THEN 'BNT'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA'               THEN 'INTERMUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE'               THEN 'INTERMUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS'                THEN 'INTERMUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE'                 THEN 'INTERMUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'                             THEN 'MUNICIPAL'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU'                           THEN 'RTO'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                    THEN 'OUTROS'
+  --   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                THEN 'CONSÓRCIO NÃO ESPECIFICADO'
+  --   ELSE 'VERIFICAR'
+  -- END                                                                                  AS ds_consortium_group,
   CASE
     WHEN ds_consortium = 'CPTM'  THEN 'TRILHO'
     WHEN ds_consortium = 'METRO' THEN 'TRILHO'
@@ -177,9 +200,16 @@ LEFT  JOIN ${ref('tb_his_mrd_top001_transport_provider_consortium')} tpc
   ON usage.cd_transport_provider = tpc.cd_transport_provider
 LEFT  JOIN ${ref('tb_his_mrd_top001_consortium')} c
   ON tpc.cd_consortium = c.cd_consortium
-LEFT  JOIN ${ref('tb_his_mrd_top001_application')} a
-  ON usage.cd_issuer_application = a.cd_issuer
- AND usage.cd_application = a.cd_application
+
+-- LEFT  JOIN ${ref('tb_his_mrd_top001_application')} a
+--   ON usage.cd_issuer_application = a.cd_issuer
+--  AND usage.cd_application = a.cd_application
+
+LEFT  JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` a 
+--`prd-autopass-bi-001.his.tb_his_mrd_top001_application` a
+  ON usage.cd_issuer_application = a.toIssuerCode
+ AND usage.cd_application = a.code
+
 LEFT  JOIN ${ref('tb_his_mrd_top001_line_detail')} ld
   ON usage.cd_line_detail = ld.cd_line_detail
 LEFT  JOIN ${ref('tb_his_mrd_top001_line')} lm
