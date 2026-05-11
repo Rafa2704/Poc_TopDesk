@@ -41,19 +41,36 @@ SELECT cu.cd_card_usage_internal cd_card_usage_internal
 --, a.ds_short ds_product --PRODUTO
 , IFNULL(c.ds_consortium, 'MUNICIPAL') ds_consortium --CONSORCIO --alterado 31/08/2023
 ,CASE
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5' THEN 'INTERMUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT' THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'
+    AND c.nm_company IN ('CPTM', 'METRO', 'VIA MOBILIDADE', 'VIAMOBILIDADE LINHAS 8 E 9','METRO - LINHA 17') THEN 'BNT'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.'        THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5'                                    THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT'                                       THEN 'BNT'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA' THEN 'INTERMUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE' THEN 'INTERMUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS' THEN 'INTERMUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE' THEN 'INTERMUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS' THEN 'MUNICIPAL'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU' THEN 'RTO'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS' THEN 'OUTROS'
-  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL THEN 'CONSÓRCIO NÃO ESPECIFICADO'
-ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA'                      THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE'                      THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS'                       THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE'                        THEN 'INTERMUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'                                    THEN 'MUNICIPAL'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU'                                  THEN 'RTO'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                           THEN 'OUTROS'
+  WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                       THEN 'MUNICIPAL'
+  ELSE                                                                                          'VERIFICAR'
+END AS ds_consortium_group
+-- ,CASE
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'INTERMUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5' THEN 'INTERMUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT' THEN 'BNT'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IN ('METRO','CPTM','VIAQUATRO','VIAMOBILIDADE') THEN 'BNT'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO ANHANGUERA' THEN 'INTERMUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERNORTE' THEN 'INTERMUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO INTERVIAS' THEN 'INTERMUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'CONSORCIO UNILESTE' THEN 'INTERMUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS' THEN 'MUNICIPAL'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU' THEN 'RTO'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS' THEN 'OUTROS'
+--   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL THEN 'CONSÓRCIO NÃO ESPECIFICADO'
+-- ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
 ,CASE 
   WHEN ds_consortium = "CPTM" THEN "TRILHO" 
   WHEN ds_consortium = "METRO" THEN "TRILHO"
