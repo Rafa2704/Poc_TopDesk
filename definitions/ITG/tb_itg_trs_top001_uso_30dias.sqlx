@@ -1,0 +1,25 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_card_usage",
+    }
+}
+
+SELECT
+  dt_card_usage,
+  tm_card_usage,
+  nr_card,
+  nr_registered_number,
+  nm_company,
+  ds_product,
+  ds_consortium,
+  ds_modal,
+  nm_station,
+  fl_hot_list,
+  dt_hot_list
+FROM ${ref('tb_itg_trs_top001_card_usage_gate')}
+-- `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`
+WHERE dt_card_usage >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 30 DAY)
