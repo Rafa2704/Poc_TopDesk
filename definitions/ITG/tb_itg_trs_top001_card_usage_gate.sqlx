@@ -105,7 +105,7 @@ SELECT
   a.repasse_clearing,
   a.comissionamento,
 
-
+#
 --   core.fn_classificar_mascara_produto(core.fn_classificar_mascara_aplicacao(a.ds_short))  AS ds_mascara_aplicacao,
 --   core.fn_classificar_mascara_aplicacao(a.ds_short)                                     AS ds_product_agg,
   --core.fn_aut001_application_format(a.ds_short)                                       AS ds_product_agg,
