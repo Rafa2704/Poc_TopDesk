@@ -112,7 +112,7 @@ SELECT
   IFNULL(c.ds_consortium, 'MUNICIPAL')                                                AS ds_consortium,
   CASE
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'OUTROS'
-    AND c.nm_company IN ('CPTM', 'METRO', 'VIA MOBILIDADE', 'VIAMOBILIDADE LINHAS 8 E 9') THEN 'BNT'
+    AND tp.ds_transport_provider IN ('CPTM', 'METRO', 'VIA MOBILIDADE', 'VIAMOBILIDADE LINHAS 8 E 9') THEN 'BNT'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'ABC SISTEMA DE TRANSPORTE SPE S.A.'        THEN 'INTERMUNICIPAL'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'AREA 5'                                    THEN 'INTERMUNICIPAL'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'BNT'                                       THEN 'BNT'
