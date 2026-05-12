@@ -6,6 +6,7 @@ config {
   description: "Tabela sumaria da query de vendas de atm em debito"
 }
 SELECT
+DISTINCT 
     -- IDENTIFICADORES
     cod_atm,
     estacao,
