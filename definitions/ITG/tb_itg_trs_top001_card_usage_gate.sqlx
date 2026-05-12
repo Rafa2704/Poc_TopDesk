@@ -29,7 +29,7 @@ config {
     "prd-autopass-bi-001.his.tb_his_mrd_top001_card_user",
     "prd-autopass-bi-001.his.tb_his_mrd_top001_user",
     "prd-autopass-bi-001.his.tb_his_mrd_top001_user_document",
-    "tb_itg_trs_top001_card_emission"
+    "prd-autopass-bi-001.itg.tb_itg_trs_top001_card_emission"
   ]
 }
 
