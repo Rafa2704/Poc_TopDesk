@@ -2,23 +2,15 @@ config {
   type: "incremental",
   schema: "his",
   name: "tb_his_trs_tmb001_atm_dinheiro",
-  description: "Tabela de incidentes persistida via Delete + Reinsert (3 dias)",
+  uniqueKey: ["idtrn"],
+  description: "Tabela de histori de debito",
   bigquery: {
     partitionBy: "data_trans",
   },
   tags: ["commercial"],
 }
 
-pre_operations {
-  ${ when(incremental(), `
-    DELETE FROM ${self()}
-    WHERE data_trans >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
-  `) }
-}
 
-SELECT *
-FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}
-
-${ when(incremental(), `
-  WHERE data_trans >= DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
-`) }
+SELECT 
+    *
+ FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}
