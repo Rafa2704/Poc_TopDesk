@@ -35,8 +35,13 @@ sstf_mediaproductversion,
 sstf_mediasizeinkb,
 sstf_mediacounter,
 sstf_samserverid,
-sstf_createdat,
-sstf_updatedat,
+FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%E*S',
+    TIMESTAMP(DATETIME(TIMESTAMP(sstf_createdat), 'America/Sao_Paulo'))
+) AS sstf_createdat,
+
+FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%E*S',
+    TIMESTAMP(DATETIME(TIMESTAMP(sstf_updatedat), 'America/Sao_Paulo'))
+) AS sstf_updatedat,
 sstf_blameuser
 FROM   ${ref("tb_day_trs_tmob001_sam_samtransactionfull")}
 )
