@@ -324,7 +324,7 @@ WITH union_catracadas as (
     --   WHEN ds_produto = 'TOP PROF. RGS' THEN 'ESCOLAR' 
     --   WHEN ds_produto = 'SENIOR TABOAO' THEN 'SENIOR PAULISTA' 
    -- else 
-    ,ds_produto as ds_mascara_produto
+    ,produto_agrupado as ds_mascara_produto
     ,CASE
     WHEN nm_linha = '0-LINHA DEFAULT'THEN '0-LINHA DEFAULT'
     WHEN nm_linha = 'LINHA 0'THEN '0-LINHA DEFAULT'
