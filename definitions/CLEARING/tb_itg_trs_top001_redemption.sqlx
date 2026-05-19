@@ -46,10 +46,10 @@ ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
 , cd_issuer
 , cd_application
 , ds_short_application
-    produto_agrupado,
-    valorado,
-    repasse_clearing,
-    comissionamento
+, produto_agrupado
+  ,  valorado
+   , repasse_clearing
+  ,  comissionamento
 --, core.fn_aut001_application_format(ds_short_application) ds_short_application_agg --ADICIONADO 10/12/2025
 , cd_transport_provider
 , cd_status
