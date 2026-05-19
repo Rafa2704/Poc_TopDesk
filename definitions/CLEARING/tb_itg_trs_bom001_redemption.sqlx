@@ -82,7 +82,7 @@ SELECT
     cp.cd_system_source cd_system_source,
     ld.ds_long nm_station, --ESTACAO ADICIONADO 12/12/2024
     lm.ds_long nm_line, --LINHA ADICIONADO 12/12/2024
-FROM his.tb_his_trs_bom001_clearing_payment cp
+FROM prd-autopass-bi-001.his.tb_his_trs_bom001_clearing_payment cp
 INNER JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
       ON cp.cd_application = B.code
       AND cp.cd_issuer = B.toIssuerCode
@@ -93,25 +93,25 @@ INNER JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
 
 
 --AND app.cd_status = 'A'  -- exclusão do filtro em 29/08
-LEFT OUTER JOIN his.tb_his_trs_bom001_device_log dl 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_device_log dl 
 ON dl.cd_device_log_file = cp.cd_device_log_file 
 AND dl.cd_process_batch = cp.cd_process_batch 
 AND dl.cd_device_log = cp.cd_device_log 
 AND dl.cd_device_log_detail = cp.cd_device_log_detail
 AND dl.dt_financial >= '2021-01-01'
-LEFT OUTER JOIN his.tb_his_mrd_bom001_line_detail ld
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line_detail ld
 on cp.cd_line_detail = ld.cd_line_detail
-LEFT OUTER JOIN his.tb_his_mrd_bom001_line lm
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line lm
 ON ld.cd_line = lm.cd_line
 --LEFT OUTER JOIN his.tb_his_mrd_bom001_transport_provider_line tpl  --esta tabela só existe no TOP
 --on ld.cd_line = tpl.cd_line 
-LEFT OUTER JOIN his.tb_his_mrd_bom001_transport_provider tp 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider tp 
 ON tp.cd_transport_provider = cp.cd_transport_provider
-LEFT OUTER JOIN his.tb_his_mrd_bom001_transport_provider_consortium tpc 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider_consortium tpc 
 ON tpc.cd_transport_provider = cp.cd_transport_provider
-LEFT OUTER JOIN his.tb_his_mrd_bom001_consortium c 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_consortium c 
 ON c.cd_consortium = tpc.cd_consortium
-LEFT OUTER JOIN his.tb_his_trs_bom001_clearing cl
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_clearing cl
 ON cp.cd_clearing = cl.cd_clearing
 WHERE 1 = 1
 AND cl.dt_process_start >= '2021-01-01'

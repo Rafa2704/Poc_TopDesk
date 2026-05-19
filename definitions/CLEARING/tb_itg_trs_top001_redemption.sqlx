@@ -107,7 +107,7 @@ FROM (
       , cp.cd_system_source cd_system_source
       , ld.ds_long nm_station --ESTACAO ADICIONADO 12/12/2024
       , lm.ds_long nm_line --LINHA ADICIONADO 12/12/2024
-      FROM his.tb_his_trs_top001_clearing_payment cp
+      FROM prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment cp
 
       -- INNER JOIN his.tb_his_mrd_top001_application app
       -- ON app.cd_application = cp.cd_application
@@ -119,30 +119,30 @@ FROM (
       AND cp.cd_issuer = B.toIssuerCode
 
 
-      LEFT OUTER JOIN his.tb_his_mrd_top001_line_detail ld
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail ld
       ON cp.cd_line_detail = ld.cd_line_detail
-      LEFT OUTER JOIN his.tb_his_mrd_top001_line lm
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line lm
       ON ld.cd_line = lm.cd_line
-      LEFT OUTER JOIN his.tb_his_trs_top001_device_log dl  --regra acertada em 20/09
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_device_log dl  --regra acertada em 20/09
       ON dl.cd_device_log_file = cp.cd_device_log_file
       AND dl.cd_process_batch = cp.cd_process_batch
       AND dl.cd_device_log = cp.cd_device_log
       AND dl.cd_device_log_detail = cp.cd_device_log_detail
-      LEFT OUTER JOIN his.tb_his_mrd_top001_transport_provider tp
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider tp
       ON tp.cd_transport_provider = cp.cd_transport_provider
  
-      LEFT OUTER JOIN his.tb_his_mrd_top001_transport_provider_consortium tpc
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium tpc
       --(SELECT * FROM his.tb_his_mrd_top001_transport_provider_consortium WHERE (cd_transport_provider NOT IN ('2') AND cd_consortium NOT IN ('9'))) tpc
       ON tpc.cd_transport_provider = cp.cd_transport_provider
  
-      LEFT OUTER JOIN his.tb_his_mrd_top001_consortium c
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_consortium c
       ON c.cd_consortium = tpc.cd_consortium
-      LEFT JOIN his.tb_his_trs_top001_clearing cl
+      LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_top001_clearing cl
       ON cp.cd_clearing = cl.cd_clearing
-      LEFT JOIN his.tb_his_trs_top001_device_log_file dlf
+      LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_top001_device_log_file dlf
       ON dlf.cd_process_batch = cp.cd_process_batch
       AND dlf.cd_device_log_file = cp.cd_device_log_file
-      LEFT JOIN his.tb_his_trs_top001_usage_data_file udf
+      LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_top001_usage_data_file udf
       ON  cp.cd_process_batch = udf.cd_process_batch
       and cp.cd_usage_data_file = udf.cd_usage_data_file
       WHERE 1 = 1
