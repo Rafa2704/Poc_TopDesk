@@ -114,9 +114,17 @@ FROM (
       -- AND app.cd_issuer = '14'
       -- AND app.cd_status = 'A'
 
-     LEFT JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
-      ON cp.cd_application = B.code
-      AND cp.cd_issuer = B.toIssuerCode
+    --  LEFT JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
+    --   ON cp.cd_application = B.code
+    --   AND cp.cd_issuer = B.toIssuerCode
+
+    LEFT JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` B
+        ON  CASE 
+        WHEN cp.cd_issuer_application = '0' AND cp.cd_application = '100' 
+        THEN '14'
+        ELSE cp.cd_issuer_application 
+      END = B.toIssuerCode
+        AND cp.cd_application = B.code 
 
 
       LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail ld
