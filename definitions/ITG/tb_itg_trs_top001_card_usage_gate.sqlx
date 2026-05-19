@@ -185,9 +185,20 @@ LEFT  JOIN ${ref('tb_his_mrd_top001_transport_provider_consortium')} tpc
   ON  usage.cd_transport_provider = tpc.cd_transport_provider
 LEFT  JOIN ${ref('tb_his_mrd_top001_consortium')} c
   ON  tpc.cd_consortium = c.cd_consortium
-LEFT  JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` a
-  ON  usage.cd_issuer_application = a.toIssuerCode
- AND  usage.cd_application        = a.code
+
+LEFT JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` a
+  ON  CASE 
+        WHEN usage.cd_issuer_application = '0' AND usage.cd_application = '100' 
+        THEN '14'
+        ELSE usage.cd_issuer_application 
+      END = a.toIssuerCode
+  AND usage.cd_application = a.code
+
+-- LEFT  JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` a
+--   ON  usage.cd_issuer_application = a.toIssuerCode
+--  AND  usage.cd_application        = a.code
+
+
 LEFT  JOIN ${ref('tb_his_mrd_top001_line_detail')} ld
   ON  usage.cd_line_detail = ld.cd_line_detail
 LEFT  JOIN ${ref('tb_his_mrd_top001_line')} lm
