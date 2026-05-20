@@ -54,7 +54,7 @@ ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
 , cd_transport_provider
 , cd_status
 , case
-  when ds_short_application = 'QRCODE' then  'QRCODE'
+  when ds_short_application LIKE '%QR%' then  'QRCODE'
   -- when ds_short_application = 'EMV' then  'EMV' alterado por Patucci dia 02/03/2026 devido a inclusão das aplicações 180 e 181 -- EMV CRÉDITO E EMV DÉBITO
   when ds_short_application like '%EMV%' then  'EMV'
   else 'TOP'
@@ -118,7 +118,7 @@ FROM (
     --   ON cp.cd_application = B.code
     --   AND cp.cd_issuer = B.toIssuerCode
 
-    LEFT JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` B
+    INNER JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` B
         ON  CASE 
         WHEN cp.cd_issuer_application = '0' AND cp.cd_application = '100' 
         THEN '14'
