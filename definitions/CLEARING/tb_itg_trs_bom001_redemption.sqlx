@@ -83,9 +83,17 @@ SELECT
     ld.ds_long nm_station, --ESTACAO ADICIONADO 12/12/2024
     lm.ds_long nm_line, --LINHA ADICIONADO 12/12/2024
 FROM prd-autopass-bi-001.his.tb_his_trs_bom001_clearing_payment cp
-INNER JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
-      ON cp.cd_application = B.code
-      AND cp.cd_issuer = B.toIssuerCode
+
+INNER JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` B
+        ON  CASE 
+        WHEN cp.cd_issuer_application = '0' AND cp.cd_application = '100' 
+        THEN '14'
+        ELSE cp.cd_issuer_application 
+      END = B.toIssuerCode
+        AND cp.cd_application = B.code 
+-- INNER JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
+--       ON cp.cd_application = B.code
+--       AND cp.cd_issuer = B.toIssuerCode
 
 -- INNER JOIN his.tb_his_mrd_bom001_application app 
 -- ON app.cd_application = cp.cd_application 
