@@ -32,7 +32,10 @@ const tables = [
   "tb_ext_mrd_tpd001_incidentpriorities",
   "tb_ext_mrd_tpd001_incidenttypes",
   "tb_ext_mrd_tpd001_incidenturgencies",
-  "tb_ext_trs_aut001_monitoramento_canais"
+  "tb_ext_trs_aut001_monitoramento_canais",
+  "tb_ext_trs_pwb001_auditoria",
+  "tb_ext_trs_pwb001_governanca",
+  "tb_ext_trs_pwb001_historico_refresh"
 
 ];
 
