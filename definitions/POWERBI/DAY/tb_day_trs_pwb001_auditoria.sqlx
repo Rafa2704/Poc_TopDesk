@@ -1,0 +1,20 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_pwb001_auditoria",
+  tags: ["powerbi"],
+  description: "Auditoria de relatórios Power BI — metadados de reports da organização, incluindo responsáveis pela criação e modificação, workspace e dataset vinculado."
+}
+
+SELECT
+  CAST(report_id        AS STRING)    AS report_id,
+  CAST(report_name      AS STRING)    AS report_name,
+  CAST(report_type      AS STRING)    AS report_type,
+  CAST(workspace_id     AS STRING)    AS workspace_id,
+  CAST(dataset_id       AS STRING)    AS dataset_id,
+  CAST(createdBy        AS STRING)    AS created_by,
+  CAST(createdDateTime  AS TIMESTAMP) AS created_at,
+  CAST(modifiedBy       AS STRING)    AS modified_by,
+  CAST(modifiedDateTime AS TIMESTAMP) AS modified_at
+
+FROM ${ref("tb_ext_trs_pwb001_auditoria")}

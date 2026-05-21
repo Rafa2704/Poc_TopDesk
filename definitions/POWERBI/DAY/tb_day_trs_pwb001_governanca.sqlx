@@ -1,0 +1,22 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_pwb001_governanca",
+  tags: ["powerbi"],
+  description: "Governança de workspaces Power BI — inventário de datasets, reports, dataflows, usuários e eventos de acesso dos workspaces CORP e EXT."
+}
+
+SELECT
+  CAST(workspace_name AS STRING)    AS workspace_name,
+  CAST(workspace_id   AS STRING)    AS workspace_id,
+  CAST(item_type      AS STRING)    AS item_type,
+  CAST(item_name      AS STRING)    AS item_name,
+  CAST(item_id        AS STRING)    AS item_id,
+  CAST(item_webUrl    AS STRING)    AS item_web_url,
+  CAST(principalType  AS STRING)    AS principal_type,
+  CAST(principalId    AS STRING)    AS principal_id,
+  CAST(displayName    AS STRING)    AS display_name,
+  CAST(accessRight    AS STRING)    AS access_right,
+  CAST(accessTime     AS TIMESTAMP) AS access_time
+
+FROM ${ref("tb_ext_trs_pwb001_governanca")}
