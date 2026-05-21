@@ -1,0 +1,21 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_pwb001_governanca",
+  tags: ["powerbi"],
+  description: "Histórico incremental de governança de workspaces Power BI.",
+  uniqueKey: ["row_hash"]
+}
+
+SELECT
+DISTINCT
+  TO_HEX(MD5(CONCAT(
+    COALESCE(workspace_name, ''), COALESCE(workspace_id, ''),
+    COALESCE(item_type, ''), COALESCE(item_name, ''),
+    COALESCE(item_id, ''), COALESCE(item_web_url, ''),
+    COALESCE(principal_type, ''), COALESCE(principal_id, ''),
+    COALESCE(display_name, ''), COALESCE(access_right, ''),
+    COALESCE(CAST(access_time AS STRING), '')
+  ))) AS row_hash,
+  *
+FROM ${ref("tb_day_trs_pwb001_governanca")}

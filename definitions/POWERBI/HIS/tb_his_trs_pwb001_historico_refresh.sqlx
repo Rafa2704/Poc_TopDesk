@@ -1,0 +1,23 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_pwb001_historico_refresh",
+  tags: ["powerbi"],
+  description: "Histórico incremental de refresh de datasets Power BI.",
+  uniqueKey: ["row_hash"]
+}
+
+SELECT
+DISTINCT
+  TO_HEX(MD5(CONCAT(
+    COALESCE(workspace_name, ''), COALESCE(workspace_id, ''),
+    COALESCE(dataset_name, ''), COALESCE(dataset_id, ''),
+    COALESCE(CAST(last_refresh_time AS STRING), ''),
+    COALESCE(status, ''), COALESCE(CAST(duration_seconds AS STRING), ''),
+    COALESCE(refresh_type, ''), COALESCE(CAST(start_time AS STRING), ''),
+    COALESCE(CAST(end_time AS STRING), ''), COALESCE(failure_reason, ''),
+    CAST(risk_no_refresh AS STRING), CAST(risk_failed_recently AS STRING),
+    CAST(risk_long_duration AS STRING), CAST(risk_manual_only AS STRING)
+  ))) AS row_hash,
+  *
+FROM ${ref("tb_day_trs_pwb001_historico_refresh")}

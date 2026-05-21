@@ -21,6 +21,11 @@ SELECT
   CAST(risk_no_refresh      AS BOOLEAN)   AS risk_no_refresh,
   CAST(risk_failed_recently AS BOOLEAN)   AS risk_failed_recently,
   CAST(risk_long_duration   AS BOOLEAN)   AS risk_long_duration,
-  CAST(risk_manual_only     AS BOOLEAN)   AS risk_manual_only
+  CAST(risk_manual_only     AS BOOLEAN)   AS risk_manual_only,
+
+      -- Campos de controle
+  "PWB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
 
 FROM ${ref("tb_ext_trs_pwb001_historico_refresh")}

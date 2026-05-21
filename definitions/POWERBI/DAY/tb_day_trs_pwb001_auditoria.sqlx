@@ -15,6 +15,11 @@ SELECT
   CAST(createdBy        AS STRING)    AS created_by,
   CAST(createdDateTime  AS TIMESTAMP) AS created_at,
   CAST(modifiedBy       AS STRING)    AS modified_by,
-  CAST(modifiedDateTime AS TIMESTAMP) AS modified_at
+  CAST(modifiedDateTime AS TIMESTAMP) AS modified_at,
+
+    -- Campos de controle
+  "PWB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
 
 FROM ${ref("tb_ext_trs_pwb001_auditoria")}

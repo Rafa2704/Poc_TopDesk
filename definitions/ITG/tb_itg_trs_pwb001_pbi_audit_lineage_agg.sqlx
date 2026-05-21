@@ -2,6 +2,7 @@
 config {
     type: "table", 
     schema: "itg",
+    tags: ["powerbi"],
     description: "Tabela integrada de lineage do Power BI, cruzando metadados de dataflows com informações de auditoria de relatórios e datasets. Permite rastrear quais tabelas do BigQuery são consumidas por quais dataflows, datasets e relatórios do Power BI.",
     columns: {
         bq_project: "Projeto do BigQuery onde a tabela está localizada",
