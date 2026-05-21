@@ -17,6 +17,11 @@ SELECT
   CAST(principalId    AS STRING)    AS principal_id,
   CAST(displayName    AS STRING)    AS display_name,
   CAST(accessRight    AS STRING)    AS access_right,
-  CAST(accessTime     AS TIMESTAMP) AS access_time
+  CAST(accessTime     AS TIMESTAMP) AS access_time,
+
+      -- Campos de controle
+  "PWB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
 
 FROM ${ref("tb_ext_trs_pwb001_governanca")}
