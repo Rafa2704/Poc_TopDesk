@@ -126,3 +126,9 @@ declare({
   schema: 'itg',
   name: 'tb_itg_trs_top001_card_emission',
 });
+
+declare({
+  database: 'prd-autopass-bi-001',
+  schema: 'itg',
+  name: 'tb_itg_trs_tmb001_card_emission',
+});

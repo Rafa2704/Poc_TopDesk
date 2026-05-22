@@ -32,7 +32,8 @@ config {
     "prd-autopass-bi-001.his.tb_his_mrd_top001_card_user",
     "prd-autopass-bi-001.his.tb_his_mrd_top001_user",
     "prd-autopass-bi-001.his.tb_his_mrd_top001_user_document",
-    "tb_itg_trs_top001_card_emission"
+    "tb_itg_trs_top001_card_emission",
+    "tb_itg_trs_tmb001_card_emission"
   ]
 }
 
@@ -85,8 +86,8 @@ SELECT
   usage.cd_application,
   usage.cd_line_detail,
   core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card)   AS nr_card,
-  udoc.nr_registered_number                                                          AS nr_registered_number,
-  cusr.cd_user,
+  usr.nr_registered_number_cpf                                                          AS nr_registered_number,
+  usr.cd_user,
   usage.cd_boarding_status,
   usage.vl_fare,
   usage.cd_process_batch,
@@ -159,11 +160,11 @@ END AS ds_consortium_group,
     WHEN usage.cd_card_design = '17'                      THEN 'HÍBRIDO'
     ELSE 'OUTROS'
   END                                                                                  AS ds_card,
-  CASE WHEN card.cd_status = 'H' THEN card.dt_registration ELSE NULL END              AS dt_hot_list,
-  CASE WHEN card.cd_status = 'H' THEN hls.cd_hot_list_reason ELSE NULL END            AS cd_hot_list_reason,
+  CASE WHEN usr.ds_card_status = 'HOTLIST' THEN usr.dt_cancel ELSE NULL END              AS dt_hot_list,
+  CASE WHEN usr.ds_card_status = 'HOTLIST' THEN usr.cd_cancel_reason ELSE NULL END             AS cd_hot_list_reason,
   CASE
-    WHEN card.cd_status = 'H'
-     AND card.dt_registration || ' ' || card.tm_registration
+    WHEN usr.ds_card_status = 'HOTLIST' and cd_cancel_reason <> '99'
+     AND usr.dt_cancel || ' ' || usr.tm_cancel
       <= usage.dt_card_usage   || ' ' || usage.tm_card_usage THEN 1
     ELSE 0
   END                                                                                  AS fl_hot_list,
@@ -219,32 +220,9 @@ LEFT  JOIN ${ref('tb_his_trs_top001_device_log_file')} dlf
  AND usage.cd_device_log_file = dlf.cd_device_log_file
 LEFT  JOIN ${ref('tb_his_trs_top001_clearing')} cl
   ON COALESCE(usage.cd_clearing, dlf.cd_clearing) = cl.cd_clearing
-LEFT  JOIN ${ref('tb_itg_trs_top001_card_emission')} usr
+LEFT  JOIN ${ref('tb_itg_trs_tmb001_card_emission')} usr
   ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = usr.nr_card
-LEFT  JOIN ${ref('tb_his_trs_top001_hot_list_single')} hls
-  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = core.fn_aut001_card_format(hls.cd_issuer, hls.cd_card_design, hls.cd_card)
- AND hls.cd_status = 'A'
-LEFT  JOIN ${ref('tb_his_mrd_top001_card')} card
-  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = core.fn_aut001_card_format(card.cd_issuer, card.cd_card_design, card.cd_card)
-LEFT  JOIN ${ref('tb_his_mrd_top001_card_user')} cusr
-  ON core.fn_aut001_card_format(usage.cd_issuer, usage.cd_card_design, usage.cd_card) = core.fn_aut001_card_format(cusr.cd_issuer, cusr.cd_card_design, cusr.cd_card)
-LEFT  JOIN (
-  SELECT cd_user, nr_registered_number
-  FROM (
-    SELECT
-      udoc.cd_user,
-      udoc.nr_registered_number,
-      u.dt_birth AS dt_nascimento,
-      RANK() OVER (PARTITION BY udoc.cd_user ORDER BY udoc.cd_user_document DESC) AS rank1
-    FROM ${ref('tb_his_mrd_top001_user')} u
-    LEFT JOIN ${ref('tb_his_mrd_top001_user_document')} udoc
-      ON u.cd_user = udoc.cd_user
-    WHERE udoc.cd_status = 'A'
-      AND udoc.cd_document_type_usage = '6'
-  )
-  WHERE rank1 = 1
-) udoc
-  ON cusr.cd_user = udoc.cd_user
+
 
 WHERE usage.cd_card_usage_type IN ('1', '5')
   AND IFNULL(usage.nr_part_fare, '1') = '1'
