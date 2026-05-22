@@ -38,47 +38,21 @@ SELECT
  
   -- [ADD]
   usage.cd_hot_list_reason,   -- [ADD]
-  hlr.ds_hot_list_reason,     -- [ADD]
+  emss.ds_cancel_reason ds_hot_list_reason,     -- [ADD]
  
   cd_card_usage_type as cd_tipo_uso_cartao,
   COUNT(cd_card_usage_internal) AS qt_uso,
   SUM(vl_fare) vl_uso
 FROM
   prd-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate usage
-  LEFT JOIN prd-autopass-bi-001.itg.vw_itg_trs_top001_card_emission emss
+  LEFT JOIN prd-autopass-bi-001.itg.vw_itg_trs_tmb001_card_emission emss
     ON usage.nr_card = emss.nr_card
  
-  -- [ADD] código → descrição
-  LEFT JOIN (
-    SELECT
-      cd_hot_list_reason,
-      ds_hot_list_reason
-    FROM his.tb_his_mrd_top001_hot_list_reason
-    QUALIFY ROW_NUMBER() OVER (
-      PARTITION BY cd_hot_list_reason
-      ORDER BY dt_registration DESC
-    ) = 1
-  ) hlr
-    ON usage.cd_hot_list_reason = hlr.cd_hot_list_reason
-  -- [ADD]
  
 WHERE
   dt_card_usage >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 4 MONTH)
  
-GROUP BY
-  usage.nr_card,
-  emss.cd_card_design,
-  SHA256(nr_registered_number_cpf),
-  format_date('%Y-%m', dt_card_usage),
-  format_date('%Y-%m', dt_emission),
-  dt_card_usage,
-  ds_product,
-  cd_application,
-  ds_modal,
-  fl_hot_list,
-  cd_card_usage_type,
-  usage.cd_hot_list_reason,
-  hlr.ds_hot_list_reason
+GROUP BY all
  
 UNION ALL
  
