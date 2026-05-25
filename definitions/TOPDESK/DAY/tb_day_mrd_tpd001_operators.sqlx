@@ -1,0 +1,28 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_operators",
+  tags: ["topdesk"],
+  description: "Lookup de operadores do TOPdesk"
+}
+
+SELECT
+  CAST(id               AS STRING)    AS id,
+  CAST(name             AS STRING)    AS name,
+  CAST(email            AS STRING)    AS email,
+  CAST(loginName        AS STRING)    AS loginName,
+  CAST(employeeNumber   AS STRING)    AS employeeNumber,
+  CAST(telephoneNumber  AS STRING)    AS telephoneNumber,
+  CAST(mobileNumber     AS STRING)    AS mobileNumber,
+  CAST(status           AS STRING)    AS status,
+  CAST(branchId         AS STRING)    AS branchId,
+  CAST(budgetHolderId   AS STRING)    AS budgetHolderId,
+  CAST(departmentId     AS STRING)    AS departmentId,
+  CAST(creationDate     AS TIMESTAMP) AS creationDate,
+  CAST(modificationDate AS TIMESTAMP) AS modificationDate,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_operators")}

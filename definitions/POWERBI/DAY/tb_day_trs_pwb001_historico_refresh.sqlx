@@ -1,0 +1,31 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_pwb001_historico_refresh",
+  tags: ["powerbi"],
+  description: "Histórico de refresh de datasets Power BI — registra execuções de atualização por workspace e dataset, com duração, status, tipo e indicadores de risco como falhas recentes, longa duração e execução manual."
+}
+
+SELECT
+  CAST(workspace_name       AS STRING)    AS workspace_name,
+  CAST(workspace_id         AS STRING)    AS workspace_id,
+  CAST(dataset_name         AS STRING)    AS dataset_name,
+  CAST(dataset_id           AS STRING)    AS dataset_id,
+  CAST(lastRefreshTime      AS TIMESTAMP) AS last_refresh_time,
+  CAST(status               AS STRING)    AS status,
+  CAST(durationSeconds      AS FLOAT64)   AS duration_seconds,
+  CAST(refreshType          AS STRING)    AS refresh_type,
+  CAST(startTime            AS TIMESTAMP) AS start_time,
+  CAST(endTime              AS TIMESTAMP) AS end_time,
+  CAST(failureReason        AS STRING)    AS failure_reason,
+  CAST(risk_no_refresh      AS BOOLEAN)   AS risk_no_refresh,
+  CAST(risk_failed_recently AS BOOLEAN)   AS risk_failed_recently,
+  CAST(risk_long_duration   AS BOOLEAN)   AS risk_long_duration,
+  CAST(risk_manual_only     AS BOOLEAN)   AS risk_manual_only,
+
+      -- Campos de controle
+  "PWB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_pwb001_historico_refresh")}

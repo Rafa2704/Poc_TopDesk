@@ -1,0 +1,23 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_changedetails",
+  tags: ["topdesk"],
+  description: "Detalhes de changes do TOPdesk com cast de tipos"
+}
+
+SELECT
+  CAST(id                 AS STRING)    AS id,
+  CAST(changeNumber       AS STRING)    AS changeNumber,
+  CAST(briefDescription   AS STRING)    AS briefDescription,
+  CAST(requesterName      AS STRING)    AS requesterName,
+  CAST(externalNumber     AS STRING)    AS externalNumber,
+  CAST(archivingReasonId  AS STRING)    AS archivingReasonId,
+  CAST(assetId            AS STRING)    AS assetId,
+  CAST(creationDate       AS TIMESTAMP) AS creationDate,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_changedetails")}

@@ -1,8 +1,9 @@
 config {
-  type: "table",
+  type: "incremental",
   schema: "his",
   name: "tb_his_trs_tpd001_changes",
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
   bigquery: {
     partitionBy: "DATE(creationDate)",
   },
@@ -12,88 +13,64 @@ config {
 SELECT 
 approveImplManagerGroup,
 approveImplManagerId,
-
-CAST(authorizationDate AS TIMESTAMP) AS authorizationDate,
+authorizationDate,
 authorizingOperatorId,
 branchId,
 budgetHolderId,
-
-CAST(callDate AS TIMESTAMP) AS callDate,
+callDate,
 callerBranchId,
-CAST(cancellationDate AS TIMESTAMP) AS cancellationDate,
-
+cancellationDate,
 categoryId,
 changeNumber,
 changeType,
-
 closed,
-CAST(closureDate AS TIMESTAMP) AS closureDate,
-
+closureDate,
 coordinatorId,
-CAST(costs AS FLOAT64) AS costs,
-
+costs,
 DATETIME(SAFE_CAST(`creationDate` AS TIMESTAMP), "America/Sao_Paulo") AS creationDate,
 creatorId,
-
 currentPhase,
-CAST(currentPlannedCosts AS FLOAT64) AS currentPlannedCosts,
-CAST(currentPlannedTimeSpent_inSeconds AS FLOAT64) AS currentPlannedTimeSpent_inSeconds,
-
+currentPlannedCosts,
+currentPlannedTimeSpent_inSeconds,
 departmentId,
 emergencyChange,
-CAST(estimatedCosts AS FLOAT64) AS estimatedCosts,
-CAST(estimatedTimeSpent_inSeconds AS FLOAT64) AS estimatedTimeSpent_inSeconds,
-
+estimatedCosts,
+estimatedTimeSpent_inSeconds,
 evalChangeCanBeAuthorized,
-CAST(extensiveChangeImplementationDate AS TIMESTAMP) AS extensiveChangeImplementationDate,
-
+extensiveChangeImplementationDate,
 id,
 impactId,
-
-CAST(modificationDate AS TIMESTAMP) AS modificationDate,
+modificationDate,
 modifierId,
-
 operatorGroupId,
 operatorId,
 originalIncidentId,
-
-CAST(originalPlannedCosts AS FLOAT64) AS originalPlannedCosts,
-CAST(originalPlannedTimeSpent_inSeconds AS FLOAT64) AS originalPlannedTimeSpent_inSeconds,
-
-CAST(plannedAuthorizationDate AS TIMESTAMP) AS plannedAuthorizationDate,
-CAST(plannedFinalDate AS TIMESTAMP) AS plannedFinalDate,
-CAST(plannedImplementationDate AS TIMESTAMP) AS plannedImplementationDate,
-CAST(plannedStartDate AS TIMESTAMP) AS plannedStartDate,
-
+originalPlannedCosts,
+originalPlannedTimeSpent_inSeconds,
+plannedAuthorizationDate,
+plannedFinalDate,
+plannedImplementationDate,
+plannedStartDate,
 preliminaryRFCManagerGroup,
 preliminaryRFCManagerId,
-
 priorityId,
 processingStatusId,
-
 progressChangeCanBeAuthorized,
-
-CAST(realizedDate AS TIMESTAMP) AS realizedDate,
+realizedDate,
 rejected,
-CAST(rejectionDate AS TIMESTAMP) AS rejectionDate,
-
+rejectionDate,
 requestChangeCanBeAuthorized,
 requesterId,
-
-CAST(simpleChangeImplementationDate AS TIMESTAMP) AS simpleChangeImplementationDate,
-
-CAST(startDate AS TIMESTAMP) AS startDate,
+simpleChangeImplementationDate,
+startDate,
 started,
 status,
 subcategoryId,
-
 CAST(submissionDate AS TIMESTAMP) AS submissionDate,
 supplierId,
 templateId,
-
 CAST(timeTaken_inSeconds AS FLOAT64) AS timeTaken_inSeconds,
-
 typeId,
 versionId,
 withEvaluation
-FROM dev-autopass-bi-001.day.tb_day_trs_tpd001_changes
+FROM ${ref("tb_day_trs_tpd001_changes")}

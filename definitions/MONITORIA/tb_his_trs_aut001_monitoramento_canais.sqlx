@@ -1,0 +1,31 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_aut001_monitoramento_canais",
+  tags: ["monitoria"],
+  description: "Tabela histórica incremental de monitoramento de canais com chave hash de controle",
+    uniqueKey: ["id_hash"] 
+}
+
+SELECT 
+  -- Criação do campo Hash solicitado (Retorna um INT64 exclusivo baseado na combinação das strings)
+  FARM_FINGERPRINT(
+    CONCAT(
+      COALESCE(SAFE_CAST(canal AS STRING), ''),
+      COALESCE(SAFE_CAST(gerado_em AS STRING), ''),
+      COALESCE(SAFE_CAST(status AS STRING), '')
+    )
+  ) AS id_hash,
+
+  -- Campos vindos da camada 'day' (já tratados)
+  canal,
+  data_referencia,
+  gerado_em,
+  status,
+  pg_qtd_linhas,
+  pg_data_max,
+  bq_qtd_linhas,
+  bq_data_max,
+  diferenca
+FROM ${ref("tb_day_trs_aut001_monitoramento_canais")}
+

@@ -19,4 +19,4 @@ SELECT
   externalNumber,
   id,
   requesterName
-FROM dev-autopass-bi-001.day.tb_day_trs_tpd001_changedetails
+FROM ${ref("tb_day_trs_tpd001_changedetails")}

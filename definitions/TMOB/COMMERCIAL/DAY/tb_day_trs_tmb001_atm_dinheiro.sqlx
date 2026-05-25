@@ -1,0 +1,61 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_atm_dinheiro",
+  tags: ["commercial"],
+  description: "Tabela sumaria da query de vendas de atm em dinheiro"
+}
+
+
+
+SELECT
+    cod_atm,
+    estacao,
+    linha,
+    empresa,
+
+    -- TIMESTAMPS
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', abertura_servico)   AS abertura_servico,
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', fechamento_servico) AS fechamento_servico,
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', data_hora_trans)    AS data_hora_trans,
+    PARSE_DATE('%d/%m/%Y', data_trans)                       AS data_trans,
+    hora_trans,
+
+    -- PRODUTO
+    tipo_produto,
+    produto,
+    aplicacao,
+
+    -- IDs
+    idtrn,
+    ctm_datetime_tz,
+    external_id,
+    id_legado,
+
+    -- VOUCHER
+    voucher_gerado,
+    voucher_number,
+
+    SAFE_CAST(REPLACE(REPLACE(valor,         '.', ''), ',', '.') AS NUMERIC) AS valor,
+    SAFE_CAST(REPLACE(REPLACE(valor_recebido,'.', ''), ',', '.') AS NUMERIC) AS valor_recebido,
+
+    -- NOTAS
+    nota_2,
+    nota_5,
+    nota_10,
+    nota_20,
+    nota_50,
+    nota_100,
+    nota_200,
+
+    -- STATUS
+    status,
+
+    -- Campos de controle
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_atm_dinheiro")}
+
+

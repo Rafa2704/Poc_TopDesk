@@ -1,0 +1,53 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_problems",
+  tags: ["topdesk"],
+  description: "Problems do TOPdesk com cast de tipos",
+
+}
+
+SELECT
+  CAST(id                             AS STRING)    AS id,
+  CAST(status                         AS STRING)    AS status,
+
+  -- Datas
+  CAST(creationDate                   AS TIMESTAMP) AS creationDate,
+  CAST(modificationDate               AS TIMESTAMP) AS modificationDate,
+  CAST(closureDate                    AS TIMESTAMP) AS closureDate,
+  CAST(completionDate                 AS TIMESTAMP) AS completionDate,
+  CAST(registrationDate               AS TIMESTAMP) AS registrationDate,
+  CAST(targetDate                     AS TIMESTAMP) AS targetDate,
+
+  -- Flags
+  CAST(closed                         AS BOOL)      AS closed,
+  CAST(completed                      AS BOOL)      AS completed,
+
+  -- FKs
+  CAST(archivingReasonId              AS STRING)    AS archivingReasonId,
+  CAST(categoryId                     AS STRING)    AS categoryId,
+  CAST(durationId                     AS STRING)    AS durationId,
+  CAST(impactId                       AS STRING)    AS impactId,
+  CAST(managerId                      AS STRING)    AS managerId,
+  CAST(operatorGroupId                AS STRING)    AS operatorGroupId,
+  CAST(operatorId                     AS STRING)    AS operatorId,
+  CAST(priorityId                     AS STRING)    AS priorityId,
+  CAST(processingStatusId             AS STRING)    AS processingStatusId,
+  CAST(subcategoryId                  AS STRING)    AS subcategoryId,
+  CAST(typeId                         AS STRING)    AS typeId,
+  CAST(urgencyId                      AS STRING)    AS urgencyId,
+
+  -- Custos e durações
+  CAST(costs                          AS FLOAT64)   AS costs,
+  CAST(estimatedCosts                 AS FLOAT64)   AS estimatedCosts,
+  CAST(remainingCosts                 AS FLOAT64)   AS remainingCosts,
+  CAST(totalCosts                     AS FLOAT64)   AS totalCosts,
+  CAST(actualDuration_inSeconds       AS INT64)     AS actualDuration_inSeconds,
+  CAST(estimatedTimeSpent_inSeconds   AS INT64)     AS estimatedTimeSpent_inSeconds,
+  CAST(remainingTimeSpent_inSeconds   AS INT64)     AS remainingTimeSpent_inSeconds,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_problems")}

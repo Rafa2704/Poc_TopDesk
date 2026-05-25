@@ -1,0 +1,642 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_uso",
+    }
+}
+
+WITH union_catracadas as (
+    SELECT
+    'BOM' as origem
+    ,ts_processing
+    ,cd_system_source as cd_origem_sistema
+    ,'N/A' as ds_tipo_dispositivo
+    ,cd_company as cd_empresa
+    ,dt_card_usage as dt_uso
+    ,dt_process_start as dt_clearing
+    ,'PURO TRANSPORTE' ds_tipo_cartao
+    ,ds_consortium as ds_consorcio
+    ,ds_consortium_group as ds_abrangencia
+    ,ds_modal as ds_modal
+
+
+    ,ds_product as ds_produto
+    ,produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+
+    ,nm_company as nm_empresa
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao
+    ,nm_company as nm_empresa_new
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha_new
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao_new 
+    ,cd_boarding_status as cd_status_embarque
+    
+    ,COUNT(dt_card_usage) qt_uso
+    ,SUM(vl_fare) valor_uso
+    FROM ${ref("tb_itg_trs_bom001_card_usage_gate")} tese
+    -- dev-autopass-bi-001.itg.tb_itg_trs_bom001_card_usage_gate tese
+    --dev-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_gate tese
+    WHERE dt_card_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    GROUP BY ALL
+
+    union all
+
+    SELECT
+    'EMV' as origem
+    ,ts_processing
+    , cd_system_source as cd_origem_sistema
+    ,'N/A' as ds_tipo_dispositivo
+    ,cd_company as cd_empresa
+    ,dt_card_usage as dt_uso
+    ,dt_process_start as dt_clearing
+    ,'N/A' ds_tipo_cartao
+    ,ds_consortium as ds_consorcio
+    ,ds_consortium_group as ds_abrangencia
+    ,ds_modal as ds_modal
+
+    ,ds_product as ds_produto
+    ,produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+
+
+    ,nm_company as nm_empresa
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao
+    ,nm_company as nm_empresa_new
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha_new
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao_new
+    ,cd_boarding_status as cd_status_embarque
+    --,CONCAT(nm_line,nm_station) nm_estacao_linha
+    ,COUNT(dt_card_usage) qt_uso
+    ,SUM(vl_fare) valor_uso
+    FROM ${ref("tb_itg_trs_top001_emv_card_usage_gate")} tese
+    --dev-autopass-bi-001.itg.tb_itg_trs_top001_emv_card_usage_gate tese
+    --dev-autopass-bi-001.itg.vw_itg_trs_top001_emv_card_usage_gate tese
+    WHERE dt_card_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    GROUP BY ALL
+
+    union all
+
+
+    SELECT
+    'TOP' as origem
+    ,ts_processing
+    , cd_system_source as cd_origem_sistema
+    ,'N/A' as ds_tipo_dispositivo
+    ,cd_company as cd_empresa
+    ,dt_card_usage as dt_uso
+    ,dt_process_start_clearing as dt_clearing
+    ,ds_card ds_tipo_cartao
+    ,ds_consortium as ds_consorcio
+    ,ds_consortium_group as ds_abrangencia
+    ,ds_modal as ds_modal
+
+
+
+    ,ds_product as ds_produto
+    ,produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+
+    ,nm_company as nm_empresa
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao
+    ,nm_company as nm_empresa_new
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as nm_linha_new
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as nm_estacao_new
+    ,cd_boarding_status as cd_status_embarque
+    --,CONCAT(nm_line,nm_station) nm_estacao_linha
+    ,COUNT(dt_card_usage) qt_uso
+    ,SUM(vl_fare) valor_uso
+    FROM ${ref("tb_itg_trs_top001_card_usage_gate")} tese
+    -- dev-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate tese
+    --dev-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate tese
+    WHERE dt_card_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    GROUP BY ALL
+
+    union all
+
+    select
+    'QRCODE' as origem
+    ,ts_processing
+    ,cd_system_source as cd_origem_sistema
+    ,ds_device_type as ds_tipo_dispositivo
+    ,cd_company as cd_empresa
+    ,dt_usage as dt_uso
+    ,dt_process_start as dt_clearing
+    ,'N/A' ds_tipo_cartao
+    ,nm_company_usage as ds_consorcio
+    ,'N/A' as ds_abrangencia
+    ,'TRILHO' as ds_modal
+
+
+    ,ds_product as ds_produto
+    ,ds_product_internal as produto_agrupado
+    ,valorado
+    ,repasse_clearing
+    ,comissionamento
+
+
+    ,TRIM(IFNULL(SPLIT(nm_company, '-')[SAFE_OFFSET(1)], nm_company)) nm_empresa_old
+    ,TRIM(IFNULL(SPLIT(nm_line, '-')[SAFE_OFFSET(1)], nm_line)) nm_linha_old
+    ,TRIM(IFNULL(SPLIT(nm_station, '-')[SAFE_OFFSET(1)], nm_station)) nm_estacao_old
+
+    ,TRIM(IFNULL(SPLIT(nm_company_usage, '-')[SAFE_OFFSET(1)], nm_company_usage)) nm_empresa --nm_empresa_new
+    ,TRIM(IFNULL(SPLIT(nm_line_usage, '-')[SAFE_OFFSET(1)], nm_line_usage)) nm_linha --nm_linha_new
+    ,TRIM(nm_station_usage) nm_estacao -- nm_estacao_new
+    ,'N/A' as cd_status_embarque
+    --,CONCAT(TRIM(IFNULL(SPLIT(nm_line, '-')[SAFE_OFFSET(1)], nm_line)),TRIM(IFNULL(SPLIT(nm_station, '-')[SAFE_OFFSET(1)], nm_station))) nm_estacao_linha
+    ,count(cd_qrcode_media) as qt_uso
+    ,sum(vl_unit_price) as valor_uso
+    from ${ref("tb_itg_trs_top001_qrcode_usage")} 
+    --`dev-autopass-bi-001.itg.tb_itg_trs_top001_qrcode_usage`
+    --`dev-autopass-bi-001.itg.vw_itg_trs_top001_qrcode_usage`
+    where dt_usage >= date_sub(DATE_TRUNC(CURRENT_DATE(), MONTH), interval 2 year)
+    group by all
+    ),
+    finalizacao_union as (
+    select
+    origem
+    ,ts_processing
+    ,ds_tipo_dispositivo
+    ,cd_origem_sistema
+    ,cd_empresa
+    ,dt_uso
+    ,dt_clearing
+    ,ds_tipo_cartao
+    ,ds_consorcio
+    ,ds_abrangencia
+    ,ds_modal
+    ,ds_produto
+    ,nm_empresa
+    ,nm_linha
+    ,nm_estacao
+    ,nm_empresa_new
+    ,nm_linha_new
+    ,nm_estacao_new
+    ,cd_status_embarque
+    ,CONCAT(nm_linha,nm_estacao) nm_estacao_linha
+    ,CONCAT(nm_linha_new,nm_estacao_new) nm_estacao_linha_new
+    ,qt_uso
+    ,valor_uso
+    -- ,CASE
+    -- WHEN ds_produto = 'AC ARUJA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'AC COTIA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'AC TABOAO' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ACOMP.' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'BOTOEIRAS' THEN 'PAGANTE DINHEIRO'
+    -- WHEN ds_produto = 'COMUM' THEN 'COMUM'
+    -- WHEN ds_produto = 'ESC ARUJA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC COTIA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC MT PREF' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC MT SEC EDU' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC PAULISTA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC PL COTIA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC PL RGS' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESC. TABOAO' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESP ARUJA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP ARUJA AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP COTIA' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP COTIA AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP TABOAO' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP TABOAO AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESP. C/AC' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'ESPECIAL' THEN 'ESPECIAL'
+    -- WHEN ds_produto = 'FUNCIONAL' THEN 'FUNCIONAL'
+    -- WHEN ds_produto = 'GRATUIDADE' THEN 'GRATUIDADE'
+    -- WHEN ds_produto = 'MAE COTIANA' THEN 'GRATUIDADE'
+    -- WHEN ds_produto = 'PGTE MOEDEIRA' THEN 'PAGANTE DINHEIRO'
+    -- WHEN ds_produto = 'SENIOR' THEN 'SENIOR'
+    -- WHEN ds_produto = 'SENIOR ARUJA' THEN 'SENIOR'
+    -- WHEN ds_produto = 'SENIOR COTIA' THEN 'SENIOR'
+    -- WHEN ds_produto = 'SENIOR PAULISTA' THEN 'SENIOR PAULISTA'
+    -- WHEN ds_produto = 'SENIOR RGS' THEN 'SENIOR'
+    -- WHEN ds_produto = 'V.T.' THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto = 'VT' THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto = 'V.T. GUARUPAS' THEN 'FUNCIONAL'
+    -- WHEN ds_produto = 'AGENTES TABOAO' THEN 'FUNCIONAL'
+    -- WHEN ds_produto = 'COLABORADOR' THEN 'FUNCIONAL'
+    -- WHEN ds_produto IN ('TESTE MOBI 8/9','TOP TESTE CPTM', 'TOP TESTE METRO', 'TOP TESTE VIA4', 'TESTE BNT', 'TESTE VIA MOBI') THEN 'TESTE'
+    -- WHEN ds_produto = 'COMUM' THEN 'COMUM'
+    -- WHEN ds_produto = 'COMUM TOP' THEN 'COMUM'
+    -- WHEN ds_produto = 'COMUM VALONLINE' THEN 'COMUM'
+    -- WHEN ds_produto = 'ESC TABOAO ABASP' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR ARUJA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR COTIA' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR TABOAO' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR TABOAO MUNI' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'ESCOLAR TOP' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'TOP COMUM' THEN 'COMUM'
+    -- WHEN ds_produto = 'TOP ESCOLAR' THEN 'ESCOLAR'
+    -- WHEN ds_produto = 'VT TOP' THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto = 'ESCOLAR DINH.' THEN 'ESCOLAR'	--tmob
+    -- WHEN ds_produto = 'VC D INTEG.' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VC D TRILHO' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VE D G TRI' THEN 'ESCOLAR'	--tmob
+    -- WHEN ds_produto = 'RESTITUICAO' THEN 'RESTITUICAO'	--tmob
+    -- WHEN ds_produto = 'VC M ONIBUS' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'FIDELIDADE 20' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VALE TRANSPORTE TOP' THEN 'VALE TRANSPORTE'	--tmob
+    -- WHEN ds_produto = 'VC D ONIBUS' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'VC M TRILHO' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto = 'FIDELIDADE 50' THEN 'COMUM'	--tmob
+    -- WHEN ds_produto in ('QR PLBS', 'QR SUPRESSAO', 'QR SUPRESSAO CPTM', 'QR TESTE METRO', 'QRCODE NEXT INTEG', 'LOTE UNITARIO', 'PRODUTO QRCODE', 'UNITARIO', 'UNITARIO OFFLINE', 'PRODUTO QRCODE A', 'QRCONTING', 'QRCODE CORP')   THEN 'QR CODE'
+    -- WHEN ds_produto in ('ESP.', 'ESP. TABOAO AC', 'ACOMP TABOAO', 'ESPECIAL TABOAO') THEN 'ESPECIAL'
+    -- WHEN ds_produto in ('AGENTES', 'COLAB CPTM', 'FUNC GUARUPAS') THEN 'FUNCIONAL'
+    -- WHEN ds_produto in ('PGTE', 'PGTE GUARUPAS') THEN 'PAGANTE DINHEIRO'
+    -- WHEN ds_produto in ('EMV', 'EMV CREDITO', 'EMV DEBITO') THEN 'EMV'
+    -- WHEN ds_produto in ('VT-EXP') THEN 'VALE TRANSPORTE'
+    -- WHEN ds_produto in ('ESC.', 'PROF.')  THEN 'ESCOLAR'
+    -- WHEN ds_produto in ('QR TESTE CPTM', 'QR TESTE VIA4', 'QR TESTE VIAMOBI') THEN 'TESTE'
+    -- WHEN ds_produto = 'VC D TRILHO' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M ONIBUS L' THEN 'COMUM'
+    --   WHEN ds_produto = 'COMUM DINHEIRO' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M INTEG. L' THEN 'COMUM'
+    --   WHEN ds_produto = 'FIDELIDADE 10' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC D ONIBUS' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M TRILHO L' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M INTEG.' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC D INTEG. L' THEN 'COMUM'
+    --   WHEN ds_produto = 'FIDELIDADE 8' THEN 'COMUM'
+    --   WHEN ds_produto = 'VC M ONIBUS' THEN 'COMUM'
+    --   WHEN ds_produto = 'VD D G T L' THEN 'COMUM'
+    --   WHEN ds_produto = 'VD D G O L' THEN 'COMUM'
+    --   WHEN ds_produto = 'ABT' THEN 'ABT'
+    --   WHEN ds_produto = 'BENFACIL' THEN 'QR CODE'
+    --   WHEN ds_produto = 'EMPRESARIAL' THEN 'EMPRESARIAL'
+    --   WHEN ds_produto = 'QR METRA TRANSF' THEN 'QR CODE'
+    --   WHEN ds_produto = 'TOP TROCA' THEN 'TOP TROCA'
+    --   WHEN ds_produto = 'QRCODE' THEN 'QR CODE'
+    --   WHEN ds_produto = 'EDMONSON' THEN 'PAGANTE DINHEIRO' 
+    --   WHEN ds_produto = 'TOP PROF. RGS' THEN 'ESCOLAR' 
+    --   WHEN ds_produto = 'SENIOR TABOAO' THEN 'SENIOR PAULISTA' 
+   -- else 
+    ,produto_agrupado as ds_mascara_produto
+    ,CASE
+    WHEN nm_linha = '0-LINHA DEFAULT'THEN '0-LINHA DEFAULT'
+    WHEN nm_linha = 'LINHA 0'THEN '0-LINHA DEFAULT'
+    WHEN nm_linha = 'BLOQUEIO NÃO CADASTRADO'THEN 'BLOQUEIO NÃO CADASTRADO'
+    WHEN nm_linha = 'AZUL'THEN 'LINHA 1 - AZUL'
+    WHEN nm_linha = 'LINHA 1 - AZUL'THEN 'LINHA 1 - AZUL'
+    WHEN nm_linha = 'LINHA 10 - TURQUESA'THEN 'LINHA 10 - TURQUESA'
+    WHEN nm_linha = 'TURQUESA'THEN 'LINHA 10 - TURQUESA'
+    WHEN nm_linha = 'CORAL'THEN 'LINHA 11 - CORAL'
+    WHEN nm_linha = 'LINHA 11 - CORAL'THEN 'LINHA 11 - CORAL'
+    WHEN nm_linha = 'LINHA 12 - SAFIRA'THEN 'LINHA 12 - SAFIRA'
+    WHEN nm_linha = 'SAFIRA'THEN 'LINHA 12 - SAFIRA'
+    WHEN nm_linha = 'JADE'THEN 'LINHA 13 - JADE'
+    WHEN nm_linha = 'LINHA 13 - JADE'THEN 'LINHA 13 - JADE'
+    WHEN nm_linha = 'LINHA 13 JADE'THEN 'LINHA 13 - JADE'
+    WHEN nm_linha = 'LINHA 15 - PRATA'THEN 'LINHA 15 - PRATA'
+    WHEN nm_linha = 'PRATA'THEN 'LINHA 15 - PRATA'
+    WHEN nm_linha = 'LINHA 2 - VERDE'THEN 'LINHA 2 - VERDE'
+    WHEN nm_linha = 'VERDE'THEN 'LINHA 2 - VERDE'
+    WHEN nm_linha = 'LINHA 3 - VERMELHA'THEN 'LINHA 3 - VERMELHA'
+    WHEN nm_linha = 'VERMELHA'THEN 'LINHA 3 - VERMELHA'
+    WHEN nm_linha = 'AMARELA'THEN 'LINHA 4 - AMARELA'
+    WHEN nm_linha = 'LINHA 4 - AMARELA'THEN 'LINHA 4 - AMARELA'
+    WHEN nm_linha = 'LILAS'THEN 'LINHA 5 - LILAS'
+    WHEN nm_linha = 'LINHA 5 - LILAS'THEN 'LINHA 5 - LILAS'
+    WHEN nm_linha = 'LINHA 7 - RUBI'THEN 'LINHA 7 - RUBI'
+    WHEN nm_linha = 'RUBI'THEN 'LINHA 7 - RUBI'
+    WHEN nm_linha = 'DIAMANTE'THEN 'LINHA 8 - DIAMANTE'
+    WHEN nm_linha = 'LINHA 8 - DIAMANTE'THEN 'LINHA 8 - DIAMANTE'
+    WHEN nm_linha = 'ESMERALDA'THEN 'LINHA 9 - ESMERALDA'
+    WHEN nm_linha = 'LINHA 9 - ESMERALDA'THEN 'LINHA 9 - ESMERALDA'
+    WHEN nm_linha = 'LINHA LAB AUTOPASS-METRO'THEN 'LINHA LAB AUTOPASS-METRO'
+    WHEN nm_linha = 'EMBU-GUACU (CHACARA FLORIDA) - ITAPECERICA DA SERRA (VALO VELHO)'THEN 'N/A'
+    ELSE nm_linha
+    END nm_mascara_linha --adicionado em 4/7
+    ,CASE
+    WHEN nm_estacao = '0-LINHA DEFAULT' THEN '0-LINHA DEFAULT'
+    WHEN nm_estacao = 'AACD' THEN 'AACD-SERVIDOR'
+    WHEN nm_estacao = 'AACD-SERVIDOR' THEN 'AACD-SERVIDOR'
+    WHEN nm_estacao = 'ADOLFO PINHEIRO' THEN 'ADOLFO PINHEIRO'
+    WHEN nm_estacao = 'AEROPORTO - GUARULHOS' THEN 'AEROPORTO - GUARULHOS'
+    WHEN nm_estacao = 'AEROPORTO GUARULHOS' THEN 'AEROPORTO - GUARULHOS'
+    WHEN nm_estacao = 'AGUA BRANCA' THEN 'AGUA BRANCA'
+    WHEN nm_estacao = 'ALTO BOA VISTA' THEN 'ALTO DA BOA VISTA'
+    WHEN nm_estacao = 'ALTO DA BOA VISTA' THEN 'ALTO DA BOA VISTA'
+    WHEN nm_estacao = 'ALTO DO IPIRANGA' THEN 'ALTO DO IPIRANGA'
+    WHEN nm_estacao = 'ANA ROSA' THEN 'ANA ROSA'
+    WHEN nm_estacao = 'ANHANGABAU' THEN 'ANHANGABAU'
+    WHEN nm_estacao = 'ANTONIO GIANETTI' THEN 'ANTONIO GIANETTI'
+    WHEN nm_estacao = 'ANTONIO JOAO' THEN 'ANTONIO JOAO'
+    WHEN nm_estacao = 'ARACARE' THEN 'ARACARE'
+    WHEN nm_estacao = 'ARMENIA' THEN 'ARMENIA'
+    WHEN nm_estacao = 'ARTHUR ALVIN' THEN 'ARTUR ALVIM'
+    WHEN nm_estacao = 'ARTUR ALVIM' THEN 'ARTUR ALVIM'
+    WHEN nm_estacao = 'AUTODROMO' THEN 'AUTODROMO'
+    WHEN nm_estacao = 'BALTAZAR FIDELIS' THEN 'BALTAZAR FIDELIS'
+    WHEN nm_estacao = 'BARRA FUNDA' THEN 'BARRA FUNDA'
+    WHEN nm_estacao = 'BARUERI' THEN 'BARUERI'
+    WHEN nm_estacao = 'BELEM' THEN 'BELEM'
+    WHEN nm_estacao = 'BERRINI' THEN 'BERRINI'
+    WHEN nm_estacao = 'BLOQUEIO NÃO CADASTRADO' THEN 'BLOQUEIO NÃO CADASTRADO'
+    WHEN nm_estacao = 'BORBA GATO' THEN 'BORBA GATO'
+    WHEN nm_estacao = 'BOTUJURU' THEN 'BOTUJURU'
+    WHEN nm_estacao = 'BRAS' THEN 'BRAS'
+    WHEN nm_estacao = 'BRAS CUBAS' THEN 'BRAS CUBAS'
+    WHEN nm_estacao = 'BRESSER' THEN 'BRESSER - MOOCA'
+    WHEN nm_estacao = 'BRESSER  MOOCA' THEN 'BRESSER - MOOCA'
+    WHEN nm_estacao = 'BRESSER - MOOCA' THEN 'BRESSER - MOOCA'
+    WHEN nm_estacao = 'BRIGADEIRO' THEN 'BRIGADEIRO'
+    WHEN nm_estacao = 'BROOKLIN' THEN 'BROOKLIN'
+    WHEN nm_estacao = 'BUTANTA' THEN 'BUTANTA'
+    WHEN nm_estacao = 'CAIEIRAS' THEN 'CAIEIRAS'
+    WHEN nm_estacao = 'CALMOM VIANA' THEN 'CALMON VIANA'
+    WHEN nm_estacao = 'CALMON VIANA' THEN 'CALMON VIANA'
+    WHEN nm_estacao = 'CAMILO HADDAD' THEN 'CAMILO HADDAD'
+    WHEN nm_estacao = 'CAMPO BELO' THEN 'CAMPO BELO'
+    WHEN nm_estacao = 'CAMPO LIMPO' THEN 'CAMPO LIMPO'
+    WHEN nm_estacao = 'CAMPO LIMPO PAULISTA' THEN 'CAMPO LIMPO PAULISTA'
+    WHEN nm_estacao = 'CAPAO REDONDO' THEN 'CAPAO REDONDO'
+    WHEN nm_estacao = 'CAPUAVA' THEN 'CAPUAVA'
+    WHEN nm_estacao = 'CARANDIRU' THEN 'CARANDIRU'
+    WHEN nm_estacao = 'CARAPICUIBA' THEN 'CARAPICUIBA'
+    WHEN nm_estacao = 'CARRAO' THEN 'CARRAO'
+    WHEN nm_estacao = 'CEASA' THEN 'CEASA'
+    WHEN nm_estacao = 'CHACARA KLABIN' THEN 'CHACARA KLABIN'
+    WHEN nm_estacao = 'CIDADE JARDIM' THEN 'CIDADE JARDIM'
+    WHEN nm_estacao = 'CIDADE UNIVERSITARIA' THEN 'CIDADE UNIVERSITARIA'
+    WHEN nm_estacao = 'CLINICAS' THEN 'CLINICAS'
+    WHEN nm_estacao = 'COM. ERMELINO' THEN 'COMENDADOR ERMELINO'
+    WHEN nm_estacao = 'COMANDANTE SAMPAIO' THEN 'COMANDANTE SAMPAIO'
+    WHEN nm_estacao = 'COMENDADOR ERMELINO' THEN 'COMENDADOR ERMELINO'
+    WHEN nm_estacao = 'CONCEICAO' THEN 'CONCEICAO'
+    WHEN nm_estacao = 'CONSOLACAO' THEN 'CONSOLACAO'
+    WHEN nm_estacao = 'CORINTHIANS - ITAQUERA' THEN 'CORINTHIANS - ITAQUERA'
+    WHEN nm_estacao = 'CORINTHIANS ITAQUERA' THEN 'CORINTHIANS - ITAQUERA'
+    WHEN nm_estacao = 'CPBAR' THEN 'N/A'
+    WHEN nm_estacao = 'DOM BOSCO' THEN 'DOM BOSCO'
+    WHEN nm_estacao = 'DOMINGOS DE MORAIS' THEN 'DOMINGOS DE MORAES'
+    WHEN nm_estacao = 'EMBU-GUACU (CHACARA FLORIDA) - ITAPECERICA DA SERRA (VALO VELHO)' THEN 'N/A'
+    WHEN nm_estacao = 'ENG. CARDOSO' THEN 'ENGENHEIRO CARDOSO'
+    WHEN nm_estacao = 'ENGENHEIRO CARDOSO' THEN 'ENGENHEIRO CARDOSO'
+    WHEN nm_estacao = 'ENGENHEIRO GOULART' THEN 'ENGENHEIRO GOULART'
+    WHEN nm_estacao = 'ESTUDANTES' THEN 'ESTUDANTES'
+    WHEN nm_estacao = 'EUCALIPTOS' THEN 'EUCALIPTOS'
+    WHEN nm_estacao = 'FARIA LIMA' THEN 'FARIA LIMA'
+    WHEN nm_estacao = 'FAZENDA DA JUTA' THEN 'FAZENDA DA JUTA'
+    WHEN nm_estacao = 'FAZENDA JUTA' THEN 'FAZENDA DA JUTA'
+    WHEN nm_estacao = 'FERRAZ' THEN 'FERRAZ DE VASCONCELOS'
+    WHEN nm_estacao = 'FERRAZ DE VASCONCELOS' THEN 'FERRAZ DE VASCONCELOS'
+    WHEN nm_estacao = 'FRAD COUTINHO' THEN 'FRADIQUE COUTINHO'
+    WHEN nm_estacao = 'FRADIQUE COUTINHO' THEN 'FRADIQUE COUTINHO'
+    WHEN nm_estacao = 'FRANCISCO MORATO' THEN 'FRANCISCO MORATO'
+    WHEN nm_estacao = 'FRANCO DA ROCHA' THEN 'FRANCO DA ROCHA'
+    WHEN nm_estacao = 'GENERAL MIGUEL COSTA' THEN 'GENERAL MIGUEL COSTA'
+    WHEN nm_estacao = 'GIOVANNI GRONCHI' THEN 'GIOVANNI GRONCHI'
+    WHEN nm_estacao = 'GRAJAU' THEN 'GRAJAU'
+    WHEN nm_estacao = 'GRANJA JULIETA' THEN 'GRANJA JULIETA'
+    WHEN nm_estacao = 'GUAIANAZES' THEN 'GUAIANAZES'
+    WHEN nm_estacao = 'GUAPITUBA' THEN 'GUAPITUBA'
+    WHEN nm_estacao = 'GUARULHOS' THEN 'GUARULHOS - CECAP'
+    WHEN nm_estacao = 'GUARULHOS - CECAP' THEN 'GUARULHOS - CECAP'
+    WHEN nm_estacao = 'GUILHERMINA - ESPERANCA' THEN 'GUILHERMINA - ESPERANCA'
+    WHEN nm_estacao = 'GUILHERMINA ESPERANCA' THEN 'GUILHERMINA - ESPERANCA'
+    WHEN nm_estacao = 'HEBRAICA' THEN 'HEBRAICA - REBOUCAS'
+    WHEN nm_estacao = 'HEBRAICA REBOUCAS' THEN 'HEBRAICA - REBOUCAS'
+    WHEN nm_estacao = 'HIGIENOPOLIS MACKENZIE' THEN 'HIGIENOPOLIS - MACKENZIE'
+    WHEN nm_estacao = 'HIGIENOPOLIS-MACKENZIE' THEN 'HIGIENOPOLIS - MACKENZIE'
+    WHEN nm_estacao = 'HOSPITAL SAO PAULO' THEN 'HOSPITAL SAO PAULO'
+    WHEN nm_estacao = 'IGUATEMI' THEN 'IGUATEMI'
+    WHEN nm_estacao = 'IMIGRANTES' THEN 'IMIGRANTES'
+    WHEN nm_estacao = 'IMPERATRIZ LEOPOLDINA' THEN 'IMPERATRIZ LEOPOLDINA'
+    WHEN nm_estacao = 'INTERLAGOS' THEN 'INTERLAGOS'
+    WHEN nm_estacao = 'IPIRANGA' THEN 'IPIRANGA'
+    WHEN nm_estacao = 'ITAIM PAULISTA' THEN 'ITAIM PAULISTA'
+    WHEN nm_estacao = 'ITAPEVI' THEN 'ITAPEVI'
+    WHEN nm_estacao = 'ITAQUAQUECETUBA' THEN 'ITAQUAQUECETUBA'
+    WHEN nm_estacao = 'JABAQUARA' THEN 'JABAQUARA'
+    WHEN nm_estacao = 'JAGUARE' THEN 'JAGUARE'
+    WHEN nm_estacao = 'JANDIRA' THEN 'JANDIRA'
+    WHEN nm_estacao = 'JARAGUA' THEN 'JARAGUA'
+    WHEN nm_estacao = 'JARDIM BELVAL' THEN 'JARDIM BELVAL'
+    WHEN nm_estacao = 'JARDIM COLONIAL' THEN 'JARDIM COLONIAL'
+    WHEN nm_estacao = 'JARDIM HELENA' THEN 'JARDIM HELENA'
+    WHEN nm_estacao = 'JARDIM PLANALTO' THEN 'JARDIM PLANALTO'
+    WHEN nm_estacao = 'JARDIM ROMANO' THEN 'JARDIM ROMANO'
+    WHEN nm_estacao = 'JARDIM SAO PAULO' THEN 'JARDIM SAO PAULO'
+    WHEN nm_estacao = 'JARDIM SILVEIRA' THEN 'JARDIM SILVEIRA'
+    WHEN nm_estacao = 'JOAO DIAS' THEN 'JOAO DIAS'
+    WHEN nm_estacao = 'JOSE BONIFACIO' THEN 'JOSE BONIFACIO'
+    WHEN nm_estacao = 'JULIO PRESTES' THEN 'JULIO PRESTES'
+    WHEN nm_estacao = 'JUNDIAI' THEN 'JUNDIAI'
+    WHEN nm_estacao = 'JUNDIAPEBA' THEN 'JUNDIAPEBA'
+    WHEN nm_estacao = 'JURUBATUBA' THEN 'JURUBATUBA'
+    WHEN nm_estacao = 'LAPA' THEN 'LAPA'
+    WHEN nm_estacao = 'LAPA A' THEN 'LAPA'
+    WHEN nm_estacao = 'LAPA B' THEN 'LAPA'
+    WHEN nm_estacao = 'LARGO TREZE' THEN 'LARGO TREZE'
+    WHEN nm_estacao = 'LIBERDADE' THEN 'LIBERDADE'
+    WHEN nm_estacao = 'LINHA 0' THEN 'LINHA 0'
+    WHEN nm_estacao = 'LINHA LAB AUTOPASS-METRO' THEN 'LINHA LAB AUTOPASS-METRO'
+    WHEN nm_estacao = 'LUZ' THEN 'LUZ'
+    WHEN nm_estacao = 'MANOEL FEIO' THEN 'ENGENHEIRO MANOEL FEIO'
+    WHEN nm_estacao = 'MARECHAL DEODORO' THEN 'MARECHAL DEODORO'
+    WHEN nm_estacao = 'MAUA' THEN 'MAUA'
+    WHEN nm_estacao = 'MENDES - VILA NATAL' THEN 'MENDES - VILA NATAL'
+    WHEN nm_estacao = 'MENDES VILA NATAL' THEN 'MENDES - VILA NATAL'
+    WHEN nm_estacao = 'MOEMA' THEN 'MOEMA'
+    WHEN nm_estacao = 'MOGI DAS CRUZES' THEN 'MOGI DAS CRUZES'
+    WHEN nm_estacao = 'MOOCA' THEN 'MOOCA'
+    WHEN nm_estacao = 'MORUMBI' THEN 'MORUMBI'
+    WHEN nm_estacao = 'ORATORIO' THEN 'ORATORIO'
+    WHEN nm_estacao = 'OSASCO' THEN 'OSASCO'
+    WHEN nm_estacao = 'OSCAR FREIRE' THEN 'OSCAR FREIRE'
+    WHEN nm_estacao = 'PALMEIRAS - BARRA FUNDA' THEN 'PALMEIRAS - BARRA FUNDA'
+    WHEN nm_estacao = 'PALMEIRAS BARRA FUNDA' THEN 'PALMEIRAS - BARRA FUNDA'
+    WHEN nm_estacao = 'PARADA INGLESA' THEN 'PARADA INGLESA'
+    WHEN nm_estacao = 'PARAISO' THEN 'PARAISO'
+    WHEN nm_estacao = 'PATIO VILA SONIA' THEN 'PATIO VILA SONIA'
+    WHEN nm_estacao = 'PATRIARCA' THEN 'PATRIARCA'
+    WHEN nm_estacao = 'PAULISTA' THEN 'PAULISTA'
+    WHEN nm_estacao = 'PEDRO II' THEN 'PEDRO II'
+    WHEN nm_estacao = 'PENHA' THEN 'PENHA'
+    WHEN nm_estacao = 'PERUS' THEN 'PERUS'
+    WHEN nm_estacao = 'PINHEIROS' THEN 'PINHEIROS'
+    WHEN nm_estacao = 'PIQUERI' THEN 'PIQUERI'
+    WHEN nm_estacao = 'PIRITUBA' THEN 'PIRITUBA'
+    WHEN nm_estacao = 'POA' THEN 'POA'
+    WHEN nm_estacao = 'PORTUGUESA TIETE' THEN 'PORTUGUESA TIETE'
+    WHEN nm_estacao = 'PRACA DA ARVORE' THEN 'PRACA DA ARVORE'
+    WHEN nm_estacao = 'PRACA DA SE' THEN 'PRACA DA SE'
+    WHEN nm_estacao = 'PREFEITO SALADINO' THEN 'PREFEITO SALADINO'
+    WHEN nm_estacao = 'PRESIDENTE ALTINO' THEN 'PRESIDENTE ALTINO'
+    WHEN nm_estacao = 'QUITAUNA' THEN 'QUITAUNA'
+    WHEN nm_estacao = 'REPUBLICA' THEN 'REPUBLICA'
+    WHEN nm_estacao = 'RIBEIRAO PIRES' THEN 'RIBEIRAO PIRES'
+    WHEN nm_estacao = 'RIO GRANDE DA SERRA' THEN 'RIO GRANDE DA SERRA'
+    WHEN nm_estacao = 'SACOMA' THEN 'SACOMA'
+    WHEN nm_estacao = 'SAGRADO CORACAO' THEN 'SAGRADO CORACAO'
+    WHEN nm_estacao = 'SANTA CECILIA' THEN 'SANTA CECILIA'
+    WHEN nm_estacao = 'SANTA CRUZ' THEN 'SANTA CRUZ'
+    WHEN nm_estacao = 'SANTA TEREZINHA' THEN 'SANTA TEREZINHA'
+    WHEN nm_estacao = 'SANTANA' THEN 'SANTANA'
+    WHEN nm_estacao = 'SANTO AMARO' THEN 'SANTO AMARO'
+    WHEN nm_estacao = 'SANTO ANDRE' THEN 'SANTO ANDRE'
+    WHEN nm_estacao = 'SANTOS IMIGRANTES' THEN 'SANTOS IMIGRANTES'
+    WHEN nm_estacao = 'SAO BENTO' THEN 'SAO BENTO'
+    WHEN nm_estacao = 'SAO CAETANO' THEN 'SAO CAETANO'
+    WHEN nm_estacao = 'SAO JOAQUIM' THEN 'SAO JOAQUIM'
+    WHEN nm_estacao = 'SAO JUDAS' THEN 'SAO JUDAS'
+    WHEN nm_estacao = 'SAO LUCAS' THEN 'SAO LUCAS'
+    WHEN nm_estacao = 'SAO MATEUS' THEN 'SAO MATEUS'
+    WHEN nm_estacao = 'SAO MATHEUS' THEN 'SAO MATEUS'
+    WHEN nm_estacao = 'SAO MIGUEL' THEN 'SAO MIGUEL PAULISTA'
+    WHEN nm_estacao = 'SAO MIGUEL PAULISTA' THEN 'SAO MIGUEL PAULISTA'
+    WHEN nm_estacao = 'SAO PAULO MORUMBI' THEN 'SAO PAULO - MORUMBI'
+    WHEN nm_estacao = 'SAO PAULO-MORUMBI' THEN 'SAO PAULO - MORUMBI'
+    WHEN nm_estacao = 'SAPOPEMBA' THEN 'SAPOPEMBA'
+    WHEN nm_estacao = 'SAUDE' THEN 'SAUDE'
+    WHEN nm_estacao = 'SE' THEN 'SE'
+    WHEN nm_estacao = 'SOCORRO' THEN 'SOCORRO'
+    WHEN nm_estacao = 'SUMARE' THEN 'SUMARE'
+    WHEN nm_estacao = 'SUZANO' THEN 'SUZANO'
+    WHEN nm_estacao = 'TAMANDUATEI' THEN 'TAMANDUATEI'
+    WHEN nm_estacao = 'TATUAPE' THEN 'TATUAPE'
+    WHEN nm_estacao = 'TIETE' THEN 'PORTUGUESA TIETE'
+    WHEN nm_estacao = 'TIRADENTES' THEN 'TIRADENTES'
+    WHEN nm_estacao = 'TRIANON' THEN 'TRIANON MASP'
+    WHEN nm_estacao = 'TRIANON MASP' THEN 'TRIANON MASP'
+    WHEN nm_estacao = 'TUCURUVI' THEN 'TUCURUVI'
+    WHEN nm_estacao = 'USP' THEN 'USP LESTE'
+    WHEN nm_estacao = 'USP - LESTE' THEN 'USP LESTE'
+    WHEN nm_estacao = 'UTINGA' THEN 'UTINGA'
+    WHEN nm_estacao = 'VARGINHA' THEN 'VARGINHA'
+    WHEN nm_estacao = 'VARZEA PAULISTA' THEN 'VARZEA PAULISTA'
+    WHEN nm_estacao = 'VERGUEIRO' THEN 'VERGUEIRO'
+    WHEN nm_estacao = 'VILA AURORA' THEN 'VILA AURORA'
+    WHEN nm_estacao = 'VILA CLARICE' THEN 'VILA CLARICE'
+    WHEN nm_estacao = 'VILA DAS BELEZAS' THEN 'VILA DAS BELEZAS'
+    WHEN nm_estacao = 'VILA MADALENA' THEN 'VILA MADALENA'
+    WHEN nm_estacao = 'VILA MARIANA' THEN 'VILA MARIANA'
+    WHEN nm_estacao = 'VILA MATILDE' THEN 'VILA MATILDE'
+    WHEN nm_estacao = 'VILA OLIMPIA' THEN 'VILA OLIMPIA'
+    WHEN nm_estacao = 'VILA PRUDENTE' THEN 'VILA PRUDENTE'
+    WHEN nm_estacao = 'VILA SONIA' THEN 'VILA SONIA'
+    WHEN nm_estacao = 'VILA TOLSTOI' THEN 'VILA TOLSTOI'
+    WHEN nm_estacao = 'VILA TOSTOI' THEN 'VILA TOLSTOI'
+    WHEN nm_estacao = 'VILA UNIAO' THEN 'VILA UNIAO'
+    WHEN nm_estacao = 'VILLA LOBOS JAGUARE' THEN 'VILLA LOBOS JAGUARE'
+    ELSE nm_estacao
+    END nm_mascara_estacao --adicionado em 05/07/2024
+    ,`prd-autopass-bi-001.core.fn_aut001_nm_line_format`(nm_linha_new) nm_mascara_linha_new --adicionado em 4/7
+    ,`prd-autopass-bi-001.core.fn_aut001_nm_station_format`( nm_estacao_new) nm_mascara_estacao_new  
+    ,valorado
+    from union_catracadas
+    )
+  select
+    origem
+    ,ts_processing as dh_atualizacao
+    ,cd_origem_sistema
+    ,ds_tipo_dispositivo
+    ,cd_empresa
+    ,dt_uso
+    ,dt_clearing
+    ,ds_tipo_cartao
+    ,REPLACE(ds_consorcio, 'CONSORCIO', '') AS ds_consorcio
+    --,ds_consorcio
+    ,ds_abrangencia
+    ,ds_modal
+    ,ds_produto
+    ,nm_empresa
+    ,nm_empresa_new
+    ,nm_linha
+    ,nm_linha_new
+    ,nm_estacao
+    ,nm_estacao_new
+    ,cd_status_embarque
+    ,nm_estacao_linha
+    ,nm_estacao_linha_new
+    ,sum(qt_uso) as qt_uso
+    ,sum(valor_uso) as valor_uso
+    ,ds_mascara_produto
+    ,nm_mascara_linha
+    ,nm_mascara_linha_new
+    ,nm_mascara_estacao
+    ,nm_mascara_estacao_new
+    -- ,case
+    -- WHEN  ds_mascara_produto = 'ESPECIAL'	THEN 'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'FUNCIONAL' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'ESCOLAR' THEN	'VALORADA'
+    -- WHEN  ds_mascara_produto = 'PAGANTE DINHEIRO' THEN	'PAGANTE DINHEIRO'
+    -- WHEN  ds_mascara_produto = 'GRATUIDADE' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'SENIOR' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'VALE TRANSPORTE' THEN	'VALORADA'
+    -- WHEN  ds_mascara_produto = 'COMUM' THEN	'VALORADA'
+    -- WHEN  ds_mascara_produto = 'QR CODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN  ds_mascara_produto = 'BU' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN ds_mascara_produto = 'EMV' THEN 'VALORADA'
+    -- WHEN  ds_mascara_produto = 'SENIOR PAULISTA' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'TESTE' THEN	'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'QRCODE' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN  ds_mascara_produto = 'ABT' THEN 'VALORADA' --PRECISAMOS CERTIFICAR?
+    -- WHEN  ds_mascara_produto = 'BENFACIL' THEN 'VALORADA'
+    -- WHEN  ds_mascara_produto = 'EMPRESARIAL' THEN 'VALORADA'
+    -- WHEN  ds_mascara_produto = 'QR METRA TRANSF' THEN 'QR METRA TRANSF'
+    -- WHEN  ds_mascara_produto = 'TOP TROCA' THEN 'TOP TROCA'
+    -- WHEN  ds_mascara_produto = 'RAPOSO MUNI' THEN 'NAO VALORADA'
+    -- WHEN  ds_mascara_produto = 'DESEMPREGADO' THEN 'NAO VALORADA'
+    -- else 'N/A'
+    --end
+    ,valorado AS ds_mascara_aplicacao,
+    SHA256(CONCAT(COALESCE(nm_mascara_estacao, ''), COALESCE(nm_mascara_linha, ''))) AS cd_estacao_linha ,
+    SHA256(CONCAT(COALESCE(nm_mascara_estacao_new , ''), COALESCE(nm_mascara_linha_new , ''))) AS cd_estacao_linha_new --adicionado em 13/12
+  from finalizacao_union
+  group by all 
+  -- ", null, [EnableFolding = true])

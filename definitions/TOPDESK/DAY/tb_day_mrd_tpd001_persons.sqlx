@@ -1,0 +1,44 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_persons",
+  tags: ["topdesk"],
+  description: "Lookup de persons (utilizadores) do TOPdesk"
+}
+
+SELECT
+  id    ,                        
+  firstName   ,                  
+  surName  ,                     
+  name   ,                       
+  email  ,                      
+  loginName   ,                  
+  networkLoginName              ,
+  jobTitle     ,                 
+  employeeNumber ,               
+  telephoneNumber  ,             
+  mobileNumber    ,              
+  privateMobileNumber           ,
+  departmentWhenPlainText  ,     
+  status       ,                
+  isManager   ,              
+  branchId   ,                   
+  budgetHolderId   ,             
+  departmentId   ,               
+  locationId   ,                 
+  managerId  ,                   
+  extraAId  ,                    
+  extraBId  ,                    
+  CAST(dateOfHire                AS DATE)      AS dateOfHire,
+  CAST(contractStartDate         AS DATE)      AS contractStartDate,
+  CAST(contractEndDate           AS DATE)      AS contractEndDate,
+  CAST(endOfProbationaryPeriod   AS DATE)      AS endOfProbationaryPeriod,
+  CAST(terminationOfEmployment   AS DATE)      AS terminationOfEmployment,
+  CAST(creationDate              AS TIMESTAMP) AS creationDate,
+  CAST(modificationDate          AS TIMESTAMP) AS modificationDate,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_persons")}

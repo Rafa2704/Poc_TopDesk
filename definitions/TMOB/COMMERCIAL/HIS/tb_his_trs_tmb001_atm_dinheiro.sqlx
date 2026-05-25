@@ -1,0 +1,16 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_atm_dinheiro",
+  uniqueKey: ["idtrn"],
+  description: "Tabela de histori de debito",
+  bigquery: {
+    partitionBy: "data_trans",
+  },
+  tags: ["commercial"],
+}
+
+
+SELECT 
+    *
+ FROM ${ref("tb_day_trs_tmb001_atm_dinheiro")}

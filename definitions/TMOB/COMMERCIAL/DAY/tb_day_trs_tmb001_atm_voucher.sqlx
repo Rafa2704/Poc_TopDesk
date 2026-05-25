@@ -1,0 +1,57 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_atm_voucher",
+  tags: ["commercial"],
+  description: "Tabela sumaria da query de vendas de atm voucher"
+}
+
+
+
+SELECT
+    -- IDs
+    pvc_id,
+    numero_media,
+    numero_voucher,
+    idtrn_geracao,
+    external_id,
+    id_legado,
+
+    -- DATAS CRIACAO
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', data_hora_criacao) AS data_hora_criacao,
+    PARSE_DATE('%d/%m/%Y', data_criacao)                    AS data_criacao,
+    hora_criacao,
+
+    -- VALORES
+    SAFE_CAST(REPLACE(REPLACE(valor,          '.', ''), ',', '.') AS NUMERIC) AS valor,
+    SAFE_CAST(REPLACE(REPLACE(valor_recebido, '.', ''), ',', '.') AS NUMERIC) AS valor_recebido,
+
+    -- PRODUTO
+    tipo_produto,
+
+    -- TERMINAIS
+    terminal_geracao,
+    modo_geracao,
+    terminal_uso,
+
+    -- VOUCHER
+    status_voucher,
+    razao_voucher,
+
+    -- DATAS USO
+    PARSE_DATE('%d/%m/%Y', data_uso)                                AS data_uso,
+    hora_uso,
+    PARSE_TIMESTAMP('%d/%m/%Y %H:%M:%S', data_expiracao)           AS data_expiracao,
+
+    -- STATUS
+    status_orbi,
+    estacao,
+    linha,
+    empresa,
+
+      -- Campos de controle
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_atm_voucher")}

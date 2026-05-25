@@ -1,0 +1,60 @@
+config {
+    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    schema: "itg",
+    name: "itg_trs_tmob001_uso_ultimos_30",
+    description: "Tabela de usos dos ultimos 30 dias",
+    tags: ["tmob"],
+}
+
+
+WITH hot_cards AS (
+  SELECT
+    m.nr_card,
+    m.nr_csn,
+    hl.dt_create
+  FROM `prd-autopass-bi-001.his.tb_his_mrd_tmb001_med_media` m
+  INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_med_hot_list` hl
+    ON m.nr_csn = hl.nr_csn
+  WHERE m.fl_hot_list = 1
+    AND hl.dt_create >= '2025-01-01'
+),
+ 
+card_usage_ranked AS (
+  SELECT
+    u.cd_application,
+    u.ds_product,
+    u.nm_company,
+    u.ds_consortium,
+    u.dt_card_usage,
+    u.tm_card_usage,
+    u.nr_card,
+    u.nr_registered_number,
+    u.nm_station,
+    hc.dt_create,
+    DENSE_RANK() OVER (
+      PARTITION BY u.nr_card
+      ORDER BY DATE(u.dt_card_usage) DESC
+    ) AS rk
+  FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate` u
+  INNER JOIN hot_cards hc
+    ON SUBSTR(u.nr_card, 1, LENGTH(u.nr_card) - 2)
+     = SUBSTR(hc.nr_card, 1, LENGTH(hc.nr_card) - 2)
+)
+ 
+SELECT
+  cd_application,
+  ds_product,
+  nm_company,
+  ds_consortium,
+  dt_card_usage,
+  tm_card_usage,
+  nr_card,
+  nr_registered_number,
+  nm_station,
+  dt_create
+FROM card_usage_ranked
+WHERE rk <= 30
+ORDER BY
+  nr_card,
+  dt_card_usage DESC,
+  tm_card_usage DESC

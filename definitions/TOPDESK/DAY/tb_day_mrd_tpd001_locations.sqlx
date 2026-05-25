@@ -1,0 +1,32 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_locations",
+  tags: ["topdesk"],
+  description: "Lookup de status de processamento de incidents"
+}
+
+
+SELECT 
+    branchId,
+    budgetHolderId,
+    capacity,
+    CAST(creationDate     AS TIMESTAMP) AS creationDate,
+    functionalUseTypeId,
+    id,
+    issueable,
+    CAST(modificationDate AS TIMESTAMP) AS modificationDate,
+    name,
+    reservable,
+    reservableInSSP,
+    roomNumber,
+    roomTypeId,
+    specification,
+    status,
+    statusId,
+        -- Campos de controle
+    "TPD" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_locations")}

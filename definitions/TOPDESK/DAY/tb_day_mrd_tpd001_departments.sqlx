@@ -1,0 +1,18 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_departments",
+  tags: ["topdesk"],
+  description: "Lookup de departamentos do TOPdesk"
+}
+
+SELECT
+  CAST(id    AS STRING) AS id,
+  CAST(name  AS STRING) AS name,
+  CAST(`order` AS STRING)  AS order_departaments,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_departments")}

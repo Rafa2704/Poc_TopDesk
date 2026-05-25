@@ -1,0 +1,88 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_changes",
+  tags: ["topdesk"],
+  description: "Changes do TOPdesk com cast de tipos",
+  bigquery: {
+    partitionBy: "DATE(creationDate)",
+  }
+}
+
+SELECT
+  CAST(id                                    AS STRING)    AS id,
+  CAST(changeNumber                          AS STRING)    AS changeNumber,
+  CAST(changeType                            AS STRING)    AS changeType,
+  CAST(status                                AS STRING)    AS status,
+  CAST(currentPhase                          AS STRING)    AS currentPhase,
+
+  -- Datas
+  CAST(callDate                              AS TIMESTAMP) AS callDate,
+  CAST(creationDate                          AS TIMESTAMP) AS creationDate,
+  CAST(modificationDate                      AS TIMESTAMP) AS modificationDate,
+  CAST(authorizationDate                     AS TIMESTAMP) AS authorizationDate,
+  CAST(cancellationDate                      AS TIMESTAMP) AS cancellationDate,
+  CAST(closureDate                           AS TIMESTAMP) AS closureDate,
+  CAST(extensiveChangeImplementationDate     AS TIMESTAMP) AS extensiveChangeImplementationDate,
+  CAST(plannedAuthorizationDate              AS TIMESTAMP) AS plannedAuthorizationDate,
+  CAST(plannedFinalDate                      AS TIMESTAMP) AS plannedFinalDate,
+  CAST(plannedImplementationDate             AS TIMESTAMP) AS plannedImplementationDate,
+  CAST(plannedStartDate                      AS TIMESTAMP) AS plannedStartDate,
+  CAST(realizedDate                          AS TIMESTAMP) AS realizedDate,
+  CAST(rejectionDate                         AS TIMESTAMP) AS rejectionDate,
+  CAST(simpleChangeImplementationDate        AS TIMESTAMP) AS simpleChangeImplementationDate,
+  CAST(startDate                             AS TIMESTAMP) AS startDate,
+  CAST(submissionDate                        AS TIMESTAMP) AS submissionDate,
+
+  -- Flags booleanas
+  CAST(closed                                AS BOOL)      AS closed,
+  CAST(emergencyChange                       AS BOOL)      AS emergencyChange,
+  CAST(evalChangeCanBeAuthorized             AS BOOL)      AS evalChangeCanBeAuthorized,
+  CAST(progressChangeCanBeAuthorized         AS BOOL)      AS progressChangeCanBeAuthorized,
+  CAST(rejected                              AS BOOL)      AS rejected,
+  CAST(requestChangeCanBeAuthorized          AS BOOL)      AS requestChangeCanBeAuthorized,
+  CAST(started                               AS BOOL)      AS started,
+  CAST(withEvaluation                        AS BOOL)      AS withEvaluation,
+
+  -- FKs
+  approveImplManagerGroup   ,                
+  approveImplManagerId   ,                   
+  authorizingOperatorId  ,                   
+  branchId  ,                                
+  budgetHolderId ,                         
+  callerBranchId ,                           
+  categoryId ,                               
+  coordinatorId ,                            
+  creatorId  ,                               
+  departmentId,                              
+  impactId  ,                                
+  modifierId ,                               
+  operatorGroupId ,                          
+  operatorId   ,                             
+  originalIncidentId   ,                     
+  preliminaryRFCManagerGroup ,               
+  preliminaryRFCManagerId,                   
+  priorityId    ,                            
+  processingStatusId ,                       
+  requesterId   ,                            
+  subcategoryId  ,                           
+  supplierId  ,                              
+  templateId  ,                             
+  typeId    ,                                
+  versionId  ,                              
+
+  -- Custos e durações
+  CAST(costs                                 AS FLOAT64)   AS costs,
+  CAST(currentPlannedCosts                   AS FLOAT64)   AS currentPlannedCosts,
+  CAST(estimatedCosts                        AS FLOAT64)   AS estimatedCosts,
+  CAST(originalPlannedCosts                  AS FLOAT64)   AS originalPlannedCosts,
+  CAST(currentPlannedTimeSpent_inSeconds     AS INT64)     AS currentPlannedTimeSpent_inSeconds,
+  CAST(estimatedTimeSpent_inSeconds          AS INT64)     AS estimatedTimeSpent_inSeconds,
+  CAST(originalPlannedTimeSpent_inSeconds    AS INT64)     AS originalPlannedTimeSpent_inSeconds,
+  CAST(timeTaken_inSeconds                   AS INT64)     AS timeTaken_inSeconds,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_changes")}

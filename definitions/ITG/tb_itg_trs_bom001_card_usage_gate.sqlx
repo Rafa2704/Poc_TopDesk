@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "itg",
     description: "Tabela itg de card usage gate bom ",
-    tags: ["cardusagegate"],
+    tags: ["itg"],
     bigquery: {
         partitionBy: "dt_card_usage",
     }
@@ -55,6 +55,9 @@ SELECT cu.cd_card_usage_internal cd_card_usage_internal
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'RTO EMTU'                                  THEN 'RTO'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') = 'PERMISSIONARIAS'                           THEN 'OUTROS'
   WHEN IFNULL(c.ds_consortium, 'MUNICIPAL') IS NULL                                       THEN 'MUNICIPAL'
+  WHEN IFNULL(ds_consortium, 'MUNICIPAL') = 'MUNICIPAL'
+  AND tp.ds_transport_provider = 'METRO - LINHA 17' 
+  THEN 'BNT'  
   ELSE                                                                                          'VERIFICAR'
 END AS ds_consortium_group
 -- ,CASE

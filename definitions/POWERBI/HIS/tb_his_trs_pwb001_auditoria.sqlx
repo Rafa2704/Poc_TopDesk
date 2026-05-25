@@ -1,0 +1,19 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_pwb001_auditoria",
+  tags: ["powerbi"],
+  description: "Histórico incremental de auditoria de relatórios Power BI.",
+  uniqueKey: ["row_hash"]
+}
+
+SELECT
+DISTINCT
+  TO_HEX(MD5(CONCAT(
+    COALESCE(report_id, ''), report_name, COALESCE(report_type, ''),
+    COALESCE(workspace_id, ''), COALESCE(dataset_id, ''),
+    COALESCE(created_by, ''), COALESCE(CAST(created_at AS STRING), ''),
+    COALESCE(modified_by, ''), COALESCE(CAST(modified_at AS STRING), '')
+  ))) AS row_hash,
+  *
+FROM ${ref("tb_day_trs_pwb001_auditoria")}

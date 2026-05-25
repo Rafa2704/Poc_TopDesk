@@ -1,0 +1,17 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tpd001_incidentdetails",
+  tags: ["topdesk"],
+  uniqueKey: ["id"],
+  description: "Detalhes dos incidents do TOPdesk com cast de tipos",
+  bigquery: {
+    partitionBy: "DATE(creationDate)"
+  }
+}
+
+
+
+SELECT 
+*
+FROM ${ref("tb_day_trs_tpd001_incidentdetails")}

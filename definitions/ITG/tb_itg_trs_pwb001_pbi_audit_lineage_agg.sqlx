@@ -1,0 +1,45 @@
+
+config {
+    type: "table", 
+    schema: "itg",
+    tags: ["powerbi"],
+    description: "Tabela integrada de lineage do Power BI, cruzando metadados de dataflows com informações de auditoria de relatórios e datasets. Permite rastrear quais tabelas do BigQuery são consumidas por quais dataflows, datasets e relatórios do Power BI.",
+    columns: {
+        bq_project: "Projeto do BigQuery onde a tabela está localizada",
+        bq_dataset: "Dataset do BigQuery onde a tabela está localizada",
+        bq_table: "Nome da tabela do BigQuery consumida pelo dataflow",
+        tipo_origem: "Tipo de origem do objeto auditado no Power BI (ex: dataflow, dataset)",
+        sql: "Query SQL extraída do dataflow que referencia a tabela do BigQuery",
+        dataflow_name: "Nome do dataflow do Power BI que consome a tabela",
+        dataflow_workspace: "Workspace do Power BI onde o dataflow está publicado",
+        dataset_name: "Nome do dataset do Power BI vinculado ao dataflow",
+        dataset_workspace: "Workspace do Power BI onde o dataset está publicado",
+        report_name: "Nome do relatório do Power BI vinculado ao dataset",
+        report_workspace: "Workspace do Power BI onde o relatório está publicado",
+        extracted_at: "Data e hora em que os metadados foram extraídos via Scanner API do Power BI"
+    }
+}
+
+
+
+SELECT
+  t.bq_project,
+  t.bq_dataset,
+  t.bq_table,
+  t.tipo  AS tipo_origem,
+  t.sql,
+  t.dataflow,
+  t.query_m,
+  l.dataflow_workspace,
+  l.dataset_name,
+  l.dataset_workspace,
+  l.report_name,
+  l.report_workspace,
+  t.extracted_at
+FROM ${ref("tb_his_trs_pwb001_pbi_audit_dataflows")} t
+-- prd-autopass-ed-001.tb_his_trs_pwb001_pbi_audit_dataflows  t
+LEFT JOIN ${ref("tb_his_trs_pwb001_pbi_audit_lineage")} l
+--prd-autopass-ed-001.his.tb_his_trs_pwb001_pbi_audit_lineage l
+
+  ON l.dataflow_name = t.dataflow
+WHERE TRUE 

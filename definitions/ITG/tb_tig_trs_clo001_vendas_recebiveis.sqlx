@@ -1,0 +1,133 @@
+config {
+  type: "table",
+  schema: "itg",
+  name: "tb_tig_trs_clo001_vendas_recebiveis",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  bigquery: {
+    partitionBy: "Ref_Mes_Ano",
+  },
+  tags: ["itg"],
+}
+
+
+
+WITH Dados_Originais_Limpos AS (
+  SELECT DISTINCT
+    tabb.dt_sale_original,
+    tabb.dt_due,
+    tabb.tm_transaction,
+    tabb.nr_establishment_headquarter,
+    tabb.vl_total / 100            AS Vlr_Venda,
+    tabb.pc_sale_tax / 100         AS Perc_taxa,
+    tabb.vl_commission / 100       AS Vlr_taxa,
+    tabb.vl_net / 100              AS Vlr_Liq,
+    tabb.nr_nsu,
+    tabb.cd_authorization,
+    tabb.nr_card_prefix || '******' || tabb.nr_card_suffix AS nr_card,
+    tabc.Ds_Card_Brand,
+    tabd.ds_product AS Forma_Pagto,
+    
+    CASE
+      WHEN tabb.cd_liquidity_type = '001' THEN 'Debito'
+      WHEN tabb.cd_liquidity_type = '002' THEN 'Credito'
+      ELSE 'Não Identificado'
+    END AS TipoPagto,
+
+
+    COALESCE((
+      SELECT 'Contestada' || ';' || MAX(tabb1.dt_sale) || ';' || MAX(tabb1.dt_due)
+      FROM ${ref("tb_his_trs_clo001_receivable_analytical")} tabb1
+      --`prd-autopass-bi-001.his.tb_his_trs_clo001_receivable_analytical` tabb1
+      WHERE tabb1.cd_posting_type = '08'
+        AND tabb1.nr_nsu           = tabb.nr_nsu
+        AND tabb1.cd_authorization = tabb.cd_authorization
+        AND tabb1.dt_sale_original = tabb.dt_sale
+        AND tabb1.dt_sale_original <> tabb1.dt_sale
+        AND tabb1.dt_sale >= tabb.dt_sale
+        AND tabb1.vl_total = tabb.vl_total * -1
+    ), ' ') AS Contestada_Raw, 
+
+   
+    CASE
+      WHEN nr_establishment_headquarter = '2808286532' THEN 'GUARUJA'
+      WHEN nr_establishment_headquarter = '2808249076' THEN 'APP'
+      WHEN nr_establishment_headquarter = '2808249092' THEN 'APP'
+      WHEN nr_establishment_headquarter = '1076599165' THEN 'ATM'
+      WHEN nr_establishment_headquarter = '2808246524' THEN 'ATM'
+      WHEN nr_establishment_headquarter = '2810485156' THEN 'EMV'
+      WHEN nr_establishment_headquarter = '1114083140' THEN 'GOOGLE WALLET'
+      WHEN nr_establishment_headquarter = '1114083116' THEN 'GUARUJA'
+      WHEN nr_establishment_headquarter = '2808246532' THEN 'GUARUJA'
+      WHEN nr_establishment_headquarter = '2897855600' THEN 'METRA'
+      WHEN nr_establishment_headquarter = '2899136148' THEN 'ATM'
+      WHEN nr_establishment_headquarter = '2899843863' THEN 'ATM'
+      WHEN nr_establishment_headquarter = '2898162412' THEN 'CITY'
+      WHEN nr_establishment_headquarter = '2808286524' THEN 'ATM'--- VALORES ADICIONADOS NO DIA 20/01/2O25
+      WHEN nr_establishment_headquarter = '2810304658' THEN 'OUTROS'
+      WHEN nr_establishment_headquarter = '2808249106' THEN 'OUTROS'
+      WHEN nr_establishment_headquarter = '2808249050' THEN 'OUTROS'
+      WHEN nr_establishment_headquarter = '2808249041' THEN 'OUTROS'
+      ELSE nr_establishment_headquarter
+    END AS Canal,
+
+
+    CASE
+      WHEN nr_establishment_headquarter = '2808286532' THEN 'TAR TRANSP CGUAJA'
+      WHEN nr_establishment_headquarter = '2808249076' THEN 'RECARGA TOP'
+      WHEN nr_establishment_headquarter = '2808249092' THEN 'QRCODE'
+      WHEN nr_establishment_headquarter = '1076599165' THEN 'RECARGA TOP'
+      WHEN nr_establishment_headquarter = '2808246524' THEN 'BILHETE UNICO'
+      WHEN nr_establishment_headquarter = '2810485156' THEN 'EMV'
+      WHEN nr_establishment_headquarter = '1114083140' THEN 'QRCODE'
+      WHEN nr_establishment_headquarter = '1114083116' THEN 'CITY'
+      WHEN nr_establishment_headquarter = '2808246532' THEN 'CITY'
+      WHEN nr_establishment_headquarter = '2897855600' THEN 'METRA'
+      WHEN nr_establishment_headquarter = '2899136148' THEN 'BILHETE UNICO'
+      WHEN nr_establishment_headquarter = '2899843863' THEN 'TOP'
+      WHEN nr_establishment_headquarter = '2898162412' THEN 'CITY'
+      WHEN nr_establishment_headquarter = '2808286524' THEN 'BU'-----VALORES ADICIONADOS NO DIA 20/01/2O25
+      WHEN nr_establishment_headquarter = '2810304658' THEN 'TOP'
+      WHEN nr_establishment_headquarter = '2808249106' THEN 'QRCODE'
+      WHEN nr_establishment_headquarter = '2808249050' THEN 'TOP'
+      WHEN nr_establishment_headquarter = '2808249041' THEN 'TOP'
+      ELSE nr_establishment_headquarter
+    END AS Produto
+
+  FROM ${ref("tb_his_trs_clo001_receivable_analytical")} tabb
+  --`prd-autopass-bi-001.his.tb_his_trs_clo001_receivable_analytical` tabb
+  JOIN ${ref("tb_his_mrd_clo001_product")}tabd
+  --`prd-autopass-bi-001.his.tb_his_mrd_clo001_product` tabd 
+  ON tabd.cd_product = tabb.cd_product
+  JOIN ${ref("tb_his_mrd_clo001_card_brand")}tabc
+  --`prd-autopass-bi-001.his.tb_his_mrd_clo001_card_brand` tabc 
+  ON tabc.cd_card_brand = tabb.cd_card_brand
+
+  WHERE tabb.vl_total > 0
+    AND tabb.pc_mdr_tax > 0
+    AND tabb.cd_sale_original <> '000000000000000'
+    AND tabb.dt_sale_original >= '2025-01-01'
+)
+
+
+SELECT
+  DATE_TRUNC(dt_sale_original, MONTH) AS Ref_Mes_Ano,
+  Canal,
+  Produto,
+  Ds_Card_Brand,
+  Forma_Pagto,
+  TipoPagto,
+  
+  CASE WHEN Contestada_Raw <> ' ' THEN 'Contestada' ELSE 'Ok' END AS Status_Contestacao,
+
+  -- Somas
+  SUM(Vlr_Venda) AS Total_Venda,
+  SUM(Vlr_taxa)  AS Total_Taxa,
+  SUM(Vlr_Liq)   AS Total_Liq,
+
+  SAFE_DIVIDE(SUM(Vlr_taxa), SUM(Vlr_Venda)) * 100 AS Perc_Taxa_Media,
+
+  COUNT(*) AS Qtd_Transacoes
+
+FROM Dados_Originais_Limpos
+
+GROUP BY 1, 2, 3, 4, 5, 6, 7

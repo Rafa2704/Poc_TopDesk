@@ -1,0 +1,41 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_aut001_monitoramento_canais",
+  tags: ["monitoria"],
+  description: "Tabela de monitoramento com tratamento avançado de strings de data mistas"
+}
+
+SELECT 
+  -- Campos de Texto
+  SAFE_CAST(canal AS STRING) AS canal,
+  SAFE_CAST(status AS STRING) AS status,
+  
+  -- Conversão Estrita de STRING (YYYYMMDD) para o tipo DATE
+  SAFE.PARSE_DATE('%Y%m%d', data_referencia) AS data_referencia,
+  
+  -- Conversão de STRING para DATETIME (Gerado em usa %d/%m/%Y %H:%M:%S no Python)
+  SAFE.PARSE_DATETIME('%d/%m/%Y %H:%M:%S', gerado_em) AS gerado_em,
+  
+
+  COALESCE(
+    DATETIME(SAFE_CAST(pg_data_max AS TIMESTAMP)), 
+    SAFE_CAST(pg_data_max AS DATETIME)
+  ) AS pg_data_max,
+
+  COALESCE(
+    DATETIME(SAFE_CAST(bq_data_max AS TIMESTAMP)), 
+    SAFE_CAST(bq_data_max AS DATETIME)
+  ) AS bq_data_max,
+
+  -- Campos Numéricos
+  SAFE_CAST(pg_qtd_linhas AS INT64) AS pg_qtd_linhas,
+  SAFE_CAST(bq_qtd_linhas AS INT64) AS bq_qtd_linhas,
+  SAFE_CAST(diferenca AS INT64) AS diferenca,
+
+  -- Campos de controle
+  "aut001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_aut001_monitoramento_canais")}

@@ -1,7 +1,7 @@
 config {
     type: "incremental",
     schema: "itg",
-    tags: ['cardusagegate'],
+    tags: ['itg'],
     name: "tb_itg_trs_top001_qrcode_usage",
     bigquery: {
         partitionBy: "dt_usage",
