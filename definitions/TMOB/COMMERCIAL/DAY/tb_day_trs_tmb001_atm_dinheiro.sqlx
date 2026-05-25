@@ -56,6 +56,7 @@ SELECT
   CURRENT_TIMESTAMP() AS dt_processamento,
   SESSION_USER() AS usuario_processamento
 
-FROM ${ref("tb_ext_trs_tmb001_atm_dinheiro")}
+FROM `dev-autopass-bi-001.ext.tb_ext_trs_tmb001_atm_dinheiro`
+--${ref("tb_ext_trs_tmb001_atm_dinheiro")}
 
 
