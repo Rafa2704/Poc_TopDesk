@@ -35,7 +35,8 @@ const tables = [
   "tb_ext_trs_aut001_monitoramento_canais",
   "tb_ext_trs_pwb001_auditoria",
   "tb_ext_trs_pwb001_governanca",
-  "tb_ext_trs_pwb001_historico_refresh"
+  "tb_ext_trs_pwb001_historico_refresh",
+  "tb_ext_trs_tmb001_vendas_vt"
 
 ];
 

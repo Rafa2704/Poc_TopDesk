@@ -1,0 +1,30 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmob001_vendas_vt",
+  description: "Tabela de Vendas de VT",
+  uniqueKey: ["chave_primaria"],
+  bigquery: {
+    partitionBy: "dt_credit",
+  },
+  tags: ["commercial"],
+}
+
+
+SELECT  
+*,
+TO_HEX(MD5(
+    CONCAT(
+      COALESCE(CAST(dt_credit        AS STRING), ''),
+      COALESCE(CAST(dt_payment         AS STRING), ''),
+      COALESCE(CAST(ds_channel               AS STRING), ''),
+      COALESCE(CAST(ds_payment_mode      AS STRING), ''),
+      COALESCE(CAST(cd_provider     AS STRING), ''),
+      COALESCE(CAST(cd_sales_order          AS STRING), ''),
+      COALESCE(CAST(vl_recharge               AS STRING), ''),
+      COALESCE(CAST(cd_status              AS STRING), ''),
+      COALESCE(CAST(nr_registered_number            AS STRING), ''),
+      COALESCE(CAST(cd_recharge_order AS STRING), '')
+    )
+  )) AS chave_primaria
+  FROM ${ref("tb_day_trs_tmob001_vendas_vt")}
