@@ -27,4 +27,4 @@ TO_HEX(MD5(
       COALESCE(CAST(cd_recharge_order AS STRING), '')
     )
   )) AS chave_primaria
-  FROM ${ref("tb_day_trs_tmob001_vendas_vt")}
+  FROM ${ref("tb_day_trs_tmb001_vendas_vt")}

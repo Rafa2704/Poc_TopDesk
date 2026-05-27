@@ -1,6 +1,6 @@
 config {
   type: "table",
-  schema: "his",
+  schema: "day",
   tags: ["commercial"],
   partitionBy: "dt_credit",
   clusterBy: ["ds_provider"],
