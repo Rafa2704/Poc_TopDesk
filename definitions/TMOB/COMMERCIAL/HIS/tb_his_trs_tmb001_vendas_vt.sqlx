@@ -1,7 +1,7 @@
 config {
   type: "incremental",
   schema: "his",
-  name: "tb_his_trs_tmob001_vendas_vt",
+  name: "tb_his_trs_tmb001_vendas_vt",
   description: "Tabela de Vendas de VT",
   uniqueKey: ["chave_primaria"],
   bigquery: {
