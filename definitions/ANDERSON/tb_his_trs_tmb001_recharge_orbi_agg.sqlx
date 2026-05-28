@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "his",
     description: "Tabela do anderson ",
-    tags: ["m1"],
+    tags: ["commercial"],
     bigquery: {
         partitionBy: "DATE(transaction_date)",
     }
