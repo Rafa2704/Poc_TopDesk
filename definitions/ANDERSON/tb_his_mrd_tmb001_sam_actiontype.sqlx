@@ -1,0 +1,12 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_sam_actiontype",
+  description: "Tabela sam media",
+  uniqueKey: ["sat_code"],
+  tags: ["commercial"],
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_mrd_tmb001_sam_actiontype")}

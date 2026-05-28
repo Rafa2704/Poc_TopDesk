@@ -45,11 +45,11 @@ SELECT
    else 'I'
   end as transaction_status
   FROM ${ref("tb_his_trs_tmob001_sam_samtransactionfull")} smf
-INNER JOIN ${ref("SamMedia")}  sm  ON smf.sstf_samcsn = sm.csn
+INNER JOIN ${ref("tb_his_mrd_tmb001_sam_media")}  sm  ON smf.sstf_samcsn = sm.csn
 --`dev-autopass-bi-001.temp.SamMedia`           
-INNER JOIN ${ref("sam_typetransaction")} stt ON smf.stt_code    = stt.stt_code
+INNER JOIN ${ref("tb_his_mrd_tmb001_sam_typetransaction")} stt ON smf.stt_code    = stt.stt_code
 --`dev-autopass-bi-001.temp.sam_typetransaction` 
-INNER JOIN ${ref("sam_actiontype")} sat ON smf.sat_code    = sat.sat_code
+INNER JOIN ${ref("tb_his_mrd_tmb001_sam_actiontype")} sat ON smf.sat_code    = sat.sat_code
 --`dev-autopass-bi-001.temp.sam_actiontype`      
 LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_med_media_product_recharge` mmpr on mmpr.cd_recharge_token = smf.sstf_token  and smf.sstf_samcsn = mmpr.nr_sam_csn
 LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_med_media` mm on smf.sstf_mediacsn = mm.nr_csn

@@ -1,0 +1,18 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_sam_typetransaction",
+  description: "Tabela dimensao",
+  tags: ["commercial"],
+}
+
+
+SELECT 
+    stt_code,
+    stt_description,
+-- Campos de controle
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_sam_typetransaction")}
