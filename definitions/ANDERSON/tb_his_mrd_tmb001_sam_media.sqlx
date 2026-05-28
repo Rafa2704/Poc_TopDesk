@@ -3,7 +3,7 @@ config {
   schema: "his",
   name: "tb_his_mrd_tmb001_sam_media",
   description: "Tabela sam media",
-  uniqueKey: ["stt_code"],
+  uniqueKey: ["id"],
   tags: ["commercial"],
 }
 
