@@ -17,7 +17,7 @@ id,
   version ,
   persoDate   ,
   blameUser   ,
-  PARSE_DATE('%d/%m/%Y', createdAt)        AS createdAt,
+  SAFE_CAST(createdAt AS TIMESTAMP)        AS createdAt,
   updatedAt   ,
   samParentCsn,
 -- Campos de controle
