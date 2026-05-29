@@ -1,0 +1,57 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_aut001_extract_all",
+  tags: ["monitoria"],
+  description: "Tabela de monitoramento com tratamento avançado de strings de data mistas"
+}
+
+
+
+WITH base AS (
+  SELECT
+    STRING_AGG(linha, '') AS json_full,
+    _FILE_NAME            AS nome_arquivo
+  FROM ${ref("tb_ext_trs_aut001_extract_all")}
+  GROUP BY _FILE_NAME
+),
+parsed AS (
+  SELECT
+    nome_arquivo,
+    PARSE_JSON(json_full) AS doc
+  FROM base
+),
+
+unnested AS (
+  SELECT
+    nome_arquivo,
+    chave,
+    LAX_STRING(doc[chave]['extraction_start'])  AS extraction_start,
+    LAX_STRING(doc[chave]['extraction_end'])    AS extraction_end,
+    LAX_STRING(doc[chave]['status'])            AS cd_status,
+    LAX_INT64(doc[chave]['records'])            AS records,
+    LAX_STRING(doc[chave]['error'])             AS error,
+    LAX_STRING(doc[chave]['system_source'])     AS system_source,
+    LAX_STRING(doc[chave]['source_type'])       AS source_type,
+    LAX_STRING(doc[chave]['schema'])            AS schema_banco,
+    LAX_STRING(doc[chave]['object_type'])       AS object_type,
+    TO_JSON_STRING(doc[chave]['tags'])          AS tags
+  FROM parsed,
+  UNNEST(JSON_KEYS(doc)) AS chave
+  WHERE NOT CONTAINS_SUBSTR(chave, '.')        
+)
+SELECT
+  nome_arquivo,
+  chave               AS ds_table,
+  SAFE_CAST(extraction_start AS TIMESTAMP) AS extraction_start ,
+  SAFE_CAST(extraction_end AS TIMESTAMP) AS   extraction_end,
+  cd_status,
+  records,
+  error,
+  system_source,
+  source_type,
+  schema_banco,
+  object_type,
+  tags
+FROM unnested
+WHERE extraction_start IS NOT NULL            
