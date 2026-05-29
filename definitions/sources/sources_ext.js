@@ -39,7 +39,8 @@ const tables = [
   "tb_ext_trs_tmb001_vendas_vt",
   "tb_ext_mrd_tmb001_sam_media",
   "tb_ext_mrd_tmb001_sam_typetransaction",
-  "tb_ext_mrd_tmb001_sam_actiontype"
+  "tb_ext_mrd_tmb001_sam_actiontype",
+  "tb_ext_trs_aut001_extract_all"
 
 ];
 
