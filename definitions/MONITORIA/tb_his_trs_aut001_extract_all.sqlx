@@ -1,0 +1,38 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_aut001_extract_all",
+  tags: ["monitoria"],
+  description: "Tabela histórica incremental de monitoramento de canais com chave hash de controle",
+    uniqueKey: ["id_hash"] 
+}
+
+
+
+SELECT 
+  -- Criação do campo Hash solicitado (Retorna um INT64 exclusivo baseado na combinação das strings)
+  FARM_FINGERPRINT(
+    CONCAT(
+      COALESCE(SAFE_CAST(nome_arquivo AS STRING), ''),
+      COALESCE(SAFE_CAST(ds_table AS STRING), ''),
+      COALESCE(SAFE_CAST(extraction_start AS STRING), ''),
+      COALESCE(SAFE_CAST(cd_status AS STRING), ''),
+      COALESCE(SAFE_CAST(system_source AS STRING), '')
+
+    )
+  ) AS id_hash,
+
+nome_arquivo	,		
+ds_table,			
+extraction_start,		
+extraction_end	,		
+cd_status	,		
+records	,	
+error	,		
+system_source	,		
+source_type	,		
+schema_banco,			
+object_type	,		
+tags		
+
+FROM ${ref("tb_day_trs_aut001_extract_all")}
