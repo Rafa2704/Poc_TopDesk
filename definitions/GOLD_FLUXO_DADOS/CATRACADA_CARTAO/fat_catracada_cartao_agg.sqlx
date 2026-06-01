@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "itg",
     description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
-    tags: ["FORA"],
+    tags: ["itg"],
     bigquery: {
         partitionBy: "dt_uso",
     }
