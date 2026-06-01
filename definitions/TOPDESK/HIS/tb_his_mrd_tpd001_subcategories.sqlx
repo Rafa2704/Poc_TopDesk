@@ -1,7 +1,8 @@
 config {
-    type: "table", // Criamos como tabela para ter os dados fisicamente no BQ
+    type: "incremental", // Criamos como tabela para ter os dados fisicamente no BQ
     schema: "his",
     name: "tb_his_mrd_tpd001_subcategories",
+    uniqueKey: ["id"],
     description: "Camada Bronze: Dados persistidos como texto para garantir resiliência contra mudanças de schema",
     tags: ["topdesk"],
 }
