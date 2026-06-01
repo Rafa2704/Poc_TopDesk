@@ -1,7 +1,8 @@
 config {
-  type: "table",
+  type: "incremental",
   schema: "his",
   name: "tb_his_trs_tpd001_changedetails",
+  uniqueKey: ["id"],
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   bigquery: {
     partitionBy: "DATE(creationDate)",
