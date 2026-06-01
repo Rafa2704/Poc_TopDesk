@@ -37,6 +37,6 @@ tags	,
 
    origem,
   dt_processamento,
-  S usuario_processamento
+   usuario_processamento
 
 FROM ${ref("tb_day_trs_aut001_extract_all")}
