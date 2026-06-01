@@ -52,6 +52,12 @@ SELECT
   source_type,
   schema_banco,
   object_type,
-  tags
+  tags,
+
+  "AUT001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+
 FROM unnested
 WHERE extraction_start IS NOT NULL            

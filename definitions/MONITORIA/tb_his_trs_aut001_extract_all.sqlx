@@ -33,6 +33,10 @@ system_source	,
 source_type	,		
 schema_banco,			
 object_type	,		
-tags		
+tags	,
+
+   origem,
+  dt_processamento,
+  S usuario_processamento
 
 FROM ${ref("tb_day_trs_aut001_extract_all")}
