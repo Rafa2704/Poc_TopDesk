@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "tmp",
     description: "Tabela gold para o fluxo de dados fat_union_vendas ",
-    tags: ["FORA"],
+    tags: ["ITG"],
     bigquery: {
         partitionBy: "dt_venda",
     }
