@@ -43,8 +43,10 @@ unnested AS (
 SELECT
   nome_arquivo,
   chave               AS ds_table,
-  SAFE_CAST(extraction_start AS TIMESTAMP) AS extraction_start ,
-  SAFE_CAST(extraction_end AS TIMESTAMP) AS   extraction_end,
+--   SAFE_CAST(extraction_start AS TIMESTAMP) AS extraction_start ,
+--   SAFE_CAST(extraction_end AS TIMESTAMP) AS   extraction_end,
+  DATETIME(SAFE_CAST(extraction_start AS TIMESTAMP), 'America/Sao_Paulo') AS extraction_start,
+  DATETIME(SAFE_CAST(extraction_end AS TIMESTAMP), 'America/Sao_Paulo') AS extraction_end,
   cd_status,
   records,
   error,
@@ -55,9 +57,12 @@ SELECT
   tags,
 
   "AUT001" AS origem,
-  CURRENT_TIMESTAMP() AS dt_processamento,
+  DATETIME(CURRENT_TIMESTAMP(), 'America/Sao_Paulo') AS dt_processamento,
+ -- CURRENT_TIMESTAMP() AS dt_processamento,
   SESSION_USER() AS usuario_processamento
 
 
 FROM unnested
-WHERE extraction_start IS NOT NULL            
+WHERE extraction_start IS NOT NULL        
+
+
