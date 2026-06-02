@@ -1,6 +1,7 @@
-defaultProject: prd-autopass-ed-001
+defaultProject: dev-autopass-bi-001
 defaultDataset: dataform
 defaultAssertionDataset: dataform_assertions
 dataformCoreVersion: 3.0.37
 vars:
-  source_project: prd-autopass-ed-001
+  env: dev
+  source_project: dev-autopass-bi-001
