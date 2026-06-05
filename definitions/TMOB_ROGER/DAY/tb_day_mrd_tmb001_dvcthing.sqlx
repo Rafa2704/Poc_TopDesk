@@ -1,0 +1,49 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_dvcthing",
+  tags: ["tmb005"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT
+    thingName,
+    hardwareSerial,
+    macAddress,
+    ip,
+    osVersion,
+    deviceType,
+    serviceStatus,
+    CAST(isMaintenance AS BOOL) AS isMaintenance,
+    blameUser,
+    CAST(createdAt AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+    lastLocation,
+    connStatusEpoch,
+    disconnectReason,
+    CAST(isConnected AS BOOL) AS isConnected,
+    connectedIp,
+    internalIp,
+    CAST(lastInfoDate AS TIMESTAMP) AS lastInfoDate,
+    dvcHardwareTypeId,
+    direction,
+    CAST(directionDate AS TIMESTAMP) AS directionDate,
+    CAST(serviceStatusDate AS TIMESTAMP) AS serviceStatusDate,
+    CAST(isActive AS BOOL) AS isActive,
+    CAST(toLineDate AS TIMESTAMP) AS toLineDate,
+    toLineId,
+    toTerminalCode,
+    toTerminalGroupId,
+    toTransportOperatorId,
+    CAST(isSlave AS BOOL) AS isSlave,
+    cpuTemperature,
+    CAST(turnstileDate AS TIMESTAMP) AS turnstileDate,
+    turnstileMode,
+    connectivityType,
+    CAST(lastWifiCommunication AS TIMESTAMP) AS lastWifiCommunication,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_mrd_tmb001_dvcthing")}
+

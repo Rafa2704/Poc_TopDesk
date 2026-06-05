@@ -36,8 +36,25 @@ const tables = [
   "tb_ext_trs_pwb001_auditoria",
   "tb_ext_trs_pwb001_governanca",
   "tb_ext_trs_pwb001_historico_refresh",
-  "tb_day_trs_tpd001_operatorchanges"
-
+  "tb_day_trs_tpd001_operatorchanges",
+  "tb_ext_mrd_tmb001_dvcthing",
+  "tb_ext_mrd_tmb001_emvaid",
+  "tb_ext_mrd_tmb001_emvbin",
+  "tb_ext_trs_tmb001_emvcard",
+  "tb_ext_mrd_tmb001_emvcardtoken",
+  "tb_ext_trs_tmb001_emvdebitrecovery",
+  "tb_ext_trs_tmb001_emvdebitrecoveryprocess",
+  "tb_ext_trs_tmb001_emvdebitrecoverysummary",
+  "tb_ext_trs_tmb001_emvpayment",
+  "tb_ext_trs_tmb001_emvpaymentdenysummary",
+  "tb_ext_trs_tmb001_emvpaymentsummary",
+  "tb_ext_trs_tmb001_emvusage",
+  "tb_ext_trs_tmb001_emvusagerejectionsummary",
+  "tb_ext_mrd_tmb001_farintegrationlinegroup",
+  "tb_ext_trs_tmb001_trn_usageemv",
+  "tb_ext_mrd_tmb001_toline",
+  "tb_ext_mrd_tmb001_toterminal",
+  "tb_ext_mrd_tmb001_totransportoperator"
 ];
 
 tables.forEach(table => {

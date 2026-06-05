@@ -1,0 +1,17 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_emvbin",
+  tags: ["tmb005"],
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["bin"],
+  bigquery: {
+    partitionBy: "DATE(createdAt)",
+  },
+
+ 
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_mrd_tmb001_emvbin")}
