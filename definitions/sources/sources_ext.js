@@ -54,7 +54,8 @@ const tables = [
   "tb_ext_trs_tmb001_trn_usageemv",
   "tb_ext_mrd_tmb001_toline",
   "tb_ext_mrd_tmb001_toterminal",
-  "tb_ext_mrd_tmb001_totransportoperator"
+  "tb_ext_mrd_tmb001_totransportoperator",
+  "tb_ext_trs_tmb001_atm_pix"
 ];
 
 tables.forEach(table => {
