@@ -1,0 +1,20 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_emvbin",
+  tags: ["tmb005"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT
+    bin,
+    description,
+    CAST(isActive AS BOOL) AS isActive,
+    blameUser,
+    CAST(createdAt AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_mrd_tmb001_emvbin")}

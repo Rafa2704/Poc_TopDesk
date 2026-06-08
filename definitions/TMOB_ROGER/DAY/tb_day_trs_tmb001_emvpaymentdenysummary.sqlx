@@ -1,0 +1,36 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_emvpaymentdenysummary",
+    tags: ["tmb005"],
+    description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT
+    id,
+    CAST(date AS DATE) AS date,
+    CAST(month AS DATE) AS month,
+    toTransportOperatorId,
+    toLineId,
+    toTerminalCode,
+    toTerminalGroupId,
+    emvAcquirerCode,
+    emvProductId,
+    emvBinBin,
+    brand,
+    emvAidAid,
+    CAST(LOWER(isDebitRecovery) IN ('t','true') AS BOOL) AS isDebitRecovery,
+    debitRecoveryType,
+    denyCode,
+    denyMessage,
+    denyCount,
+    denyAmount,
+    blameUser,
+    CAST(createdAt AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+    mode,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_trs_tmb001_emvpaymentdenysummary")}

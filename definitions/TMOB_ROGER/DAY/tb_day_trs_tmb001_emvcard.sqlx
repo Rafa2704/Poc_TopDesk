@@ -1,0 +1,38 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_emvcard",
+  tags: ["tmb005"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT
+    panToken,
+    panHash,
+    last4,
+    brand,
+    CAST(expiration AS DATE) AS expiration,
+    emvBinBin,
+    emvParPar,
+    tktUsageCount,
+    tktRejectCount,
+    lastEmvUsageId,
+    lastEmvUsageRejectId,
+    debt,
+    CAST(isHotlist AS BOOL) AS isHotlist,
+    CAST(createdAt AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+    CAST(isActive AS BOOL) AS isActive,
+    CAST(lastEmvUsageDate AS TIMESTAMP) AS lastEmvUsageDate,
+    emvBinBinDigital,
+    CAST(isDigital AS BOOL) AS isDigital,
+    last4Digital,
+    emvBinBinFPan,
+    last4FPan,
+    blameUser,
+    forgivenDebt,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_trs_tmb001_emvcard")}
