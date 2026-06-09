@@ -1,0 +1,198 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela itg de vendas por cartão ",
+    bigquery: {
+        partitionBy: "DATA_PROCESSAMENTO",
+    }
+}
+
+
+
+--Tabela:REMICAO_INTEGRACAO_TOP
+--Banco:BQ
+SELECT 
+	COMP.CLR_ID,
+	COMP.CLR_PROCESS_DATE AS DATA_PROCESSAMENTO,
+	TP1.ds_transport_provider AS EMPRESA,
+	TP1.ds_name_card AS EMPRESA_APELIDO,
+	C1.ds_consortium ,
+	APP1.ds_short AS PRODUTO,
+	QTD,
+	REMICAO,
+	RECEBER,
+	PAGAR, 
+	VL_INTEGRACAO
+
+FROM (
+  SELECT DISTINCT
+    IFNULL(B.CLR_ID,A.CLR_ID) AS CLR_ID,
+    IFNULL(B.CLR_PROCESS_DATE,A.CLR_PROCESS_DATE) AS CLR_PROCESS_DATE,
+    IFNULL(B.TP_ID,A.TP_ID) TP_ID,
+    IFNULL(B.APP_ID,A.APP_ID) APP_ID,
+    B.QTD,
+    B.CLP_FAREVALUE AS REMICAO,
+    IFNULL(A.RECEBER,0) AS RECEBER,
+    IFNULL(A.PAGAR,0) AS PAGAR,
+    IF(A.RECEBER IS NULL AND A.PAGAR IS NULL, 0, COALESCE(A.RECEBER, 0) + COALESCE(A.PAGAR, 0)) AS VL_INTEGRACAO
+ 
+  FROM (
+    SELECT
+SET__RMAP_INTEGRACOES.CLR_ID AS CLR_ID,
+SET__RMAP_INTEGRACOES.TP_ID_ORIG AS TP_ID,
+SET__RMAP_INTEGRACOES.APP_ID_ORIG AS APP_ID,
+SET__RMAP_INTEGRACOES.CLR_PROCESS_DATE,
+(SUM(SET__RMAP_INTEGRACOES.RECEBER)) AS RECEBER,
+(SUM(SET__RMAP_INTEGRACOES.PAGAR)) AS PAGAR
+
+FROM (
+SELECT
+CLEARING_RMAP_INTEGRACOES.cd_clearing AS CLR_ID ,
+CLEARINGPAYMENTSPARTITION_RMAP.cd_transport_provider_orig AS TP_ID_ORIG ,
+CLEARINGPAYMENTSPARTITION_RMAP.cd_application_orig AS APP_ID_ORIG,
+CLEARING_RMAP_INTEGRACOES.dt_process_start AS CLR_PROCESS_DATE,
+(IFNULL(SUM(CASE WHEN CLEARING_RMAP_INTEGRACOES.dt_process_start >= '2025-01-01'
+AND CAST(CLEARINGPAYMENTSPARTITION_RMAP.cd_application_orig AS INT64) = 910 THEN 
+0
+WHEN IFNULL(CLEARINGPAYMENTSPARTITION_RMAP.vl_balance_orig, 0) > 0 THEN
+CLEARINGPAYMENTSPARTITION_RMAP.vl_balance_orig
+ELSE
+0
+END),
+0)) AS RECEBER ,
+
+(IFNULL(SUM(CASE
+WHEN IFNULL(CLEARINGPAYMENTSPARTITION_RMAP.vl_balance_orig, 0) < 0
+AND CAST(CLEARINGPAYMENTSPARTITION_RMAP.cd_application_orig AS INT64) <> 910 THEN
+CLEARINGPAYMENTSPARTITION_RMAP.vl_balance_orig
+WHEN IFNULL(CLEARINGPAYMENTSPARTITION_RMAP.vl_balance_orig, 0) < 0
+AND CLEARING_RMAP_INTEGRACOES.dt_process_start >= '2025-01-01'
+AND CAST(CLEARINGPAYMENTSPARTITION_RMAP.cd_application_orig AS INT64) = 910 THEN
+0
+ELSE
+0
+END),
+0)) AS PAGAR
+
+FROM
+`prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment_partition` CLEARINGPAYMENTSPARTITION_RMAP 
+INNER JOIN (`prd-autopass-bi-001.his.tb_his_trs_top001_clearing_partition` CLEARINGPARTITION_RMAP_INTEGRA 
+INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_clearing` CLEARING_RMAP_INTEGRACOES
+ON (CLEARINGPARTITION_RMAP_INTEGRA.cd_clearing_pay = CLEARING_RMAP_INTEGRACOES.cd_clearing) AND (CLEARINGPARTITION_RMAP_INTEGRA.cd_clearing_read = CLEARING_RMAP_INTEGRACOES.cd_clearing)
+)
+ON CLEARINGPAYMENTSPARTITION_RMAP.cd_clearing_partition	 = CLEARINGPARTITION_RMAP_INTEGRA.cd_clearing_partition	 
+WHERE
+-- arquivos excluidos no mercury por falha de processamento no dia
+CLEARINGPAYMENTSPARTITION_RMAP.dt_registration <> '2025-07-12' 
+and CLEARING_RMAP_INTEGRACOES.dt_process_start >= '2025-01-01'
+GROUP BY
+CLEARING_RMAP_INTEGRACOES.cd_clearing,
+CLEARINGPAYMENTSPARTITION_RMAP.cd_transport_provider_orig,
+CLEARINGPAYMENTSPARTITION_RMAP.cd_application_orig,
+CLEARING_RMAP_INTEGRACOES.dt_process_start
+UNION ALL
+SELECT
+CLEARING_RMAP_INTEGRACOES_1.cd_clearing AS CLR_ID ,
+CLEARINGPAYMENTSPARTITION_RM_1.cd_transport_provider_dest AS TP_ID_DEST, 
+CLEARINGPAYMENTSPARTITION_RM_1.cd_application_orig AS APP_ID_ORIG,
+CLEARING_RMAP_INTEGRACOES_1.dt_process_start AS CLR_PROCESS_DATE ,
+(IFNULL(SUM(CASE WHEN CLEARING_RMAP_INTEGRACOES_1.dt_process_start >= '2025-01-01'
+AND CAST(CLEARINGPAYMENTSPARTITION_RM_1.cd_application_orig AS INT64)  = 910 THEN
+0
+WHEN IFNULL(CLEARINGPAYMENTSPARTITION_RM_1.vl_balance_dest, 0) > 0 THEN
+CLEARINGPAYMENTSPARTITION_RM_1.vl_balance_dest
+ELSE
+0
+END),
+0)) AS RECEBER ,
+(IFNULL(SUM(CASE WHEN CLEARING_RMAP_INTEGRACOES_1.dt_process_start >= '2025-01-01'
+AND CAST(CLEARINGPAYMENTSPARTITION_RM_1.cd_application_orig AS INT64) = 910 THEN
+0
+WHEN IFNULL(CLEARINGPAYMENTSPARTITION_RM_1.vl_balance_dest, 0) < 0 THEN
+CLEARINGPAYMENTSPARTITION_RM_1.vl_balance_dest
+ELSE
+0
+END),
+0)) AS PAGAR
+
+FROM
+`prd-autopass-bi-001.his.tb_his_trs_top001_clearing` CLEARING_RMAP_INTEGRACOES_1 
+INNER JOIN (`prd-autopass-bi-001.his.tb_his_trs_top001_clearing_partition` CLEARINGPARTITION_RMAP_INTEG_1 
+INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment_partition` CLEARINGPAYMENTSPARTITION_RM_1
+ON CLEARINGPAYMENTSPARTITION_RM_1.cd_clearing_partition = CLEARINGPARTITION_RMAP_INTEG_1.cd_clearing_partition
+)
+ON (CLEARINGPARTITION_RMAP_INTEG_1.cd_clearing_pay = CLEARING_RMAP_INTEGRACOES_1.cd_clearing) AND (CLEARINGPARTITION_RMAP_INTEG_1.cd_clearing_read = CLEARING_RMAP_INTEGRACOES_1.cd_clearing)
+WHERE CLEARING_RMAP_INTEGRACOES_1.dt_process_start >= '2025-01-01'
+-- arquivos excluidos no mercury por falha de processamento no dia 12-07-25
+and CLEARINGPAYMENTSPARTITION_RM_1.dt_registration <> '2025-07-12'
+GROUP BY
+CLEARING_RMAP_INTEGRACOES_1.cd_clearing,
+CLEARINGPAYMENTSPARTITION_RM_1.cd_transport_provider_dest,
+CLEARINGPAYMENTSPARTITION_RM_1.cd_transport_provider_orig,
+CLEARINGPAYMENTSPARTITION_RM_1.cd_application_orig,
+CLEARING_RMAP_INTEGRACOES_1.dt_process_start
+) SET__RMAP_INTEGRACOES 
+
+WHERE (1=1)
+GROUP BY SET__RMAP_INTEGRACOES.CLR_ID,
+SET__RMAP_INTEGRACOES.TP_ID_ORIG,
+SET__RMAP_INTEGRACOES.APP_ID_ORIG,
+SET__RMAP_INTEGRACOES.CLR_PROCESS_DATE
+) A
+
+FULL OUTER JOIN (
+SELECT
+CP.cd_clearing AS CLR_ID, 
+CP.cd_application AS APP_ID, 
+TP.cd_transport_provider AS TP_ID , 
+CL.dt_process_start AS CLR_PROCESS_DATE, 
+FORMAT_DATE('%m/%Y', CL.dt_process_start) as CLR_PROCESS_DATEM,
+TP.ds_transport_provider AS TP_DESC, 
+TP.ds_name_card AS TP_NAMEONCARD, 
+C.ds_consortium AS CSD_DESC, 
+--CP.cd_issuer AS ISS_ID, 
+APP.ds_short AS APP_DESCSHORT, 
+COUNT(*) QTD , 
+SUM(CP.vl_fare) CLP_FAREVALUE
+
+FROM `prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment` CP
+INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_clearing` CL ON CL.cd_clearing = CP.cd_clearing
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider` TP ON CP.cd_transport_provider = TP.cd_transport_provider
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium` TPC ON TP.cd_transport_provider = TPC.cd_transport_provider
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_consortium` C ON TPC.cd_consortium = C.cd_consortium
+INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_application` APP ON CP.cd_application = APP.cd_application
+WHERE
+--app.cd_issuer = '14' AND
+    APP.cd_status = 'A'
+AND (CP.nr_part_fare = '1' OR CP.nr_part_fare IS NULL)
+AND CL.cd_clearing IN
+(SELECT cd_clearing AS CLR_ID
+FROM `prd-autopass-bi-001.his.tb_his_trs_top001_clearing`
+WHERE dt_process_start >= '2025-01-01'
+)
+GROUP BY 
+CP.cd_clearing,  
+CP.cd_application, 
+TP.cd_transport_provider, 
+CL.dt_process_start, 
+FORMAT_DATE('%m/%Y', CL.dt_process_start), 
+TP.ds_transport_provider, 
+TP.ds_name_card, 
+C.ds_consortium, 
+--CP.cd_issuer, 
+APP.ds_short) B
+
+ON A.CLR_ID = B.CLR_ID
+AND A.APP_ID = B.APP_ID
+AND A.TP_ID = B.TP_ID
+) COMP
+
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider` TP1
+ON COMP.TP_ID = TP1.cd_transport_provider
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium` TPC1
+ON COMP.TP_ID = TPC1.cd_transport_provider
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_consortium` C1
+ON TPC1.cd_consortium = C1.cd_consortium
+LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_application` APP1
+ON COMP.APP_ID = APP1.cd_application
+AND APP1.cd_issuer = '14'

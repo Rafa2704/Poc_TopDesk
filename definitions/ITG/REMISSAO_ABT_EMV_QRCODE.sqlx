@@ -1,0 +1,186 @@
+config {
+    type: "table", 
+    schema: "tmp",
+    description: "Tabela itg de vendas por cartão ",
+    bigquery: {
+        partitionBy: "DATA_PROCESSAMENTO",
+    }
+}
+
+
+
+
+
+
+WITH
+
+-- ----------------------------------------------------------------
+-- CTE 1: Clearing filtrado por data de processamento
+-- Leitura única da tabela de clearing, evitando scan repetido
+-- nas 3 origens
+-- ----------------------------------------------------------------
+cte_clearing AS (
+    SELECT
+        cd_clearing,
+        dt_process_start
+    FROM `prd-autopass-bi-001.his.tb_his_trs_top001_clearing`
+    WHERE dt_process_start >= '2025-01-01'
+),
+
+-- ----------------------------------------------------------------
+-- CTE 2: Pagamentos de clearing
+-- Leitura única da tabela de pagamentos, usada nas 3 origens
+-- ----------------------------------------------------------------
+cte_clearing_payment AS (
+    SELECT
+        cd_clearing,
+        cd_transport_provider,
+        cd_application,
+        cd_abt_emv_usage_data,
+        cd_abt_usage_data,
+        cd_qrcode_media_usage_data,
+        vl_fare,
+        vl_clearing_payment,
+        tm_card_usage
+    FROM `prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment`
+		    WHERE dt_process_start >= '2025-01-01'
+),
+
+-- ----------------------------------------------------------------
+-- CTE 3: Dimensão de empresa de transporte
+-- Leitura única, usada nas 3 origens
+-- ----------------------------------------------------------------
+cte_transport_provider AS (
+    SELECT
+        cd_transport_provider,
+        ds_transport_provider,
+        ds_name_card
+    FROM `prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider`
+),
+
+-- ----------------------------------------------------------------
+-- CTE 4: Dimensão de consórcio por empresa
+-- Leitura única, usada nas origens EMV e ABT
+-- ----------------------------------------------------------------
+cte_consortium AS (
+    SELECT
+        TPC.cd_transport_provider,
+        C.ds_consortium
+    FROM `prd-autopass-bi-001.his.tb_his_mrd_top001_transport_provider_consortium` TPC
+    LEFT JOIN `prd-autopass-bi-001.his.tb_his_mrd_top001_consortium` C
+        ON TPC.cd_consortium = C.cd_consortium
+),
+
+-- ----------------------------------------------------------------
+-- CTE 5: Dimensão de produto (application)
+-- Leitura única, usada nas origens EMV e ABT
+-- ----------------------------------------------------------------
+cte_application AS (
+    SELECT
+        cd_application,
+        cd_issuer,
+        ds_short
+    FROM `prd-autopass-bi-001.his.tb_his_mrd_top001_application`
+),
+
+-- ----------------------------------------------------------------
+-- CTE 6: Remição EMV
+-- Origem: abt_emv_usage_data
+-- JOIN com cd_issuer para identificar o produto corretamente
+-- ----------------------------------------------------------------
+cte_emv AS (
+    SELECT
+        'EMV'                          AS TIPO_REMICAO,
+        UDE.dt_usage                   AS DATA_USO,
+        CL.dt_process_start            AS DATA_PROCESSAMENTO,
+        CS.ds_consortium,
+        T.ds_transport_provider        AS EMPRESA,
+        T.ds_name_card                 AS EMPRESA_APELIDO,
+        A.ds_short                     AS APP,
+        CP.cd_clearing                 AS CLR_ID,
+        COUNT(CP.vl_fare)              AS QTD_CATRACADAS,
+        SUM(CP.vl_fare)                AS VALOR
+    FROM `prd-autopass-bi-001.his.tb_his_trs_top001_abt_emv_usage_data` UDE
+    LEFT JOIN cte_application        A  ON UDE.cd_application        = A.cd_application
+                                       AND UDE.cd_issuer              = A.cd_issuer
+    LEFT JOIN cte_clearing_payment  CP  ON UDE.cd_abt_emv_usage_data = CP.cd_abt_emv_usage_data
+    LEFT JOIN cte_clearing          CL  ON CL.cd_clearing            = CP.cd_clearing
+    LEFT JOIN cte_transport_provider T  ON CP.cd_transport_provider  = T.cd_transport_provider
+    LEFT JOIN cte_consortium        CS  ON T.cd_transport_provider   = CS.cd_transport_provider
+    GROUP BY ALL
+),
+
+-- ----------------------------------------------------------------
+-- CTE 7: Remição ABT
+-- Origem: abt_usage_data
+-- JOIN com application sem cd_issuer (diferença em relação ao EMV)
+-- ----------------------------------------------------------------
+cte_abt AS (
+    SELECT
+        'ABT'                          AS TIPO_REMICAO,
+        UDA.dt_usage                   AS DATA_USO,
+        CL.dt_process_start            AS DATA_PROCESSAMENTO,
+        CS.ds_consortium,
+        T.ds_transport_provider        AS EMPRESA,
+        T.ds_name_card                 AS EMPRESA_APELIDO,
+        A.ds_short                     AS APP,
+        CP.cd_clearing                 AS CLR_ID,
+        COUNT(CP.tm_card_usage)        AS QTD_CATRACADAS,
+        SUM(CP.vl_fare)                AS VALOR
+    FROM `prd-autopass-bi-001.his.tb_his_trs_top001_abt_usage_data` UDA
+    LEFT JOIN cte_application        A  ON UDA.cd_application      = A.cd_application
+    LEFT JOIN cte_clearing_payment  CP  ON UDA.cd_abt_usage_data   = CP.cd_abt_usage_data
+    LEFT JOIN cte_clearing          CL  ON CL.cd_clearing          = CP.cd_clearing
+    LEFT JOIN cte_transport_provider T  ON CP.cd_transport_provider = T.cd_transport_provider
+    LEFT JOIN cte_consortium        CS  ON T.cd_transport_provider  = CS.cd_transport_provider
+    GROUP BY ALL
+),
+
+-- ----------------------------------------------------------------
+-- CTE 8: Remição QRCODE
+-- Origem: clearing_payment filtrado por cd_application QRCODE
+-- Sem DATA_USO e EMPRESA_APELIDO — preenchidos como NULL
+-- ----------------------------------------------------------------
+cte_qrcode AS (
+    SELECT
+        'QRCODE'                              AS TIPO_REMICAO,
+        CAST(NULL AS DATE)                    AS DATA_USO,
+        CL.dt_process_start                   AS DATA_PROCESSAMENTO,
+        CAST(NULL AS STRING)                  AS ds_consortium,
+        TP.ds_transport_provider              AS EMPRESA,
+        CAST(NULL AS STRING)                  AS EMPRESA_APELIDO,
+        'QRCODE'                              AS APP,
+        CP.cd_clearing                        AS CLR_ID,
+        COUNT(CP.cd_qrcode_media_usage_data)  AS QTD_CATRACADAS,
+        SUM(CP.vl_clearing_payment)           AS VALOR
+    FROM cte_clearing_payment CP
+    LEFT JOIN cte_clearing           CL ON CL.cd_clearing          = CP.cd_clearing
+    LEFT JOIN cte_transport_provider TP ON TP.cd_transport_provider = CP.cd_transport_provider
+    WHERE CP.cd_application IN ('110', '116', '118')
+    GROUP BY
+        CP.cd_clearing,
+        CL.dt_process_start,
+        TP.ds_transport_provider
+),
+
+-- ----------------------------------------------------------------
+-- CTE 9: União das 3 origens em uma única tabela
+-- ----------------------------------------------------------------
+cte_final AS (
+    SELECT * FROM cte_emv
+    UNION ALL
+    SELECT * FROM cte_abt
+    UNION ALL
+    SELECT * FROM cte_qrcode
+)
+
+SELECT
+*
+-- date_trunc(DATA_PROCESSAMENTO , month) as mes,
+-- EMPRESA,
+--     SUM(CASE WHEN TIPO_REMICAO = 'EMV'    THEN VALOR ELSE 0 END) AS RS_REMICAO_EMV,
+--     SUM(CASE WHEN TIPO_REMICAO = 'ABT'    THEN VALOR ELSE 0 END) AS RS_REMICAO_ABT,
+--     SUM(CASE WHEN TIPO_REMICAO = 'QRCODE' THEN VALOR ELSE 0 END) AS RS_REMICAO_QRCODE,
+--     SUM(VALOR)                                                    AS RS_REMICAO_TOTAL
+FROM cte_final
+group by all 
