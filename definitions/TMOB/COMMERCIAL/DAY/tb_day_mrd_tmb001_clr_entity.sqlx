@@ -1,0 +1,25 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_clr_entity",
+  tags: ["tmb001"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+SELECT
+    ce_id,
+    ce_type,
+    ce_id_parent,
+    ce_description,
+    ce_totransportoperatorid,
+    CAST(ce_isactive AS BOOL) AS ce_isactive,
+    DATETIME(CAST(ce_createdat_tz AS TIMESTAMP), "America/Sao_Paulo") AS ce_createdat_tz,
+    DATETIME(CAST(ce_updatedat_tz AS TIMESTAMP), "America/Sao_Paulo") AS ce_updatedat_tz,
+    ce_blameuser,
+    cc_id,
+    ce_shortdesc,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_mrd_tmb001_clr_entity")}

@@ -1,0 +1,16 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_clr_entity",
+  tags: ["tmb001"],
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["ce_id"],
+  bigquery: {
+    partitionBy: "DATE(ce_createdat_tz)",
+  },
+
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_mrd_tmb001_clr_entity")}
