@@ -1,0 +1,31 @@
+config {
+  type: "table",
+  schema: "his",
+  tags: ["shp001"],
+  description: "Tabela de-para de mapeamento das linhas de METRO e CPTM",
+  columns: {
+    cd_origem: "Código identificador do sistema de origem (Ex: TOP, TMB)",
+    cd_linha: "Número identificador da linha",
+    ds_localidade: "Tipo do transporte (METRO ou CPTM)",
+    ds_linha: "Nome descritivo da linha",
+    ds_cor: "Nome da cor comercial da linha",
+    ds_linha_completa: "Concatenação padrão de Linha e Cor"
+  }
+}
+
+SELECT "TOP" AS cd_origem, 1 AS cd_linha, "METRO" AS ds_localidade, "LINHA 1" AS ds_linha, "AZUL" AS ds_linha_cor, "LINHA 1 - AZUL" AS ds_linha_completa UNION ALL
+SELECT "TOP", 2, "METRO", "LINHA 2", "VERDE", "LINHA 2 - VERDE" UNION ALL
+SELECT "TOP", 3, "METRO", "LINHA 3", "VERMELHA", "LINHA 3 - VERMELHA" UNION ALL
+SELECT "TOP", 4, "METRO", "LINHA 4", "AMARELA", "LINHA 4 - AMARELA" UNION ALL
+SELECT "TOP", 5, "METRO", "LINHA 5", "LILAS", "LINHA 5 - LILAS" UNION ALL
+SELECT "TOP", 6, "METRO", "LINHA 6", "LARANJA", "LINHA 6 - LARANJA" UNION ALL
+SELECT "TOP", 7, "CPTM", "LINHA 7", "RUBI", "LINHA 7 - RUBI" UNION ALL
+SELECT "TOP", 8, "CPTM", "LINHA 8", "DIAMANTE", "LINHA 8 - DIAMANTE" UNION ALL
+SELECT "TOP", 9, "CPTM", "LINHA 9", "ESMERALDA", "LINHA 9 - ESMERALDA" UNION ALL
+SELECT "TOP", 10, "CPTM", "LINHA 10", "TURQUESA", "LINHA 10 - TURQUESA" UNION ALL
+SELECT "TOP", 11, "CPTM", "LINHA 11", "CORAL", "LINHA 11 - CORAL" UNION ALL
+SELECT "TOP", 12, "CPTM", "LINHA 12", "SAFIRA", "LINHA 12 - SAFIRA" UNION ALL
+SELECT "TOP", 13, "CPTM", "LINHA 13", "JADE", "LINHA 13 - JADE" UNION ALL
+SELECT "TOP", 14, "CPTM", "LINHA 14", CAST(NULL AS STRING), "LINHA 14" UNION ALL
+SELECT "TOP", 15, "METRO", "LINHA 15", "PRATA", "LINHA 15 - PRATA" UNION ALL
+SELECT "TOP", 17, "METRO", "LINHA 17", "OURO", "LINHA 17 - OURO"

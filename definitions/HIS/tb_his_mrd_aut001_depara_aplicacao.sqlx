@@ -1,0 +1,26 @@
+config {
+    type: "table",
+    schema: "his",
+    tags: ["shp001"],
+    description: "Tabela de-para de mapeamento das aplicações (produto)",
+    columns: {
+        cd_emissor: "Código identificador do sistema de origem (Ex: 14)",
+        cd_aplicacao: "Número identificador da aplicação",
+        ds_aplicacao_origem: "nome da aplicação sem tratamento",
+        ds_aplicacao: "Nome da aplicação ajustada",
+        fl_valorado: "Aplicação valorada SIM/NÃO",
+        fl_repasse_clearing: "Repasse clearing SIM/NÃO",
+        fl_comissionamento: "Comissão SIM/NÃO"
+    }
+}
+
+SELECT
+  toIssuerCode cd_emissor,
+  code cd_aplicacao,
+  displayName ds_aplicacao_origem,
+  produto_agrupado ds_aplicacao,
+  UPPER(valorado) fl_valorado,
+  UPPER(repasse_clearing) fl_repasse_clearing,
+  UPPER(comissionamento) fl_comissionamento
+FROM
+  prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto

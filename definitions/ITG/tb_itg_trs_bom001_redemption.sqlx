@@ -9,15 +9,11 @@ config {
     }
 }
 
-
--- CREATE OR REPLACE TABLE itg.tb_itg_trs_bom001_redemption
--- PARTITION BY dt_process_start
--- CLUSTER BY cd_clearing, cd_issuer, ds_transport_provider, ds_consortium
--- AS
 SELECT
   cd_clearing
 , dt_process_start
 , ds_transport_provider
+, cd_consortium
 ,CASE 
   WHEN ds_consortium in( "CPTM", "METRO" , "BNT") THEN "TRILHO"  
   ELSE  "PNEU" 
@@ -39,15 +35,16 @@ END ds_modal
 ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
 , cd_issuer
 , ds_short_application,
-produto_agrupado,
-    valorado,
-    repasse_clearing,
-    comissionamento
+ds_aplicacao ds_application_agg,
+    fl_valorado fl_valued_application,
+    fl_repasse_clearing fl_financial_transfer,
+    fl_comissionamento fl_commission
 , 'BOM'ds_product_group
 , qt_redemption
 , vl_clearing_payment
 , nm_station --ADICIONADO 12/12/2024
 , core.fn_aut001_nm_station_format(nm_station ) nm_station_agg --ADICIONADO 10/12/2025
+, cd_line
 , nm_line --ADICIONADO 12/12/2024
 --, core.fn_aut001_nm_line_format(nm_line) nm_line_agg --ADICIONADO 10/12/2025
 , ts_processing
@@ -61,16 +58,17 @@ SELECT
     cp.cd_clearing cd_clearing,
     cl.dt_process_start dt_process_start,
     tp.ds_transport_provider ds_transport_provider,
+    c.cd_consortium,
     CASE 
     WHEN c.ds_consortium is null or c.ds_consortium = 'ARQUIVOS INCONSISTENTES' or c.ds_consortium = 'AUTOPASS'  THEN 'MUNICIPAL' 
         ELSE c.ds_consortium  
     END AS ds_consortium,  --regra aplicada em 28/08 
     cp.cd_issuer cd_issuer,
-    B.displayName ds_short_application,
-    B.produto_agrupado,
-    B.valorado,
-    B.repasse_clearing,
-    B.comissionamento,
+    B.ds_aplicacao_origem ds_short_application,
+    B.ds_aplicacao,
+    B.fl_valorado,
+    B.fl_repasse_clearing,
+    B.fl_comissionamento,
 -- , app.ds_short ds_short_application,
     COUNT(*) qt_redemption,
 --, SUM(cp.vl_fare) vl_fare  --alterada a regra para pegar vl_clearing_payment em 31/08
@@ -82,15 +80,17 @@ SELECT
     cp.cd_system_source cd_system_source,
     ld.ds_long nm_station, --ESTACAO ADICIONADO 12/12/2024
     lm.ds_long nm_line, --LINHA ADICIONADO 12/12/2024
+    lm.cd_line
 FROM prd-autopass-bi-001.his.tb_his_trs_bom001_clearing_payment cp
 
-INNER JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` B
+LEFT JOIN from ${ref("tb_his_mrd_aut001_depara_aplicacao")}
+--`dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_aplicacao` B
         ON  CASE 
         WHEN cp.cd_issuer_application = '0' AND cp.cd_application = '100' 
         THEN '14'
         ELSE cp.cd_issuer_application 
-      END = B.toIssuerCode
-        AND cp.cd_application = B.code 
+      END = B.cd_emissor
+        AND cp.cd_application = B.cd_aplicacao 
 -- INNER JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
 --       ON cp.cd_application = B.code
 --       AND cp.cd_issuer = B.toIssuerCode
@@ -101,26 +101,27 @@ INNER JOIN `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto` B
 
 
 --AND app.cd_status = 'A'  -- exclusão do filtro em 29/08
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_device_log dl 
+LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_device_log dl 
 ON dl.cd_device_log_file = cp.cd_device_log_file 
 AND dl.cd_process_batch = cp.cd_process_batch 
 AND dl.cd_device_log = cp.cd_device_log 
 AND dl.cd_device_log_detail = cp.cd_device_log_detail
 AND dl.dt_financial >= '2021-01-01'
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line_detail ld
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line_detail ld
 on cp.cd_line_detail = ld.cd_line_detail
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line lm
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_line lm
 ON ld.cd_line = lm.cd_line
 --LEFT OUTER JOIN his.tb_his_mrd_bom001_transport_provider_line tpl  --esta tabela só existe no TOP
 --on ld.cd_line = tpl.cd_line 
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider tp 
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider tp 
 ON tp.cd_transport_provider = cp.cd_transport_provider
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider_consortium tpc 
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_transport_provider_consortium tpc 
 ON tpc.cd_transport_provider = cp.cd_transport_provider
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_consortium c 
+LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_consortium c 
 ON c.cd_consortium = tpc.cd_consortium
-LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_clearing cl
+LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_bom001_clearing cl
 ON cp.cd_clearing = cl.cd_clearing
+
 WHERE 1 = 1
 AND cl.dt_process_start >= '2024-01-01'
 --AND (cp.nr_part_fare = '1' OR cp.nr_part_fare IS NULL) --excluido o filtro devido a alteração do campo mapeado de vl_fare para vl_clearing_payment em 31/08
