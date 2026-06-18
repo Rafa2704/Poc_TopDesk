@@ -2,7 +2,7 @@ config {
   type: "table",
   schema: "day",
   name: "tb_day_trs_tmb001_com_tranmt",
-  tags: ["tmb001"],
+  tags: ["commercial"],
   description: "Tabela de transações comerciais (com_tranmt) tipada e tratada — IDs como INT64, valores como NUMERIC e timestamps convertidos para America/Sao_Paulo"
 }
 SELECT 

@@ -2,7 +2,7 @@ config {
     type: "table",
     schema: "day",
     name: "tb_day_mrd_tmb001_farintegrationlinegroup",
-    tags: ["tmb001"],
+    tags: ["commercial"],
     description: "Lista de assets ATM do TOPdesk"
 }
 

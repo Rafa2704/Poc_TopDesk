@@ -7,7 +7,7 @@ config {
   bigquery: {
     partitionBy: "DATE(ctm_datetime_tz)",
   },
-  tags: ["tmb001"],
+  tags: ["commercial"],
 }
 
 

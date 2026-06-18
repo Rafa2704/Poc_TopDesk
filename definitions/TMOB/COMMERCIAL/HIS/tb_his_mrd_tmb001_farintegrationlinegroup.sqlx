@@ -2,7 +2,7 @@ config {
     type: "incremental",
     schema: "his",
     name: "tb_his_mrd_tmb001_farintegrationlinegroup",
-    tags: ["tmb001"],
+    tags: ["commercial"],
     description: "Tabela de incidentes tipada e persistida via Merge Incremental",
     uniqueKey: ["id"],
     bigquery: {
