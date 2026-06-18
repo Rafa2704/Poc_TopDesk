@@ -146,14 +146,14 @@ FROM (
     --  LEFT JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
     --   ON cp.cd_application = B.code
     --   AND cp.cd_issuer = B.toIssuerCode
-  LEFT JOIN from ${ref("tb_his_mrd_aut001_depara_aplicacao")}
+  LEFT JOIN  ${ref("tb_his_mrd_aut001_depara_aplicacao")} B
     --`dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_aplicacao` B
   ON
     CASE
       WHEN cp.cd_issuer_application = '0' AND cp.cd_application = '100' THEN '14'
       ELSE cp.cd_issuer_application
   END
-    = B.cd_emissor
+     = B.cd_emissor
     AND cp.cd_application = B.cd_aplicacao
   LEFT JOIN
     prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail ld
