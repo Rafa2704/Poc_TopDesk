@@ -1,0 +1,16 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_com_tranmt",
+  description: "Tabela tb_his_trs_tmb001_com_tranmt",
+  uniqueKey: ["ctm_id"],
+  bigquery: {
+    partitionBy: "DATE(ctm_datetime_tz)",
+  },
+  tags: ["tmb001"],
+}
+
+
+SELECT 
+    *
+ FROM ${ref("tb_day_trs_tmb001_com_tranmt")}

@@ -47,7 +47,8 @@ const tables = [
   "tb_ext_mrd_tpd001_problemcauses",
   "tb_ext_mrd_tmb001_clr_entity",
   "tb_ext_mrd_tmb001_clr_consortium",
-  "tb_ext_mrd_tmb001_farintegrationlinegroup"
+  "tb_ext_mrd_tmb001_farintegrationlinegroup",
+  "tb_ext_trs_tmb001_com_tranmt"
 
 ];
 
