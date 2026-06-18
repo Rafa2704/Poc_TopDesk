@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "itg",
     description: "Tabela itg de vendas por cartão ",
-    tags: ["itg"],
+    tags: ["clearing"],
     bigquery: {
         partitionBy: "dt_process_start",
         clusterBy: ["cd_clearing", "cd_issuer", "ds_transport_provider", "ds_consortium"]
@@ -83,7 +83,7 @@ SELECT
     lm.cd_line
 FROM prd-autopass-bi-001.his.tb_his_trs_bom001_clearing_payment cp
 
-LEFT JOIN from ${ref("tb_his_mrd_aut001_depara_aplicacao")}
+LEFT JOIN  ${ref("tb_his_mrd_aut001_depara_aplicacao")} B
 --`dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_aplicacao` B
         ON  CASE 
         WHEN cp.cd_issuer_application = '0' AND cp.cd_application = '100' 
