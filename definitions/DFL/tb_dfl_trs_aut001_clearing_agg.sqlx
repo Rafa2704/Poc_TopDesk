@@ -1,0 +1,102 @@
+config {
+    type: "table",
+    schema: "dfl",
+    description: "Tabela master do clearing com diversas origens ",
+    tags: ["dfl"],
+    bigquery: {
+        partitionBy: "dt_clearing",
+    }
+}
+
+WITH
+  union_clearing AS (
+  SELECT
+    ds_product_group ds_origem,
+    cd_system_source cd_origem_sistema,
+    dt_process_start dt_clearing,
+    ds_transport_provider ds_empresa,
+    ds_consortium ds_consorcio,
+    cons.ds_consorcio ds_abrangencia,
+    ds_short_application ds_produto_origem,
+    ds_application_agg ds_produto,
+    fl_valued_application fl_valorado,
+    fl_financial_transfer fl_repasse_clearing,
+    fl_commission fl_comissionamento,
+    ds_modal,
+    linha.ds_linha ,
+    est.ds_estacao,
+    SUM(qt_redemption) AS qt_remicao,
+    SUM(vl_fare) AS vl_remicao
+
+  FROM  ${ref("tb_itg_trs_top001_redemption")} 
+    --`dev-autopass-bi-001.itg.tb_itg_trs_top001_redemption`
+  LEFT JOIN
+    ${ref("tb_his_mrd_aut001_depara_linha")} linha
+    --dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_linha linha
+  ON
+    linha.cd_origem = 'TOP'
+    AND linha.cd_linha = CAST(cd_line AS integer)
+  LEFT JOIN
+     ${ref("tb_his_mrd_aut001_depara_consorcio")} cons 
+     --dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_consorcio cons
+  ON
+    cons.cd_origem = 'TOP'
+    AND cons.cd_consorcio = cd_consortium
+  LEFT JOIN
+    ${ref("tb_his_mrd_aut001_depara_estacao")} est 
+    --dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_estacao est
+  ON
+    est.cd_origem = 'TOP'
+    AND est.cd_estacao = cd_station
+  WHERE
+    dt_process_start >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 2 year)
+  GROUP BY
+    ALL
+  UNION ALL
+  SELECT
+    ds_product_group AS ds_origem,
+    cd_system_source cd_origem_sistema,
+    dt_process_start dt_clearing,
+    ds_transport_provider nm_empresa,
+    ds_consortium ds_consorcio,
+    cons.ds_consorcio ds_abrangencia,
+    ds_short_application ds_produto_origem,
+    ds_application_agg ds_produto,
+    fl_valued_application fl_valorado,
+    fl_financial_transfer fl_repasse_clearing,
+    fl_commission fl_comissionamento,
+    ds_modal,
+    nm_line nm_linha,
+    nm_station ds_estacao,
+    SUM(qt_redemption) AS qt_remicao,
+    SUM(vl_clearing_payment) AS vl_remicao
+  FROM
+    ${ref("tb_itg_trs_bom001_redemption")}
+    --`dev-autopass-bi-001.itg.tb_itg_trs_bom001_redemption`
+  LEFT JOIN
+    ${ref("tb_his_mrd_aut001_depara_consorcio")} cons 
+    --dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_consorcio cons
+  ON
+    cons.cd_origem = 'BOM'
+    AND cons.cd_consorcio = cd_consortium
+  WHERE
+    dt_process_start >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 2 year)
+  GROUP BY
+    ALL )
+  SELECT
+    cd_origem_sistema,
+    ds_origem,
+    dt_clearing,
+    ds_modal,
+    ds_empresa,
+    ds_consorcio,
+    ds_linha,
+    ds_estacao,
+    ds_abrangencia,
+    ds_produto_origem ds_aplicacao_origem,
+    ds_produto ds_aplicacao,
+    fl_valorado,
+    qt_remicao,
+    vl_remicao
+  FROM
+    union_clearing 

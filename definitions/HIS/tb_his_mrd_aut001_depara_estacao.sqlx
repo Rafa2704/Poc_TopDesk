@@ -1,0 +1,85 @@
+config {
+    type: "table",
+    schema: "his",
+    tags: ["shp001"],
+    description: "Tabela de-para de mapeamento de estação",
+    columns: {
+        cd_origem: "Código identificador do sistema de origem (Ex: TOP, TMB)",
+        cd_estacao: "Número identificador da estação",
+        ds_estacao: "Descrição da estação ajustada",
+        ds_estacao_origem: "Descrição da estação sem tratamento"
+    }
+}
+
+select 
+'TOP' cd_origem,
+ld.cd_line_detail cd_estacao, ld.ds_long ds_estacao_origem, 
+CASE
+    WHEN cd_line_detail = '905' THEN 'AACD SERVIDOR'
+    WHEN cd_line_detail = '912' THEN 'ADOLFO PINHEIRO'
+    WHEN cd_line_detail = '913' THEN 'ALTO DA BOA VISTA'
+    WHEN cd_line_detail = '71'  THEN 'ALTO DO IPIRANGA'
+    WHEN cd_line_detail = '62'  THEN 'ANA ROSA'
+    WHEN cd_line_detail = '76'  THEN 'ANHANGABAU'
+    WHEN cd_line_detail = '37'  THEN 'ARTUR ALVIM'
+    WHEN cd_line_detail = '102' THEN 'PALMEIRAS BARRA FUNDA'
+    WHEN cd_line_detail = '67'  THEN 'BELEM'
+    WHEN cd_line_detail = '914' THEN 'BORBA GATO'
+    WHEN cd_line_detail = '69'  THEN 'BRAS'
+    WHEN cd_line_detail = '68'  THEN 'BRESSER MOOCA'
+    WHEN cd_line_detail = '57'  THEN 'BRIGADEIRO'
+    WHEN cd_line_detail = '915' THEN 'BROOKLIN'
+    WHEN cd_line_detail = '922' THEN 'BUTANTA'
+    WHEN cd_line_detail IN ('917','203') THEN 'CAMPO BELO'
+    WHEN cd_line_detail = '910' THEN 'CAMPO LIMPO'
+    WHEN cd_line_detail = '911' THEN 'CAPAO REDONDO'
+    WHEN cd_line_detail = '59'  THEN 'CARRAO'
+    WHEN cd_line_detail IN ('903','65') THEN 'CHACARA KLABIN'
+    WHEN cd_line_detail = '46'  THEN 'CLINICAS'
+    WHEN cd_line_detail = '52'  THEN 'CONSOLACAO'
+    WHEN cd_line_detail = '3'   THEN 'CORINTHIANS ITAQUERA'
+    WHEN cd_line_detail = '916' THEN 'EUCALIPTOS'
+    WHEN cd_line_detail = '921' THEN 'FARIA LIMA'
+    WHEN cd_line_detail = '120' THEN 'FAZENDA DA JUTA'
+    WHEN cd_line_detail = '925' THEN 'FRADIQUE COUTINHO'
+    WHEN cd_line_detail = '908' THEN 'GIOVANNI GRONCHI'
+    WHEN cd_line_detail = '40'  THEN 'GUILHERMINA ESPERANCA'
+    WHEN cd_line_detail = '923' THEN 'HIGIENOPOLIS MACKENZIE'
+    WHEN cd_line_detail = '5'   THEN 'HOSPITAL SAO PAULO'
+    WHEN cd_line_detail = '134' THEN 'JARDIM COLONIAL'
+    WHEN cd_line_detail = '906' THEN 'LARGO TREZE'
+    WHEN cd_line_detail IN ('28','924') THEN 'LUZ'
+    WHEN cd_line_detail = '98'  THEN 'MARECHAL DEODORO'
+    WHEN cd_line_detail = '904' THEN 'MOEMA'
+    WHEN cd_line_detail = '926' THEN 'OSCAR FREIRE'
+    WHEN cd_line_detail = '60'  THEN 'PARAISO'
+    WHEN cd_line_detail = '39'  THEN 'PATRIARCA'
+    WHEN cd_line_detail = '920' THEN 'PAULISTA'
+    WHEN cd_line_detail = '74'  THEN 'PEDRO II'
+    WHEN cd_line_detail = '53'  THEN 'PENHA'
+    WHEN cd_line_detail = '919' THEN 'PINHEIROS'
+    WHEN cd_line_detail = '26'  THEN 'SE'
+    WHEN cd_line_detail = '78'  THEN 'REPUBLICA'
+    WHEN cd_line_detail = '72'  THEN 'SACOMA'
+    WHEN cd_line_detail = '81'  THEN 'SANTA CECILIA'
+    WHEN cd_line_detail IN ('21','902') THEN 'SANTA CRUZ'
+    WHEN cd_line_detail = '907' THEN 'SANTO AMARO'
+    WHEN cd_line_detail = '132' THEN 'SAO MATEUS'
+    WHEN cd_line_detail IN ('4','195') THEN 'SAO PAULO MORUMBI'
+    WHEN cd_line_detail = '16'  THEN 'SUMARE'
+    WHEN cd_line_detail = '73'  THEN 'TAMANDUATEI'
+    WHEN cd_line_detail = '63'  THEN 'TATUAPE'
+    WHEN cd_line_detail = '31'  THEN 'PORTUGUESA TIETE'
+    WHEN cd_line_detail = '56'  THEN 'TRIANON MASP'
+    WHEN cd_line_detail = '909' THEN 'VILA DAS BELEZAS'
+    WHEN cd_line_detail = '2'   THEN 'VILA MADALENA'
+    WHEN cd_line_detail = '51'  THEN 'VILA MATILDE'
+    WHEN cd_line_detail IN ('15','75') THEN 'VILA PRUDENTE'
+    WHEN cd_line_detail = '918' THEN 'VILA SONIA'
+    WHEN cd_line_detail = '114' THEN 'VILA TOLSTOI'
+    ELSE ld.ds_long
+END AS ds_estacao
+from prd-autopass-bi-001.his.tb_his_mrd_top001_line_detail ld
+JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_line lm
+ON ld.cd_line = lm.cd_line
+where cd_location in ('METRO', 'CPTM')
