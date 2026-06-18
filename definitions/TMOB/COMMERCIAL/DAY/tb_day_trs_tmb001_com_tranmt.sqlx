@@ -1,0 +1,31 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_com_tranmt",
+  tags: ["tmb001"],
+  description: "Tabela de transações comerciais (com_tranmt) tipada e tratada — IDs como INT64, valores como NUMERIC e timestamps convertidos para America/Sao_Paulo"
+}
+SELECT 
+    ctm_id,
+    cm_id,
+    ctt_id,
+    cs_id,
+    dv_id,
+    ctm_status,
+    DATETIME(CAST(ctm_datetime_tz           AS TIMESTAMP), 'America/Sao_Paulo') AS ctm_datetime_tz,
+    DATETIME(CAST(ctm_confirm_datetime_tz   AS TIMESTAMP), 'America/Sao_Paulo') AS ctm_confirm_datetime_tz,
+    SAFE_CAST(ctm_value               AS NUMERIC)   AS ctm_value,
+    SAFE_CAST(ctm_receivedvalue       AS NUMERIC)   AS ctm_receivedvalue,
+    ctm_externalid,
+    DATETIME(CAST(ctm_createdat             AS TIMESTAMP), 'America/Sao_Paulo') AS ctm_createdat,
+    DATETIME(CAST(ctm_updatedat             AS TIMESTAMP), 'America/Sao_Paulo') AS ctm_updatedat,
+    ctm_createdby,
+    ctm_updatedby,
+    ctm_tef_receipt,
+    ctm_legacy_id,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_trs_tmb001_com_tranmt")}
