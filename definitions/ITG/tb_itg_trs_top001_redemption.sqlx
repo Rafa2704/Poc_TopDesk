@@ -2,7 +2,7 @@ config {
     type: "table",
     schema: "itg",
     description: "Tabela itg de vendas por cartão ",
-    tags: ["itg"],
+    tags: ["clearing"],
     bigquery: {
         partitionBy: "dt_process_start",
         clusterBy: ["cd_clearing", "cd_issuer", "ds_transport_provider", "ds_consortium"]
