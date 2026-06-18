@@ -1,0 +1,24 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tpd001_asseteqvalidadoronlinelist",
+  tags: ["topdesk"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+
+SELECT
+    Id ,
+    ObjectId ,
+    Status ,
+    TemplateId ,
+    ArchivedReasonId ,
+    Archived ,
+    CAST(CreationDate AS TIMESTAMP) AS CreationDate,
+    CAST(ModificationDate AS TIMESTAMP) AS ModificationDate,
+    -- Campos de controle
+  "TPD" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tpd001_asseteqvalidadoronlinelist")}

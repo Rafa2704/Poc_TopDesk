@@ -40,7 +40,14 @@ const tables = [
   "tb_ext_mrd_tmb001_sam_media",
   "tb_ext_mrd_tmb001_sam_typetransaction",
   "tb_ext_mrd_tmb001_sam_actiontype",
-  "tb_ext_trs_aut001_extract_all"
+  "tb_ext_trs_aut001_extract_all",
+  "tb_ext_mrd_tpd001_asseteqvalidadoronlinelist",
+  "tb_ext_mrd_tpd001_problemprocessingstatuses",
+  "tb_ext_mrd_tpd001_problemurgencies",
+  "tb_ext_mrd_tpd001_problemcauses",
+  "tb_ext_mrd_tmb001_clr_entity",
+  "tb_ext_mrd_tmb001_clr_consortium",
+  "tb_ext_mrd_tmb001_farintegrationlinegroup"
 
 ];
 
