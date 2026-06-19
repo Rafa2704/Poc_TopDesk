@@ -1,0 +1,13 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_com_product",
+  tags: ["commercial"],
+  description: "Tabela de produtos Merge Incremental",
+  uniqueKey: ["cp_id"],
+
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_mrd_tmb001_com_product")}

@@ -1,0 +1,23 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_com_product",
+  tags: ["commercial"],
+  description: "Tabela de transações comerciais (com_tranmt) tipada e tratada — IDs como INT64, valores como NUMERIC e timestamps convertidos para America/Sao_Paulo"
+}
+SELECT 
+    cp_id          ,
+    cpt_id         ,
+    cp_desc        ,
+    cp_externalid  ,
+    DATETIME(CAST(cp_createdat           AS TIMESTAMP), 'America/Sao_Paulo') AS cp_createdat,
+    DATETIME(CAST(cp_updatedat           AS TIMESTAMP), 'America/Sao_Paulo') AS cp_updatedat,
+    cp_createdby   ,
+    cp_updatedby   ,
+    cpg_id   ,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_mrd_tmb001_com_product")}
+
