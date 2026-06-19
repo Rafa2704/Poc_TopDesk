@@ -50,7 +50,8 @@ const tables = [
   "tb_ext_mrd_tmb001_farintegrationlinegroup",
   "tb_ext_trs_tmb001_com_tranmt",
   "tb_ext_trs_tmb001_com_trandt",
-  "tb_ext_mrd_tmb001_com_product"
+  "tb_ext_mrd_tmb001_com_product",
+  "tb_ext_mrd_tmb001_medtransitproduct"
 
 ];
 
