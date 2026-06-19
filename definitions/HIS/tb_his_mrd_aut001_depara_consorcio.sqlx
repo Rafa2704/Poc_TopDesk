@@ -15,23 +15,21 @@ SELECT
   'BOM' cd_origem,
   cd_consortium cd_consorcio,
   ds_consortium ds_consorcio_origem,
-  CASE
-    WHEN ds_consortium = 'CONSORCIO ANHANGUERA' THEN 'ANHANGUERA'
-    WHEN ds_consortium = 'CONSORCIO INTERNORTE' THEN 'INTERNORTE'
-    WHEN ds_consortium = 'CONSORCIO INTERVIAS' THEN 'INTERVIAS'
-    WHEN ds_consortium = 'CONSORCIO UNILESTE' THEN 'UNILESTE'
-    WHEN ds_consortium = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'ABC SISTEMA DE TRANSPORTE SPE S.A.'
-    WHEN ds_consortium = 'AUTOPASS' THEN 'AUTOPASS'
-    WHEN ds_consortium = 'BLOQUEIO NÃO CADASTRADO' THEN 'BLOQUEIO NÃO CADASTRADO'
-    WHEN ds_consortium = 'CPTM' THEN 'CPTM'
-    WHEN ds_consortium = 'METRO' THEN 'METRO'
-    WHEN ds_consortium = 'MUNICIPAL' THEN 'MUNICIPAL'
-    WHEN ds_consortium = 'OUTROS' THEN 'OUTROS'
-    WHEN ds_consortium = 'RTO EMTU' THEN 'RTO EMTU'
-    ELSE ds_consortium
-    -- Mantém o valor original caso não haja correspondência
-END
-  AS ds_consorcio
+  CASE  
+        WHEN ds_consortium = 'CONSORCIO ANHANGUERA' THEN 'ANHANGUERA'
+        WHEN ds_consortium = 'CONSORCIO INTERNORTE' THEN 'INTERNORTE'
+        WHEN ds_consortium = 'CONSORCIO INTERVIAS' THEN 'INTERVIAS'
+        WHEN ds_consortium = 'CONSORCIO UNILESTE' THEN 'UNILESTE'
+        WHEN ds_consortium = 'ABC SISTEMA DE TRANSPORTE SPE S.A.' THEN 'ABC SISTEMA DE TRANSPORTE SPE S.A.'
+        WHEN ds_consortium = 'AUTOPASS' THEN 'AUTOPASS'
+        WHEN ds_consortium = 'BLOQUEIO NÃO CADASTRADO' THEN 'BLOQUEIO NÃO CADASTRADO'
+        WHEN ds_consortium = 'CPTM' THEN 'CPTM'
+        WHEN ds_consortium = 'METRO' THEN 'METRO'
+        WHEN ds_consortium = 'MUNICIPAL' THEN 'MUNICIPAL'
+        WHEN ds_consortium = 'OUTROS' THEN 'OUTROS'
+        WHEN ds_consortium = 'RTO EMTU' THEN 'RTO EMTU'
+        ELSE ds_consortium 
+  END AS ds_consorcio
 FROM
   prd-autopass-bi-001.his.tb_his_mrd_bom001_consortium
 UNION ALL

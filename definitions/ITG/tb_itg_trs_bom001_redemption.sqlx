@@ -35,13 +35,14 @@ END ds_modal
 ELSE 'VERIFICAR' END ds_consortium_group --incluido em 03/06/2024
 , cd_issuer
 , ds_short_application,
-ds_aplicacao ds_application_agg,
+coalesce(ds_aplicacao, "VERIFICAR")  ds_application_agg,
     fl_valorado fl_valued_application,
     fl_repasse_clearing fl_financial_transfer,
     fl_comissionamento fl_commission
 , 'BOM'ds_product_group
 , qt_redemption
 , vl_clearing_payment
+,cd_station
 , nm_station --ADICIONADO 12/12/2024
 , core.fn_aut001_nm_station_format(nm_station ) nm_station_agg --ADICIONADO 10/12/2025
 , cd_line
@@ -64,7 +65,7 @@ SELECT
         ELSE c.ds_consortium  
     END AS ds_consortium,  --regra aplicada em 28/08 
     cp.cd_issuer cd_issuer,
-    B.ds_aplicacao_origem ds_short_application,
+    app.ds_short ds_short_application,
     B.ds_aplicacao,
     B.fl_valorado,
     B.fl_repasse_clearing,
@@ -78,6 +79,7 @@ SELECT
     CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
     SESSION_USER() cd_created_by,
     cp.cd_system_source cd_system_source,
+    ld.cd_line_detail cd_station,
     ld.ds_long nm_station, --ESTACAO ADICIONADO 12/12/2024
     lm.ds_long nm_line, --LINHA ADICIONADO 12/12/2024
     lm.cd_line
@@ -95,9 +97,9 @@ LEFT JOIN  ${ref("tb_his_mrd_aut001_depara_aplicacao")} B
 --       ON cp.cd_application = B.code
 --       AND cp.cd_issuer = B.toIssuerCode
 
--- INNER JOIN his.tb_his_mrd_bom001_application app 
--- ON app.cd_application = cp.cd_application 
--- AND app.cd_issuer = '31' 
+ INNER JOIN prd-autopass-bi-001.his.tb_his_mrd_bom001_application app 
+ ON app.cd_application = cp.cd_application 
+ AND app.cd_issuer = '31' 
 
 
 --AND app.cd_status = 'A'  -- exclusão do filtro em 29/08
