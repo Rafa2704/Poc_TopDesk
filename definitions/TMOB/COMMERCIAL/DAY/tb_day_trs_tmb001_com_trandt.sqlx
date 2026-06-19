@@ -1,0 +1,26 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_com_trandt",
+  tags: ["commercial"],
+  description: "Tabela de transações comerciais (com_tranmt) tipada e tratada — IDs como INT64, valores como NUMERIC e timestamps convertidos para America/Sao_Paulo"
+}
+SELECT 
+    ctd_id,
+    ctm_id,
+    cp_id,
+    SAFE_CAST(ctd_value               AS NUMERIC)   AS ctm_value,
+    SAFE_CAST(ctd_quantity       AS NUMERIC)   AS ctm_receivedvalue,
+    ctd_mediaid,
+    ctd_mediatype,
+    DATETIME(CAST(ctd_createdat           AS TIMESTAMP), 'America/Sao_Paulo') AS ctd_createdat,
+    DATETIME(CAST(ctd_updatedat   AS TIMESTAMP), 'America/Sao_Paulo') AS ctd_updatedat,
+    ctd_createdby,
+    ctd_updatedby,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_trs_tmb001_com_trandt")}
+
+ 
