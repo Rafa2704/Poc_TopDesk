@@ -1,0 +1,16 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_com_tranmt_x_payment_mode",
+  tags: ["commercial"],
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["ctmxcpm_id"],
+  bigquery: {
+    partitionBy: "DATE(ctmxcpm_dtpayment)",
+  },
+
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_mrd_tmb001_clr_consortium")}
