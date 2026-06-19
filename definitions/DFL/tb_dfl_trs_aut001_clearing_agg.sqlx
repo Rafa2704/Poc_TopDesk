@@ -15,16 +15,16 @@ WITH
     cd_system_source cd_origem_sistema,
     dt_process_start dt_clearing,
     ds_transport_provider ds_empresa,
-    ds_consortium ds_consorcio,
-    cons.ds_consorcio ds_abrangencia,
+    coalesce(cons.ds_consorcio, "VERIFICAR") ds_consorcio,
+    ds_consortium_group ds_abrangencia,
     ds_short_application ds_produto_origem,
     ds_application_agg ds_produto,
     fl_valued_application fl_valorado,
     fl_financial_transfer fl_repasse_clearing,
     fl_commission fl_comissionamento,
     ds_modal,
-    linha.ds_linha ,
-    est.ds_estacao,
+    COALESCE(linha.ds_linha_completa,nm_line) ds_linha,
+    COALESCE(est.ds_estacao,nm_station) ds_estacao,
     SUM(qt_redemption) AS qt_remicao,
     SUM(vl_fare) AS vl_remicao
 
@@ -58,16 +58,16 @@ WITH
     cd_system_source cd_origem_sistema,
     dt_process_start dt_clearing,
     ds_transport_provider nm_empresa,
-    ds_consortium ds_consorcio,
-    cons.ds_consorcio ds_abrangencia,
+    coalesce(cons.ds_consorcio, 'VERIFICAR')  ds_consorcio,
+    ds_consortium_group ds_abrangencia,
     ds_short_application ds_produto_origem,
     ds_application_agg ds_produto,
     fl_valued_application fl_valorado,
     fl_financial_transfer fl_repasse_clearing,
     fl_commission fl_comissionamento,
     ds_modal,
-    nm_line nm_linha,
-    nm_station ds_estacao,
+    COALESCE(linha.ds_linha_completa,nm_line)  nm_linha,
+    COALESCE(est.ds_estacao,nm_station) ds_estacao,
     SUM(qt_redemption) AS qt_remicao,
     SUM(vl_clearing_payment) AS vl_remicao
   FROM
@@ -79,6 +79,18 @@ WITH
   ON
     cons.cd_origem = 'BOM'
     AND cons.cd_consorcio = cd_consortium
+  LEFT JOIN
+    ${ref("tb_his_mrd_aut001_depara_linha")} linha
+    --dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_linha linha
+  ON
+    linha.cd_origem = 'BOM'
+    AND linha.cd_linha = CAST(cd_line AS integer)
+    LEFT JOIN
+    ${ref("tb_his_mrd_aut001_depara_estacao")} est 
+    --dev-autopass-bi-001.his.tb_his_mrd_aut001_depara_estacao est
+  ON
+    est.cd_origem = 'BOM'
+    AND est.cd_estacao = cd_station
   WHERE
     dt_process_start >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 2 year)
   GROUP BY

@@ -34,7 +34,7 @@ END
   cd_issuer,
   cd_application,
   ds_short_application,
-  ds_aplicacao ds_application_agg,
+  COALESCE(ds_aplicacao, "VERIFICAR") ds_application_agg,
   fl_valorado fl_valued_application,
   fl_repasse_clearing fl_financial_transfer,
   fl_comissionamento fl_commission
@@ -115,7 +115,7 @@ FROM (
     cp.cd_application
     --incluido em 22/10
     ,
-    B.ds_aplicacao_origem ds_short_application,
+    app.ds_short ds_short_application,
     B.ds_aplicacao,
     B.fl_valorado,
     B.fl_repasse_clearing,
@@ -139,10 +139,10 @@ FROM (
     SESSION_USER() cd_created_by
   FROM
     prd-autopass-bi-001.his.tb_his_trs_top001_clearing_payment cp
-    -- INNER JOIN his.tb_his_mrd_top001_application app
-    -- ON app.cd_application = cp.cd_application
-    -- AND app.cd_issuer = '14'
-    -- AND app.cd_status = 'A'
+     INNER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_application app
+     ON app.cd_application = cp.cd_application
+     AND app.cd_issuer = '14'
+     AND app.cd_status = 'A'
     --  LEFT JOIN  `prd-autopass-ed-001.ext.tb_ext_mrd_tmb001_dim_produto`  B
     --   ON cp.cd_application = B.code
     --   AND cp.cd_issuer = B.toIssuerCode
