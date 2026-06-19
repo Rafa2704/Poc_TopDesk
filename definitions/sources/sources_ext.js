@@ -52,7 +52,8 @@ const tables = [
   "tb_ext_trs_tmb001_com_trandt",
   "tb_ext_mrd_tmb001_com_product",
   "tb_ext_mrd_tmb001_medtransitproduct",
-  "tb_ext_mrd_tmb001_dvc_device"
+  "tb_ext_mrd_tmb001_dvc_device",
+  "tb_ext_mrd_tmb001_dvc_operator"
 
 ];
 
