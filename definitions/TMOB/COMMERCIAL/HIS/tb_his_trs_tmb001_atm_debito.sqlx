@@ -7,7 +7,7 @@ config {
   bigquery: {
     partitionBy: "data_trans",
   },
-  tags: ["commercial"],
+  /*tags: ["commercial"],*/
 }
 
 -- WITH dedup AS (

@@ -7,7 +7,7 @@ config {
   bigquery: {
     partitionBy: "data_uso",
   },
-  tags: ["commercial"],
+  /*tags: ["commercial"],*/
 }
 
 

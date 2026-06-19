@@ -2,7 +2,7 @@ config {
   type: "table",
   schema: "day",
   name: "tb_day_trs_tmb001_atm_dinheiro",
-  tags: ["commercial"],
+  /*tags: ["commercial"],*/
   description: "Tabela sumaria da query de vendas de atm em dinheiro"
 }
 
