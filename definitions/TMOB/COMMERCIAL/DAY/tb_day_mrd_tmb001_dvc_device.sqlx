@@ -1,0 +1,26 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_dvc_device",
+  tags: ["commercial"],
+  description: "Tabela de transações comerciais (com_tranmt) tipada e tratada — IDs como INT64, valores como NUMERIC e timestamps convertidos para America/Sao_Paulo"
+}
+SELECT 
+    REGEXP_REPLACE(dv_id, r'\.0$', '')      AS dv_id,
+    REGEXP_REPLACE(dt_id, r'\.0$', '')      AS dt_id,
+    REGEXP_REPLACE(op_id, r'\.0$', '')      AS op_id,
+    tu_code         ,
+    REGEXP_REPLACE(dv_serial, r'\.0$', '')  AS dv_serial,
+    dv_status       ,
+    DATETIME(CAST(dv_regdate           AS TIMESTAMP), 'America/Sao_Paulo') AS dv_regdate,
+    dv_reguser      ,
+    dv_guid         ,
+    REGEXP_REPLACE(dv_line_id, r'\.0$', '') AS dv_line_id,
+    dv_description  ,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_mrd_tmb001_dvc_device")}
+
+
