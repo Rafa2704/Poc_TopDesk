@@ -13,4 +13,4 @@ config {
 
 SELECT 
     *
- FROM ${ref("tb_day_mrd_tmb001_clr_consortium")}
+ FROM ${ref("tb_day_trs_tmb001_com_tranmt_x_payment_mode")}
