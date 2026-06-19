@@ -1,0 +1,19 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_dvc_operator",
+  tags: ["commercial"],
+  description: "Tabela de transações comerciais (com_tranmt) tipada e tratada — IDs como INT64, valores como NUMERIC e timestamps convertidos para America/Sao_Paulo"
+}
+SELECT 
+    op_id        ,
+    op_desc      ,
+    op_status    ,
+    DATETIME(CAST(op_regdate           AS TIMESTAMP), 'America/Sao_Paulo') AS op_regdate,
+    op_reguser,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+FROM
+    ${ref("tb_ext_mrd_tmb001_dvc_operator")}
+
