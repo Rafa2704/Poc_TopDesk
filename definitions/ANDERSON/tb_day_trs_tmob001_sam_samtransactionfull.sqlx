@@ -9,6 +9,7 @@ config {
 
 
 SELECT 
+DISTINCT
 sstf_id,
 sat_code,
 stt_code,
