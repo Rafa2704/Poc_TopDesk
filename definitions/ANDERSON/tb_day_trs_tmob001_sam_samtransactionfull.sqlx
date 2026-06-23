@@ -36,5 +36,4 @@ sstf_samserverid,
 sstf_createdat,
 sstf_updatedat,
 sstf_blameuser
-FROM `prd-autopass-ed-001.ext.tb_ext_trs_tmob001_sam_samtransactionfull_teste`
---FROM ${ref("tb_ext_trs_tmob001_sam_samtransactionfull")}
+FROM ${ref("tb_ext_trs_tmob001_sam_samtransactionfull")}
