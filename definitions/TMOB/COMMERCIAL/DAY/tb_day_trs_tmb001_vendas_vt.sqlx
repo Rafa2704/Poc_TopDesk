@@ -1,7 +1,7 @@
 config {
   type: "table",
   schema: "day",
-  tags: ["commercial"],
+  tags: ["VT"],
   partitionBy: "dt_credit",
   clusterBy: ["ds_provider"],
 }
@@ -971,7 +971,8 @@ SELECT
   SESSION_USER() AS usuario_processamento
 
 
-FROM ${ref("tb_ext_trs_tmb001_vendas_vt")}
+FROM 
+ ${ref("tb_ext_trs_tmb001_vendas_vt")}
 --`day.tb_his_trs_top001_vendas_vt`
 ),
 

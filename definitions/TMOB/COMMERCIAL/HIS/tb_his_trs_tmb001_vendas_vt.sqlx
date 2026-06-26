@@ -7,7 +7,7 @@ config {
   bigquery: {
     partitionBy: "dt_credit",
   },
-  tags: ["commercial"],
+  tags: ["VT"],
 }
 
 
