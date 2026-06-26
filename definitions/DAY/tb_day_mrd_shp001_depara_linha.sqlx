@@ -1,0 +1,31 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_shp001_depara_linha",
+  tags: ["shp001"],
+  description: "De-Para de linha (transporte) extraído do SharePoint (pasta DEPARAS), via fn-shp001-completo. Mapeia cd_linha (código de origem) para sua descrição padronizada, localidade e cor da linha. Atualizado a cada execução da extração.",
+columns: {
+    cd_origem: "Sigla do sistema de origem do código de linha (ex: BOM, TOP), chave do De-Para junto com cd_linha.",
+    cd_linha: "Código da linha conforme cadastrado no sistema de origem.",
+    ds_localidade: "Operadora/malha à qual a linha pertence (ex: CPTM).",
+    ds_linha: "Nome padronizado da linha (ex: LINHA 10).",
+    ds_linha_cor: "Cor identificadora da linha (ex: TURQUESA, CORAL).",
+    ds_linha_completa: "Nome completo da linha, concatenando nome e cor (ex: LINHA 10 - TURQUESA).",
+    origem: "Identificador fixo da fonte de dados (sistema de origem da extração).",
+    dt_processamento: "Data e hora em que esse registro foi processado/carregado pelo Dataform.",
+    usuario_processamento: "Usuário/conta de serviço que executou a carga desse registro."
+  }
+
+}
+
+SELECT
+  cd_origem,
+  cd_linha,
+  ds_localidade,
+  ds_linha,
+  ds_linha_cor,
+  ds_linha_completa,
+  "SHP001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_shp001_depara_linha")}

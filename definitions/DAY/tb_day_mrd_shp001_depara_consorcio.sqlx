@@ -1,0 +1,17 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_shp001_depara_consorcio",
+  tags: ["shp001"],
+  description: "De-Para de consórcio extraído do SharePoint (pasta DEPARAS), via fn-shp001-completo. Mapeia cd_consorcio (código de origem) para sua descrição padronizada (ds_consorcio). Atualizado a cada execução da extração."
+}
+
+SELECT
+  cd_origem,
+  cd_consorcio,
+  ds_consorcio_origem,
+  ds_consorcio,
+  "SHP001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_shp001_depara_consorcio")}

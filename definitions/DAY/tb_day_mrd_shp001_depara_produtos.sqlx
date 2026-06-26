@@ -1,0 +1,20 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_shp001_depara_produtos",
+  tags: ["shp001"],
+  description: "De-Para de produtos (cartões) extraído do SharePoint (pasta DEPARAS), via fn-shp001-completo. Mapeia code/toissuercode para a descrição do produto agrupado, com indicadores de valorado, repasse de clearing e comissionamento. Atualizado a cada execução da extração."
+}
+
+SELECT
+  toissuercode,
+  code,
+  displayname,
+  produto_agrupado,
+  valorado_,
+  repasse_clearing_,
+  comissionamento,
+  "SHP001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_shp001_depara_produtos")}
