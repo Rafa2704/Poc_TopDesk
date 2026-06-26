@@ -1,0 +1,17 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_shp001_depara_estacao",
+  tags: ["shp001"],
+  description: "De-Para de estação extraído do SharePoint (pasta DEPARAS), via fn-shp001-completo. Mapeia cd_estacao (código de origem) para sua descrição padronizada (ds_estacao). Atualizado a cada execução da extração."
+}
+
+SELECT
+  cd_origem,
+  cd_estacao,
+  ds_estacao_origem,
+  ds_estacao,
+  "SHP001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_shp001_depara_estacao")}

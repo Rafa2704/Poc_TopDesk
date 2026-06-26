@@ -1,0 +1,20 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_shp001_depara_aplicacao",
+  tags: ["shp001"],
+  description: "De-Para de aplicação (cartões/produtos) extraído do SharePoint (pasta DEPARAS), via fn-shp001-completo. Mapeia cd_aplicacao para sua descrição padronizada (ds_aplicacao), com indicadores de valorado, repasse de clearing e comissionamento. Atualizado a cada execução da extração."
+}
+
+SELECT
+  cd_emissor,
+  cd_aplicacao,
+  ds_aplicacao_origem,
+  ds_aplicacao,
+  fl_valorado,
+  fl_repasse_clearing,
+  fl_comissionamento,
+ "SHP001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_shp001_depara_aplicacao")}
