@@ -4,7 +4,7 @@ config {
     description: "Tabela master do clearing com diversas origens ",
     tags: ["dfl"],
     bigquery: {
-        partitionBy: "DATE(data_hora_trans)",
+        partitionBy: "DATE(ctm_datetime_tz)",
     }
 }
 
@@ -23,40 +23,56 @@ SELECT
     cp.cp_desc                       AS produto,
     mtp.code                         AS aplicacao,
     ct.ctm_id                        AS idtrn,
-    'tbd'                             AS pdv,
+    'tbd'                            AS pdv,
     ct.ctm_datetime_tz,
-    cp.cpt_id -- VAMOS USAR PRA FILTRAR O DASH
-FROM ${ref("tb_his_trs_tmb001_com_trandt")} ct
---`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt` ct
+    cp.cpt_id -- usado só pra filtrar o relatorio
+
+-- FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt` ct
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
+
+-- INNER JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt` ctd
 INNER JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd
---`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt` ctd
     ON ctd.ctm_id = ct.ctm_id
-INNER JOIN  ${ref("tb_his_mrd_tmb001_com_product")} cp
---`prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product` cp
+
+-- INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product` cp
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp
     ON cp.cp_id = ctd.cp_id
+
+-- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct` mtp
 LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp
---`prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct` mtp
     ON mtp.description = cp.cp_desc
-INNER JOIN  ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm
---`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode` ctxpm
+
+-- INNER JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode` ctxpm
+INNER JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm
     ON ctxpm.ctm_id = ct.ctm_id
+
+-- INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device` dd
 INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd
---`prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device` dd
     ON dd.dv_id = ct.dv_id
 
-    INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_operator")} op
-    --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_operator` op
-    ON op.op_id  = dd.op_id 
-LEFT JOIN  ${ref("tb_his_mrd_tmb001_toline")} tl
---`prd-autopass-ed-001.his.tb_his_mrd_tmb001_toline` tl
+-- INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_operator` op
+INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_operator")} op
+    ON op.op_id = dd.op_id
+
+-- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toline` tl
+LEFT JOIN ${ref("tb_his_mrd_tmb001_toline")} tl
     ON tl.id = dd.dv_line_id
-LEFT JOIN  ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg
---`prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup` filg
+
+-- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup` filg
+LEFT JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg
     ON filg.id = tl.farIntegrationLineGroupId
+
 WHERE ct.ctm_status IN ('A', 'P')
-and dd.dt_id = '7'
-   and ctxpm.cpm_id = '5'
-  -- and cp.cpt_id <> '5' -- CONDIÇÃO PARA EXPURGO DE BU
-   and ct.ctm_datetime_tz >= DATETIME('2026-05-20 00:00:00.000')
+  AND dd.dt_id = '7'
+  AND ctxpm.cpm_id = '5'
+  -- AND cp.cpt_id <> '5' -- CONDIÇÃO PARA EXPURGO DE BU
+  AND ct.ctm_datetime_tz >= DATETIME('2026-05-20 00:00:00.000')
+
+
+--   AND dd.dt_id = '7'
+--   AND ctxpm.cpm_id = '5'
+--   AND ct.ctm_datetime_tz BETWEEN DATETIME('2026-01-01 00:00:00')
+--                               AND DATETIME('2026-05-31 23:59:59.999')
+--  -- AND ct.ctm_id = '169445043'
 
 
