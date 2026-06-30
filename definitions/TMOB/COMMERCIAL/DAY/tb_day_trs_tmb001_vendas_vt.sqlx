@@ -971,8 +971,9 @@ SELECT
   SESSION_USER() AS usuario_processamento
 
 
-FROM `dev-autopass-bi-001.ext.ext_vendas_vt_teste1`
- --${ref("tb_ext_trs_tmb001_vendas_vt")}
+FROM 
+--`dev-autopass-bi-001.ext.ext_vendas_vt_teste1` USADO PRO ETSTE PONTUAL
+ ${ref("tb_ext_trs_tmb001_vendas_vt")}
 --`day.tb_his_trs_top001_vendas_vt`
 ),
 
