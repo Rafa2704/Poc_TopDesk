@@ -1,0 +1,42 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_trn_usageexternalmedia",
+  tags: ["commercial"],
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["tuem_id "],
+  bigquery: {
+    partitionBy: "DATE(tuem_usagetimestamp_tz)",
+    clusterBy: ["tuem_id"],
+  },
+
+}
+
+-- SELECT * EXCEPT(rn, chave_primaria),
+--   CONCAT(
+--     CAST(tuem_id AS STRING),
+--     '-',
+--     SUBSTR(CAST(tuem_usagetimestamp_tz AS STRING), 1, 19)
+--   ) AS chave_primaria
+-- FROM (
+--   SELECT
+--     *,
+--     ROW_NUMBER() OVER (
+--       PARTITION BY tuem_id, tuem_usagetimestamp_tz
+--       ORDER BY dt_processamento DESC
+--     ) AS rn
+--   FROM ${ref("tb_day_trs_tmb001_trn_usageexternalmedia")}
+-- )
+-- WHERE rn = 1
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ --`dev-autopass-bi-001.his.tb_his_trs_tmb001_trn_usageexternalmediaTESTE`
+
+ ${ref("tb_day_trs_tmb001_trn_usageexternalmedia")}
+ --FOR SYSTEM_TIME AS OF TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 minute)
