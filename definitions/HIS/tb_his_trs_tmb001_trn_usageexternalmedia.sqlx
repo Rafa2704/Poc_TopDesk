@@ -36,7 +36,7 @@ SELECT
     *
  FROM 
  
- `dev-autopass-bi-001.his.tb_his_trs_tmb001_trn_usageexternalmediaTESTE`
+ --`dev-autopass-bi-001.his.tb_his_trs_tmb001_trn_usageexternalmediaTESTE`
 
- --${ref("tb_day_trs_tmb001_trn_usageexternalmedia")}
+ ${ref("tb_day_trs_tmb001_trn_usageexternalmedia")}
  --FOR SYSTEM_TIME AS OF TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 minute)
