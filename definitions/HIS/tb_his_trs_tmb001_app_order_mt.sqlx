@@ -1,0 +1,23 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_app_order_mt",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+  uniqueKey: ["aomt_id"],
+  bigquery: {
+    partitionBy: "DATE(aomt_createdat_tz)",
+    clusterBy: ["aomt_id"],
+  
+  }
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_trs_tmb001_app_order_mt")}
