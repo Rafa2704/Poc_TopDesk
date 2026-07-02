@@ -2,8 +2,9 @@ config {
     type: "table",
     schema: "day",
     name: "tb_day_trs_tmb001_trn_usageexternalmedia",
-    tags: ["commercial"],
+   /* tags: ["commercial"],*/
     description: "Tabela trn_usageexternalmedia tipada — timestamps convertidos para America/Sao_Paulo, datas como DATE, valores como NUMERIC, demais campos como STRING"
+
 }
 
 SELECT

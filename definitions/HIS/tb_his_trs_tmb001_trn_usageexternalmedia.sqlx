@@ -2,7 +2,7 @@ config {
   type: "incremental",
   schema: "his",
   name: "tb_his_trs_tmb001_trn_usageexternalmedia",
-  tags: ["commercial"],
+   /* tags: ["commercial"],*/
   description: "Tabela de incidentes tipada e persistida via Merge Incremental",
   uniqueKey: ["tuem_id "],
   bigquery: {
