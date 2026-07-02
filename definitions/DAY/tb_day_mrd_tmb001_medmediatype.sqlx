@@ -1,0 +1,37 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_medmediatype",
+    tags: ["commercial"],
+    description: "Tabela MedMediaType tipada — datas convertidas para DATETIME, demais campos como STRING"
+}
+
+SELECT
+    id,
+    description,
+    tagType,
+    sizeInKB,
+    isActive,
+    blameUser,
+    SAFE_CAST(createdAt AS DATETIME) AS createdAt,
+    SAFE_CAST(updatedAt AS DATETIME) AS updatedAt,
+    sequence,
+    usrTypeIds,
+    externalId,
+    standardOperatorCard,
+    medMediaTemplateId,
+    toIssuerCode,
+    allowMedMediaTypeIds,
+    com_ct_id_reissue,
+    deliveryDays,
+    usrPhotoIsMandatory,
+    mmt_usrphotoismandatory,
+    pay_projectproviderid,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+
+FROM
+    ${ref("tb_ext_mrd_tmb001_medmediatype")}
