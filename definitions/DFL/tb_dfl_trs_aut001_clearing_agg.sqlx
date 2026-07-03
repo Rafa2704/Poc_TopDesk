@@ -26,7 +26,10 @@ WITH
     COALESCE(linha.ds_linha_completa,nm_line) ds_linha,
     COALESCE(est.ds_estacao,nm_station) ds_estacao,
     SUM(qt_redemption) AS qt_remicao,
-    SUM(vl_fare) AS vl_remicao
+    SUM(vl_fare) AS vl_remicao,
+    CURRENT_TIMESTAMP() ts_processamento,
+    SESSION_USER() ds_usuario_processamento,
+    rd.cd_system_source ds_origem_extracao
 
   FROM  ${ref("tb_itg_trs_top001_redemption")} 
     --`dev-autopass-bi-001.itg.tb_itg_trs_top001_redemption`
