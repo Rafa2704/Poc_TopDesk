@@ -4,7 +4,7 @@ config {
     description: "Tabela master do clearing com diversas origens ",
     tags: ["commercial"],
     bigquery: {
-        partitionBy: "DATE(ctm_datetime_tz)",
+        partitionBy: "DATE(ts_transacao_tz)",
     }
 }
 
