@@ -1,0 +1,27 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_app_order_dt",
+    tags: ["commercial"],
+    description: "Tabela app_order_dt tipada — IDs sem sufixo .0, datas convertidas para America/Sao_Paulo"
+}
+
+SELECT
+    REGEXP_REPLACE(aodt_id,                 r'\.0$', '') AS aodt_id,
+    REGEXP_REPLACE(aomt_id,                 r'\.0$', '') AS aomt_id,
+    REGEXP_REPLACE(aodt_item,               r'\.0$', '') AS aodt_item,
+    REGEXP_REPLACE(ap_id,                   r'\.0$', '') AS ap_id,
+    REGEXP_REPLACE(aodt_value,              r'\.0$', '') AS aodt_value,
+    REGEXP_REPLACE(aodt_quantity,           r'\.0$', '') AS aodt_quantity,
+    DATETIME(CAST(aodt_createdat_tz  AS TIMESTAMP), 'America/Sao_Paulo') AS aodt_createdat_tz,
+    DATETIME(CAST(aodt_updatedat_tz  AS TIMESTAMP), 'America/Sao_Paulo') AS aodt_updatedat_tz,
+    REGEXP_REPLACE(aodt_commerce_detail_id, r'\.0$', '') AS aodt_commerce_detail_id,
+    REGEXP_REPLACE(atc_id,                  r'\.0$', '') AS atc_id,
+    DATETIME(CAST(aodt_canceldat_tz  AS TIMESTAMP), 'America/Sao_Paulo') AS aodt_canceldat_tz,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM
+    ${ref("tb_ext_trs_tmb001_app_order_dt")}

@@ -58,7 +58,8 @@ const tables = [
   "tb_ext_trs_tmb001_com_tranmt_x_payment_mode",
   "tb_ext_trs_tmb001_trn_usageexternalmedia",
   "tb_ext_mrd_tmb001_medmediatype",
-  "tb_ext_trs_tmb001_app_order_mt"
+  "tb_ext_trs_tmb001_app_order_mt",
+  "tb_ext_trs_tmb001_app_order_dt"
 
 ];
 
