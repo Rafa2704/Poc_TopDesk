@@ -11,22 +11,28 @@ config {
 
 SELECT
 
-    dd.tu_code                       AS cod_atm,
-    tl.description                   AS Estacao,
-    filg.description                 AS Linha,
-    op.op_desc                       AS Empresa,
-    FORMAT_DATETIME('%d/%m/%Y %H:%M:%S', ct.ctm_datetime_tz) AS data_hora_trans,
-    ct.ctm_value                     AS valor,
-    ct.ctm_receivedvalue             AS valor_recebido,
-    ctxpm.ctmxcpm_pix_txid           AS pix_txid,
-    ctxpm.ctmxcpm_pix_endtoendid     AS pix_endtoendid,
-    cp.cp_desc                       AS produto,
-    mtp.code                         AS aplicacao,
-    ct.ctm_id                        AS idtrn,
-    'tbd'                            AS pdv,
-    ct.ctm_datetime_tz,
-    cp.cpt_id -- usado só pra filtrar o relatorio
-
+    FORMAT_DATETIME('%d/%m/%Y %H:%M:%S', ct.ctm_datetime_tz) AS ts_transacao,--data_hora_trans,
+    ct.ctm_datetime_tz               AS ts_transacao_tz,  
+    ct.ctm_id                        AS cd_transacao,--idtrn,
+    dd.tu_code                       AS cd_atm, --cod_atm,
+    tl.description                   AS ds_estacao_origem,--Estacao,
+    coalesce(dp.ds_estacao,tl.description )        AS ds_estacao,--Estacao,
+    filg.description                 AS ds_linha_origem, --Linha,
+    coalesce(dp.ds_linha_completa,filg.description )        AS ds_linha_completa,--Linha,
+    coalesce(dp.ds_linha,filg.description )        AS ds_linha,--Linha,
+    op.op_desc                       AS ds_empresa_origem, --Empresa,  
+    coalesce(dp.ds_empresa, op.op_desc,ds_empresa )                        AS ds_empresa, --Empresa, 
+    ct.ctm_value                     AS vl_transacao,--valor,
+    ct.ctm_receivedvalue             AS vl_recebido, --valor_recebido,
+    ctxpm.ctmxcpm_pix_txid           AS cd_pix_tx, --pix_txid,
+    ctxpm.ctmxcpm_pix_endtoendid     AS cd_pix_endtoend,--pix_endtoendid,
+    mtp.code                         AS cd_med_aplicacao,--aplicacao,
+    cp.cpt_id                        AS cd_aplicacao, -- usado só pra filtrar o relatorio
+    cp.cp_desc                       AS ds_aplicacao,--produto,  
+    'tbd'                            AS ds_pdv, --pdv,  
+    CURRENT_TIMESTAMP() ts_processamento,
+    SESSION_USER() ds_usuario_processamento,
+    'TMB001' ds_origem_extracao
 -- FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt` ct
 FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
 
@@ -61,6 +67,11 @@ LEFT JOIN ${ref("tb_his_mrd_tmb001_toline")} tl
 -- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup` filg
 LEFT JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg
     ON filg.id = tl.farIntegrationLineGroupId
+
+-- LEFT JOIN `dev-autopass-bi-001.his.tb_his_mrd_shp001_depara_localidade_venda_atm` dp
+LEFT JOIN ${ref("tb_his_mrd_shp001_depara_localidade_venda_atm")} dp
+    ON dp.cd_localidade_venda = dd.dv_line_id
+    AND dp.cd_origem = dd.origem
 
 WHERE ct.ctm_status IN ('A', 'P')
   AND dd.dt_id = '7'

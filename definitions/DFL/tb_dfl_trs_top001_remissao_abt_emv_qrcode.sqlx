@@ -2,6 +2,7 @@ config {
     type: "table", 
     schema: "dfl",
     description: "Tabela itg de vendas por cartão ",
+    tags: ["commercial"],
     bigquery: {
         partitionBy: "DATA_PROCESSAMENTO",
     }

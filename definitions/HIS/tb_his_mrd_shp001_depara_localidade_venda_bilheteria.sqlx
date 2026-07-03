@@ -1,0 +1,28 @@
+config {
+  type: "table",
+  schema: "his",
+  name: "tb_his_mrd_shp001_depara_localidade_venda_bilheteria",
+  tags: ["shp001"],
+  description: "Histórico de De-Para de localidade de venda (canal Bilheteria) extraído do SharePoint (pasta DEPARAS, aba BILHETERIA), via fn-shp001-completo. Mapeia o código de localidade de venda para empresa, linha e estação correspondentes. Atualizado a cada execução da extração.",
+  columns: {
+    cd_origem: "Sigla do sistema de origem do código de localidade de venda (ex: TMB001), chave do De-Para junto com cd_localidade_venda.",
+    cd_localidade_venda: "Código da localidade de venda (Bilheteria) conforme cadastrado no sistema de origem.",
+    ds_empresa: "Nome da empresa/operadora associada à localidade de venda (ex: METRO, CPTM).",
+    ds_linha_completa: "Nome completo da linha, concatenando nome e cor (ex: LINHA 10 - TURQUESA).",
+    nr_linha: "Número identificador da linha.",
+    ds_linha: "Nome padronizado da linha (ex: LINHA 10).",
+    ds_linha_cor: "Cor identificadora da linha (ex: TURQUESA, CORAL).",
+    ds_estacao_origem: "Descrição original da estação, conforme cadastrada na fonte.",
+    ds_estacao: "Descrição padronizada da estação associada à localidade de venda.",
+    ds_tabela_origem: "Nome da tabela de origem de onde o registro foi mapeado no sistema legado.",
+    ds_campo_origem: "Nome do campo de origem de onde o registro foi mapeado no sistema legado.",
+    origem: "Identificador fixo da fonte de dados (sistema de origem da extração).",
+    dt_processamento: "Data e hora em que esse registro foi processado/carregado pelo Dataform.",
+    usuario_processamento: "Usuário/conta de serviço que executou a carga desse registro."
+  }
+}
+
+SELECT
+*
+
+FROM ${ref("tb_day_mrd_shp001_depara_localidade_vendas_bilheteria")}
