@@ -4,7 +4,7 @@ config {
     description: "Tabela itg de vendas por cartão ",
     tags: ["commercial"],
     bigquery: {
-        partitionBy: "DATA_PROCESSAMENTO",
+        partitionBy: "dt_clearing",
     }
 }
 
@@ -176,7 +176,19 @@ cte_final AS (
 )
 
 SELECT
-*
+    TIPO_REMICAO ds_origem,
+    DATA_USO dt_catracada,
+    DATA_PROCESSAMENTO dt_clearing,
+    CLR_ID cd_clearing,
+    ds_consortium ds_consorcio,
+    EMPRESA ds_empresa,
+    EMPRESA_APELIDO ds_empresa_apelido,
+    APP ds_aplicacao,
+    QTD_CATRACADAS qt_catracada,
+    VALOR vl_clearing,
+    CURRENT_TIMESTAMP() ts_processamento,
+    SESSION_USER() ds_usuario_processamento,
+    'TOP001' ds_origem_extracao
 -- date_trunc(DATA_PROCESSAMENTO , month) as mes,
 -- EMPRESA,
 --     SUM(CASE WHEN TIPO_REMICAO = 'EMV'    THEN VALOR ELSE 0 END) AS RS_REMICAO_EMV,

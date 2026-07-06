@@ -4,7 +4,7 @@ config {
     description: "Tabela itg de vendas por cartão ",
     tags: ["commercial"],
     bigquery: {
-        partitionBy: "DATA_PROCESSAMENTO",
+        partitionBy: "dt_clearing",
     }
 }
 
@@ -13,17 +13,20 @@ config {
 --Tabela:REMICAO_INTEGRACAO_TOP
 --Banco:BQ
 SELECT 
-	COMP.CLR_ID,
-	COMP.CLR_PROCESS_DATE AS DATA_PROCESSAMENTO,
-	TP1.ds_transport_provider AS EMPRESA,
-	TP1.ds_name_card AS EMPRESA_APELIDO,
-	C1.ds_consortium ,
-	APP1.ds_short AS PRODUTO,
-	QTD,
-	REMICAO,
-	RECEBER,
-	PAGAR, 
-	VL_INTEGRACAO
+	COMP.CLR_ID cd_clearing,
+	COMP.CLR_PROCESS_DATE AS dt_clearing, -- DATA_PROCESSAMENTO,
+	TP1.ds_transport_provider AS ds_empresa, -- EMPRESA,
+	TP1.ds_name_card AS ds_empresa_apelido, --EMPRESA_APELIDO 
+	C1.ds_consortium ds_consorcio,
+	APP1.ds_short AS ds_aplicacao, --PRODUTO,
+	QTD qt_clearing ,
+	REMICAO vl_clearing,
+	RECEBER vl_receber,
+	PAGAR vl_pagar, 
+	VL_INTEGRACAO vl_integracao,
+  CURRENT_TIMESTAMP() ts_processamento,
+    SESSION_USER() ds_usuario_processamento,
+    'TOP001' ds_origem_extracao
 
 FROM (
   SELECT DISTINCT
