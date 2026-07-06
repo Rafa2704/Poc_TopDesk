@@ -1,0 +1,43 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_app_users",
+    tags: ["commercial"],
+    description: "Tabela app_order_dt tipada — IDs sem sufixo .0, datas convertidas para America/Sao_Paulo"
+}
+
+SELECT
+
+    au_id ,
+    au_name ,
+    au_password ,
+    au_email ,
+    au_birthdate ,
+    au_celphone ,
+    au_nat_id ,
+    au_is_active ,
+    au_is_blocked ,
+    au_reguser ,
+
+    DATETIME(CAST(au_dt_create  AS TIMESTAMP), 'America/Sao_Paulo') AS au_dt_create,
+    DATETIME(CAST(au_dt_update   AS TIMESTAMP), 'America/Sao_Paulo') AS au_dt_update ,
+    DATETIME(CAST(au_terms_accepted_at   AS TIMESTAMP), 'America/Sao_Paulo') AS au_terms_accepted_at ,
+    au_terms_accepted,
+    au_nationality_id ,
+    au_is_foreigner ,
+    au_external_uuid ,
+    au_first_name ,
+    au_last_name ,
+    au_password_migrated ,
+    au_realm_id ,
+    au_kc_user_id ,
+    au_profile_completed ,
+    au_social_name ,
+    au_email_verified ,
+    au_qrcode_migtrated ,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM
+    ${ref("tb_ext_mrd_tmb001_app_users")}

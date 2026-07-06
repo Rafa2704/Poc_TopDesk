@@ -1,0 +1,25 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_app_users",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+  uniqueKey: ["au_id"],
+   bigquery: {
+    partitionBy: "DATE(au_dt_create)",
+    clusterBy: ["au_id"],
+  },
+
+  
+
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_mrd_tmb001_app_users")}

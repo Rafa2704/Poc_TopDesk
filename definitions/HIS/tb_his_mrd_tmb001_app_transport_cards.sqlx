@@ -1,0 +1,25 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_app_transport_cards",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+  uniqueKey: ["atc_id"],
+   bigquery: {
+    partitionBy: "DATE(atc_dt_include)",
+    clusterBy: ["atc_id"],
+  },
+
+  
+
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_mrd_tmb001_app_transport_cards")}
