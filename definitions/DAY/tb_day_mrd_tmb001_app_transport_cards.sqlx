@@ -1,0 +1,28 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_app_transport_cards",
+    tags: ["commercial"],
+    description: "Tabela app_order_dt tipada — IDs sem sufixo .0, datas convertidas para America/Sao_Paulo"
+}
+
+SELECT
+
+    atc_id ,
+    aas_id ,
+    au_id ,
+    atc_nickname ,
+    atc_ext_id ,
+    atc_media_id ,
+    atc_is_active ,
+    atc_is_blocked ,
+    DATETIME(CAST(atc_dt_include  AS TIMESTAMP), 'America/Sao_Paulo') AS atc_dt_include,
+    DATETIME(CAST(atc_dt_exclude   AS TIMESTAMP), 'America/Sao_Paulo') AS atc_dt_exclude ,
+    atc_formatedlogical ,
+    atc_product_code ,
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM
+    ${ref("tb_ext_mrd_tmb001_app_transport_cards")}
