@@ -32,6 +32,7 @@ SELECT
   ds_linha_cor,
   ds_estacao_origem,
   ds_estacao,
+  ds_estacao_sigla,
   ds_tabela_origem,
   ds_campo_origem,
   CURRENT_TIMESTAMP() AS ts_processamento,
