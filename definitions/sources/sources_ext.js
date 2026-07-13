@@ -64,7 +64,8 @@ const tables = [
   "tb_ext_mrd_shp001_depara_localidade_venda_bilheteria",
   "tb_ext_mrd_shp001_depara_localidade_uso",
   "tb_ext_mrd_tmb001_app_transport_cards",
-  "tb_ext_mrd_tmb001_app_users"
+  "tb_ext_mrd_tmb001_app_users",
+  "tb_ext_trs_tmb001_com_order_mt"
 
 ];
 

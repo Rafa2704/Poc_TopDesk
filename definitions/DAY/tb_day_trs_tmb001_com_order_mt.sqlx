@@ -1,0 +1,24 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_com_order_mt",
+    tags: ["commercial"],
+    description: "Tabela app_order_mt tipada — IDs sem sufixo .0, datas convertidas para America/Sao_Paulo"
+}
+
+SELECT
+    REGEXP_REPLACE(comt_id,             r'\.0$', '') AS comt_id,
+    REGEXP_REPLACE(com_tranmt_ctm_id,              r'\.0$', '') AS com_tranmt_ctm_id,
+    comt_createdby,
+    comt_updatedby,
+    DATETIME(CAST(comt_createdat  AS TIMESTAMP), 'America/Sao_Paulo') AS comt_createdat,
+    DATETIME(CAST(comt_updatedat   AS TIMESTAMP), 'America/Sao_Paulo') AS comt_updatedat,
+    REGEXP_REPLACE(usr_organization_id, r'\.0$', '') AS usr_organization_id,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+
+FROM
+    ${ref("tb_ext_trs_tmb001_com_order_mt")}
