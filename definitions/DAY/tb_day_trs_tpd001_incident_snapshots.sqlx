@@ -1,0 +1,71 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_incident_snapshots",
+  tags: ["topdesk"],
+  description: "Lista de assets ATM do TOPdesk"
+}
+
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_incident_snapshots",
+  tags: ["topdesk"],
+  description: "Histórico de snapshots de incidentes do TOPdesk (mudanças de status, operador, grupo, SLA etc ao longo do tempo)"
+}
+
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tpd001_incident_snapshots",
+  tags: ["topdesk"],
+  description: "Histórico de snapshots de incidentes do TOPdesk (mudanças de status, operador, grupo, SLA etc ao longo do tempo)"
+}
+
+SELECT
+  -- Chaves e IDs: mantidos como STRING (são guids do TOPdesk)
+  id                    AS id,
+  incidentId            AS incidentId,
+  statusId              AS statusId,
+  operatorId            AS operatorId,
+  operatorGroupId       AS operatorGroupId,
+  priorityId            AS priorityId,
+  urgencyId             AS urgencyId,
+  impactId              AS impactId,
+  categoryId            AS categoryId,
+  subCategoryId         AS subCategoryId,
+  typeId                AS typeId,
+  entryTypeId           AS entryTypeId,
+  supplierId            AS supplierId,
+  contractId            AS contractId,
+  serviceWindowId       AS serviceWindowId,
+  callerBranchId        AS callerBranchId,
+  slaServiceId          AS slaServiceId,
+  slaServiceLevelId     AS slaServiceLevelId,
+
+  -- Datas: convertidas pra timestamp no fuso America/Sao_Paulo
+  -- (o dado de origem vem em UTC/Z do OData do TOPdesk)
+  DATETIME(TIMESTAMP(timeStamp), 'America/Sao_Paulo')             AS timeStamp,
+  DATETIME(TIMESTAMP(slaTargetDate), 'America/Sao_Paulo')         AS slaTargetDate,
+  DATETIME(TIMESTAMP(slaReponseTargetDate), 'America/Sao_Paulo')  AS slaReponseTargetDate,
+  DATETIME(TIMESTAMP(targetDate), 'America/Sao_Paulo')            AS targetDate,
+  DATETIME(TIMESTAMP(requestDate), 'America/Sao_Paulo')           AS requestDate,
+  DATETIME(TIMESTAMP(responseDate), 'America/Sao_Paulo')          AS responseDate,
+  DATETIME(TIMESTAMP(onHoldDate), 'America/Sao_Paulo')            AS onHoldDate,
+  DATETIME(TIMESTAMP(completionDate), 'America/Sao_Paulo')        AS completionDate,
+  DATETIME(TIMESTAMP(closureDate), 'America/Sao_Paulo')           AS closureDate,
+
+  -- Valores/numéricos
+  SAFE_CAST(duration_inSeconds AS NUMERIC) AS duration_inSeconds,
+  SAFE_CAST(taskSubType AS NUMERIC)        AS taskSubType,
+
+  -- Booleanos (dado de origem é Edm.Boolean)
+  SAFE_CAST(majorCall AS BOOL)   AS majorCall,
+  SAFE_CAST(slaApplied AS BOOL)  AS slaApplied,
+
+  -- Campos de controle
+  "TPD001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_incident_snapshots")}

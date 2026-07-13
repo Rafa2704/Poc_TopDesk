@@ -1,0 +1,15 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tpd001_incident_snapshots",
+  description: "Tabela de incidentes tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(timeStamp)",
+  },
+  tags: ["topdesk"],
+}
+
+SELECT 
+    *
+ FROM ${ref("tb_day_trs_tpd001_incident_snapshots")}
