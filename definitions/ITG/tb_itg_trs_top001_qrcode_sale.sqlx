@@ -1,0 +1,398 @@
+config {
+    type: "table",
+    schema: "dfl",
+    tags: ['dfl'],
+    name: "tb_itg_trs_top001_qrcode_sale",
+    bigquery: {
+        partitionBy: "dt_transaction",
+        
+    }
+}
+
+
+WITH cpf_qrcode AS (
+                 SELECT nr_registered_number
+                      , qrm_id
+                      , ds_device_type
+                      , CAST(NULL AS DATE) dt_sale_pkm
+                      , CAST(NULL AS TIME) tm_sale_pkm
+                 FROM (SELECT DISTINCT usr.nr_registered_number nr_registered_number
+                            , TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) qrm_id
+                            , 'TOP' ds_device_type 
+                            , dt_emission
+                            , RANK() OVER (PARTITION BY TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) ORDER BY dt_emission||' '||tm_emission DESC) RANK_1
+                       FROM prd-autopass-bi-001.his.tb_his_trs_mdb001_qrcode rec
+                       LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order ordr
+                       ON rec.cd_order = ordr.cd_order
+                       LEFT JOIN (SELECT DISTINCT cd_user, UPPER(TRIM(nr_registered_number)) nr_registered_number FROM prd-autopass-bi-001.his.tb_his_mrd_mdb001_user_document) usr
+                       ON rec.cd_user = usr.cd_user
+                       )
+                 WHERE RANK_1 = 1 
+                 UNION ALL
+                 SELECT DISTINCT nr_registered_number
+                               , TRIM(IFNULL(SPLIT(qrm_id, '-')[SAFE_OFFSET(0)], '')) qrm_id
+                               , 'WHATSAPP' ds_device_type
+                               , dt_order
+                               , tm_order
+                 FROM (SELECT nr_registered_number, qrm_id, dt_order, tm_order, RANK() OVER (PARTITION BY qrm_id ORDER BY dt_order||' '||tm_order, nr_registered_number asc) rank_1
+                       FROM (SELECT DISTINCT nr_registered_number --incluido em 27/06
+                                  , dt_order dt_order
+                                  , tm_order tm_order
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(0)], '') AS coluna1
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(1)], '') AS coluna2
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(2)], '') AS coluna3
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(3)], '') AS coluna4
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(4)], '') AS coluna5
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(5)], '') AS coluna6
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(6)], '') AS coluna7
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(7)], '') AS coluna8
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(8)], '') AS coluna9
+                                  , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(9)], '') AS coluna10
+                             FROM prd-autopass-bi-001.his.tb_his_trs_bar001_transaction_pakman
+                             WHERE ds_status IN ('PAID', 'PAGO')
+                             AND cd_transaction_pakman <> cd_card_session
+                             AND cd_card_session IS NOT NULL) X UNPIVOT(QRM_ID FOR X IN (COLUNA1, COLUNA2, COLUNA3, COLUNA4, COLUNA5, COLUNA6, COLUNA7, COLUNA8, COLUNA9, COLUNA10)))
+                 WHERE QRM_ID LIKE '%-%'
+                 AND rank_1 = 1
+                 UNION ALL
+                 SELECT DISTINCT usr.nr_registered_number
+                               , TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) qrm_id
+                               , 'GOOGLE WALLET' ds_device_type
+                               , CAST(NULL AS DATE) dt_sale_pkm
+                               , CAST(NULL AS TIME) tm_sale_pkm
+                 FROM prd-autopass-bi-001.his.tb_his_trs_mdb002_order rec
+                 LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb002_qrcode det
+                 ON rec.cd_order_internal = det.cd_order_internal
+                 LEFT JOIN (SELECT DISTINCT cd_user_internal
+                                       , UPPER(TRIM(nr_registered_number)) nr_registered_number
+                                  FROM prd-autopass-bi-001.his.tb_his_mrd_mdb002_user) usr
+                 ON rec.cd_user_internal = usr.cd_user_internal
+                 WHERE rec.ds_status = 'APPROVED'
+                 AND cd_qrcode_external IS NOT NULL
+                 UNION ALL
+                 SELECT nr_registered_number
+                      , qrm_id
+                      , ds_device_type
+                      , dt_sale_pkm
+                      , tm_sale_pkm
+                 FROM (SELECT DISTINCT ord.nr_registered_number --INCLUIDO EM 14/07/25
+                                     , TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) qrm_id
+                                     , 'WHATSAPP' ds_device_type
+                                     , CAST(NULL AS DATE) dt_sale_pkm
+                                     , CAST(NULL AS TIME) tm_sale_pkm
+                                     , RANK() OVER (PARTITION BY TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) ORDER BY dt_emission||' '||tm_emission DESC) RANK_1
+                       FROM prd-autopass-bi-001.his.tb_his_trs_mdb001_order ord
+                       LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_qrcode qrcode 
+                       ON ord.cd_order = qrcode.cd_order
+                       INNER JOIN prd-autopass-bi-001.his.tb_his_trs_top001_app_qrcode_transaction_detail det
+                       ON det.cd_qrcode_media = TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], ''))
+                       AND cd_channel IN ('WHATSAPP')
+                       AND cd_sale_status = 'V'
+                       WHERE ord.ds_state = 'COMPLETED')
+                 WHERE RANK_1 = 1
+)
+, mdb AS (
+  SELECT distinct 
+    cd_qrcode
+    , cd_transaction
+    , ds_payment_mode
+    , ds_pix_provider
+  FROM (
+        SELECT DISTINCT 
+          SPLIT(qrcode.cd_qrcode_external, '-')[OFFSET(0)] cd_qrcode --06/05/2025
+          , qrcode.cd_order cd_transaction --alterado 12052025 
+          , CASE WHEN opay.ds_type IS NULL THEN dtl.ds_type ELSE opay.ds_type END ds_payment_mode
+          , dtl.ds_pix_provider
+          , RANK() OVER (
+              PARTITION BY TRIM(IFNULL(SPLIT(cd_qrcode_external, '-')[SAFE_OFFSET(0)], '')) ORDER BY dt_emission||' '||tm_emission DESC) RANK_1
+        FROM prd-autopass-bi-001.his.tb_his_trs_mdb001_qrcode qrcode
+        LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order ordr ON ordr.cd_order = qrcode.cd_order  
+        LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_payment opay ON qrcode.cd_order  = opay.cd_order 
+        LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_payment_detail dtl ON ordr.cd_order = dtl.cd_order --incluido em 05/02
+        UNION ALL
+        SELECT DISTINCT 
+          REGEXP_EXTRACT(ds_qrcode_text, r'u:([^;]+)') AS cd_qrcode --06/05/2025
+          , qrcode.cd_order cd_transaction --alterado 12052025 
+          , CASE WHEN opay.ds_type IS NULL THEN dtl.ds_type ELSE opay.ds_type END ds_payment_mode
+          , dtl.ds_pix_provider
+          , RANK() OVER (
+              PARTITION BY TRIM(REGEXP_EXTRACT(ds_qrcode_text, r'u:([^;]+)'), '') ORDER BY dt_emission||' '||tm_emission DESC) RANK_1
+        FROM prd-autopass-bi-001.his.tb_his_trs_mdb001_qrcode qrcode
+        LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order ordr ON ordr.cd_order = qrcode.cd_order  
+        LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_payment opay ON qrcode.cd_order  = opay.cd_order 
+        LEFT JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_payment_detail dtl ON ordr.cd_order = dtl.cd_order --incluido em 05/02
+          )
+  WHERE RANK_1 = 1
+)
+, bolsao AS (
+   (SELECT cd_qrcode_media
+                            , dt_sale
+                            , tm_sale
+                            , cd_transaction
+                       FROM(SELECT cd_qrcode_media
+                                 , dt_sale
+                                 , tm_sale
+                                 , 'BOLSAO APP-'||cd_card_session_sale cd_transaction
+                                 , RANK() OVER (PARTITION BY cd_qrcode_media ORDER BY dt_sale||' '||tm_sale, 'BOLSAO APP-'||cd_card_session_sale asc) rank_1 
+                            FROM prd-autopass-bi-001.his.tb_his_trs_top001_app_qrcode_transaction_detail
+                            WHERE cd_channel IN ('WHATSAPP', 'TOP')
+                            AND cd_sale_status = 'V')
+                       WHERE rank_1 = 1 
+                       UNION ALL
+                       SELECT DISTINCT TRIM(IFNULL(SPLIT(qrm_id, '-')[SAFE_OFFSET(0)], '')) qrm_id 
+                                     , dt_order
+                                     , tm_order
+                                     , 'BOLSAO PAKMAN-'||cd_transaction_pakman                             
+                       FROM (SELECT cd_transaction_pakman, qrm_id, dt_order, tm_order, RANK() OVER (PARTITION BY qrm_id ORDER BY dt_order||' '||tm_order, cd_transaction_pakman asc) rank_1
+                             FROM (SELECT DISTINCT cd_transaction_pakman --incluido em 27/06
+                                                 , dt_order dt_order
+                                                 , tm_order tm_order
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(0)], '') AS coluna1
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(1)], '') AS coluna2
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(2)], '') AS coluna3
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(3)], '') AS coluna4
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(4)], '') AS coluna5
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(5)], '') AS coluna6
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(6)], '') AS coluna7
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(7)], '') AS coluna8
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(8)], '') AS coluna9
+                                                 , IFNULL(SPLIT(cd_card_session, ';')[SAFE_OFFSET(9)], '') AS coluna10
+                                   FROM prd-autopass-bi-001.his.tb_his_trs_bar001_transaction_pakman
+                                   WHERE ds_status IN ('PAID', 'PAGO')
+                                   AND cd_transaction_pakman <> cd_card_session
+                                   AND cd_card_session IS NOT NULL) X UNPIVOT(QRM_ID FOR X IN (COLUNA1, COLUNA2, COLUNA3, COLUNA4, COLUNA5, COLUNA6, COLUNA7, COLUNA8, COLUNA9, COLUNA10)))
+                       WHERE QRM_ID LIKE '%-%'
+                       AND rank_1 = 1) 
+)
+
+SELECT DISTINCT cd_qrcode_media
+     , cd_transaction
+     , CASE WHEN cd_transaction LIKE 'BOLSAO%' THEN 1 ELSE 0 END fl_bolsao --26/11
+     , nr_registered_number --incluido em 10/04/24
+     , dt_confirmation
+     , tm_confirmation
+     , dt_transaction
+     , tm_transaction
+     , dt_operation
+     , dt_transaction_pkm --incluido em 04/04/25
+     , tm_transaction_pkm --incluido em 04/04/25
+     , dt_emission --incluido em 28/04
+     , tm_emission --incluido em 28/04
+     , dt_validity_start --incluido em 28/04
+     , tm_validity_start --incluido em 28/04
+     , dt_validity_end --incluido em 28/04
+     , tm_validity_end --incluido em 28/04
+     , ds_short ds_product --incluido em 26/01
+     , `prd-autopass-bi-001.core.fn_aut001_application_format`(ds_short)  ds_product_agg --26/11
+     , cd_qrcode_product --incluido em 28/04
+     , cd_product --incluido em 28/04
+     , cd_product_internal ds_product_internal--incluido em 26/01
+     , cd_qrcode_batch -- incluido em 28/03/24
+     , cd_pos_device
+     , ds_pos_device
+     , qrcode.ds_device_type --canal_venda
+     , CASE WHEN qrcode.ds_device_type IN ('APP VOUD', 'WHATSAPP', 'APP', 'GOOGLE WALLET','TOP') THEN 'DIGITAL'
+            WHEN qrcode.ds_device_type IN ('ATM', 'BILHETERIA','REDE DE VENDAS POS' ) THEN 'IMPRESSO'
+            ELSE 'OUTROS'
+       END ds_sale_channel --incluido em 10/07     
+
+        -- AGORA OS DEPARA VEM DAS TABELAS DO SHAREPOINT
+
+    --  , nm_station  --estacao
+    --  , `prd-autopass-bi-001.core.fn_aut001_nm_station_format`(nm_station) nm_station_agg  -- --26/11
+    --  , nm_line --linha
+    --  ,  `prd-autopass-bi-001.core.fn_aut001_nm_line_format`(nm_line) nm_line_agg -- --26/11
+    --  , nm_company --empresa 
+
+
+            ,ds_empresa
+           , ds_linha_completa
+           , ds_linha
+           , ds_estacao_origem
+           , ds_estacao
+           ,ds_estacao_sigla
+     , CASE WHEN ds_payment_mode = 'DEBIT' THEN 'DEBITO'
+            WHEN ds_payment_mode = 'BALANCE' THEN 'CARTEIRA DIGITAL' --alterado em 10/07
+            WHEN ds_payment_mode = 'CREDIT' THEN 'CREDITO'
+            WHEN ds_payment_mode = 'VIRTUAL_DEBIT' THEN 'DEBITO'
+       ELSE ds_payment_mode
+       END ds_payment_mode --forma_pagamento
+     , CASE --WHEN ds_issuer = 'TICKET' THEN 'TICKET' --retirado em 08/07
+            WHEN qrcode.ds_device_type = 'GOOGLE WALLET' AND ds_payment_mode IN ('DEBITO','CREDITO') THEN 'ADYEN'
+            WHEN qrcode.ds_device_type = 'REDE DE VENDAS POS' THEN nm_dealer
+            WHEN qrcode.ds_device_type = 'TOP' AND ds_payment_mode IN ('DEBITO','CREDITO','DEBIT','CREDIT','VIRTUAL_DEBIT','BALANCE') THEN 'ADYEN'
+            WHEN qrcode.ds_device_type = 'TOP' AND ds_payment_mode IN ('PIX') THEN COALESCE(ds_pix_provider, 'PEFISA')
+       END nm_acquirer
+     , cd_record_status_media  --incluido em 28/04
+     , cd_record_status_batch  --incluido em 28/04
+     , ds_long_record_status
+     , ds_short_record_status_transaction
+     , ds_short_record_status_qrcode_media
+     , CASE WHEN ds_short_record_status_transaction = 'A' THEN 'A'
+            WHEN ds_short_record_status_transaction = 'PENDENT' THEN 'P'
+       ELSE ds_short_record_status_transaction
+       END ds_status_sale  --INCLUIDO EM 15/07/ Alterado em 21/11
+     , CASE WHEN ds_short_record_status_transaction = 'A' AND ds_short_record_status_qrcode_media IN ('A', 'I') THEN 'A'
+            WHEN ds_short_record_status_transaction = 'A' AND ds_short_record_status_qrcode_media = 'PENDENT' THEN 'P'
+            WHEN ds_short_record_status_transaction = 'PENDENT' THEN 'P'
+       ELSE ds_short_record_status_transaction
+       END ds_status_transaction
+     , CASE --alterado em 26/07/2024/
+          WHEN ds_short LIKE '%QR%PLBS%' AND ds_short_record_status_transaction NOT IN ('A','SH2000') THEN 'CANCELADO'
+          WHEN ds_short LIKE '%QR%PLBS%' AND ts_first_usage IS NULL THEN 'PRONTO PRA USO'  
+          WHEN ds_short LIKE '%QR%PLBS%' AND TIMESTAMP_DIFF(CAST(ts_ref_processing AS timestamp), CAST(ts_first_usage AS timestamp), HOUR) < 24 THEN 'ATIVO'
+          WHEN ds_short LIKE '%QR%PLBS%' AND TIMESTAMP_DIFF(CAST(ts_ref_processing AS timestamp), CAST(ts_first_usage AS timestamp), HOUR) >= 24 THEN 'INATIVO'
+       ELSE 'N/A' --INCLUIDO EM 15/07
+       END ds_status_plbs  --INCLUIDO EM 12/07
+     , ts_first_usage  --INCLUIDO EM 12/07
+     , ts_ref_processing --INCLUIDO EM 12/07
+     , cd_service_login
+     , cd_credit_serie --incluido em 28/04
+     , vl_transaction 
+     , ts_processing_sale
+     , ts_processing
+     , cd_company
+     , nr_load_control
+     , cd_created_by
+     , cd_system_source
+FROM (SELECT DISTINCT q.cd_qrcode_media cd_qrcode_media
+           , q.cd_record_status cd_record_status_media 
+           , t.cd_record_status cd_record_status_batch  
+           --, q.cd_transaction cd_transaction
+           , CASE WHEN t.cd_pos_device IN  ('9999201','987') 
+                  THEN COALESCE(bolsao.cd_transaction, q.cd_transaction) 
+                  ELSE q.cd_transaction
+             END cd_transaction -- alterado 15/05/25 - contagem de transações a partir da order mongodb
+           , t.dt_confirmation dt_confirmation
+           , t.tm_confirmation tm_confirmation
+           , t.dt_transaction dt_transaction
+           , t.tm_transaction tm_transaction
+           , q.dt_emission 
+           , q.tm_emission
+           , q.dt_validity_start
+           , q.tm_validity_start
+           , q.dt_validity_end
+           , q.tm_validity_end 
+           , CASE WHEN t.tm_transaction BETWEEN '00:00:00' AND '03:00:00' THEN (t.dt_transaction - 1) ELSE t.dt_transaction END dt_operation
+           , COALESCE(bolsao.dt_sale, t.dt_transaction) dt_transaction_pkm ---- alterado 15/05/25
+           , COALESCE(bolsao.tm_sale, t.tm_transaction) tm_transaction_pkm ---- alterado 15/05/25
+           , prd.ds_short
+           , COALESCE(t.cd_qrcode_batch, q.cd_qrcode_batch) cd_qrcode_batch --2025-11-25
+           , prd.cd_product_internal
+           , t.cd_product
+           , t.cd_pos_device cd_pos_device
+           , pd.ds_pos_device ds_pos_device
+           , CASE WHEN t.cd_pos_device = '10003839' THEN pd.ds_pos_device  
+                  WHEN t.cd_pos_device = '9999201' THEN 'WHATSAPP' 
+                  WHEN t.cd_pos_device = '987' THEN 'TOP'
+                  WHEN t.cd_pos_device = '988' THEN 'REDE DE VENDAS POS'
+             ELSE dt.ds_device_type
+             END ds_device_type --canal_venda
+           , nm_dealer 
+
+
+          --  , p1.ds_provider nm_station  --estacao
+          --  , p2.ds_provider nm_line --linha
+          --  , p3.ds_provider nm_company --empresa 
+
+          -- , depara.ds_estacao as estacao_depara
+           , depara.ds_linha_completa
+           , depara.ds_linha
+           , depara.ds_estacao_origem
+           , depara.ds_estacao
+           ,depara.ds_estacao_sigla
+           ,depara.ds_empresa
+
+
+           , CASE 
+                  WHEN t.cd_pos_device  = '9999201' THEN 'PIX' --Alterado em 20/08
+                  WHEN t.cd_pos_device IN ('987', '10003839') AND mdb.ds_payment_mode IS NOT NULL THEN mdb.ds_payment_mode
+                  WHEN pm.ds_payment_mode IS NULL THEN CASE dt.cd_device_type WHEN '3' THEN 'DEBITO'
+                                                                              WHEN '6' THEN 'DINHEIRO'
+                                                                              WHEN '7' THEN 'NAO IDENTIFICADO' --25/09
+                                                                              WHEN '21' THEN 'PIX'      --WHATSAPP 
+                                                                              WHEN '22' THEN 'DEBITO'   --GOOGLE WALLET
+                                                       END
+             ELSE pm.ds_payment_mode
+             END ds_payment_mode --forma_pagamento
+           , mdb.ds_pix_provider ds_pix_provider
+           --retirado em 08/07 --, mdb.ds_issuer 
+           --, CASE WHEN tp.cd_transaction_parent IS NULL THEN 'INATIVO' ELSE rs_t.ds_long END ds_long_record_status
+           , CASE WHEN t.cd_transaction = tp.cd_transaction_parent AND t.cd_system_source = tp.cd_system_source THEN 'INATIVO' 
+             ELSE rs_t.ds_long 
+             END ds_long_record_status
+           --, rs_t.ds_short ds_short_record_status_transaction
+           , CASE WHEN t.cd_transaction = tp.cd_transaction_parent AND t.cd_system_source = tp.cd_system_source THEN 'I' 
+             ELSE rs_t.ds_short 
+             END ds_short_record_status_transaction
+           , rs_q.ds_short ds_short_record_status_qrcode_media
+           , peq.cd_credit_serie --incluido em 28/04
+           , q.cd_qrcode_product
+           , (SELECT MAX(ts_processing) FROM prd-autopass-bi-001.day.tb_day_trs_top001_qrcode_media) ts_ref_processing
+           , CAST(CONCAT(CAST(q.dt_first_usage AS DATE),' ', CAST(q.tm_first_usage AS TIME)) AS TIMESTAMP) ts_first_usage
+           , t.cd_service_login cd_service_login
+           , q.vl_unit_price/100 vl_transaction --vlr
+           , t.ts_processing ts_processing_sale
+           , CURRENT_TIMESTAMP() ts_processing
+           , q.cd_company cd_company
+           , CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control
+           , SESSION_USER() cd_created_by
+           , q.cd_system_source cd_system_source
+      FROM `prd-autopass-bi-001.his.tb_his_trs_top001_qrcode_media` q 
+      INNER JOIN `prd-autopass-bi-001.his.tb_his_trs_top001_transaction_qrcode_sale` t --transacoes de venda
+      ON t.cd_transaction = q.cd_transaction AND t.cd_system_source = q.cd_system_source
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_product prd 
+      ON t.cd_product = prd.cd_product --incluido em 26/01
+
+     LEFT JOIN  `prd-autopass-ed-001.his.tb_his_mrd_shp001_depara_localidade_venda_bilheteria`  depara 
+     ON depara.cd_origem = t.cd_system_source AND depara.cd_localidade_venda = t.cd_provider_store
+     
+      -- LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_provider p1
+      -- ON t.cd_provider_store = p1.cd_provider AND t.cd_system_source = p1.cd_system_source
+
+      -- LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_provider p2
+      -- ON p1.cd_provider_master = p2.cd_provider AND p1.cd_system_source = p2.cd_system_source
+      
+      -- LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_provider p3
+      -- ON p2.cd_provider_master = p3.cd_provider AND p2.cd_system_source = p3.cd_system_source
+
+
+
+      LEFT OUTER JOIN (SELECT DISTINCT cd_pos_device, ds_pos_device, cd_device, cd_system_source FROM prd-autopass-bi-001.his.tb_his_mrd_top001_pos_device) pd
+      ON t.cd_pos_device = pd.cd_pos_device AND t.cd_system_source = pd.cd_system_source
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_device d
+      ON pd.cd_device = d.cd_device AND pd.cd_system_source = d.cd_system_source
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_device_type dt
+      ON d.cd_device_type = dt.cd_device_type AND d.cd_system_source = dt.cd_system_source
+      LEFT OUTER JOIN (SELECT DISTINCT cd_transaction_payment, cd_payment_mode, cd_system_source 
+                       FROM prd-autopass-bi-001.his.tb_his_trs_top001_transaction_payment 
+                       WHERE vl_amount IS NOT NULL
+                       AND cd_payment_mode IS NOT NULL) tpm
+      ON t.cd_transaction_payment = tpm.cd_transaction_payment AND t.cd_system_source = tpm.cd_system_source
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_payment_mode pm
+      ON tpm.cd_payment_mode = pm.cd_payment_mode AND tpm.cd_system_source = pm.cd_system_source
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_record_status rs_t
+      ON t.cd_record_status = rs_t.cd_record_status AND t.cd_system_source = rs_t.cd_system_source
+      LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_top001_record_status rs_q
+      ON q.cd_record_status = rs_q.cd_record_status AND q.cd_system_source = rs_q.cd_system_source
+      LEFT OUTER JOIN (SELECT DISTINCT cd_transaction_parent, cd_system_source FROM prd-autopass-bi-001.his.tb_his_trs_top001_transaction_qrcode_cancel) tp
+      ON t.cd_transaction = tp.cd_transaction_parent AND t.cd_system_source = tp.cd_system_source
+      LEFT OUTER JOIN  prd-autopass-bi-001.his.tb_his_trs_top001_pos_external_qrcode peq  --incluido em 28/04
+      ON q.cd_qrcode_media = peq.cd_qrcode_media
+      LEFT OUTER JOIN (SELECT DISTINCT sfe.nr_nsu_sell, sd.nm_dealer
+                       FROM prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry sfe
+                       LEFT JOIN  prd-autopass-bi-001.his.tb_his_mrd_bar001_dealer sd ON sfe.cd_dealer = sd.cd_dealer
+                       WHERE sfe.cd_product IN ('86')
+                       AND sfe.cd_operation_type = 'CREDIT') dealer 
+      ON dealer.nr_nsu_sell =  t.cd_transaction
+      LEFT OUTER JOIN  mdb 
+      ON mdb.cd_qrcode = q.cd_qrcode_media
+      LEFT OUTER JOIN bolsao
+      ON q.cd_qrcode_media = bolsao.cd_qrcode_media) qrcode--incluido em 26/03/24
+  LEFT OUTER JOIN  cpf_qrcode
+  ON cpf_qrcode.qrm_id = cd_qrcode_media AND cpf_qrcode.ds_device_type = qrcode.ds_device_type
+
+  -- where dt_emission >= '2026-01-01'
+  -- AND dt_transaction >= '2026-01-01'
+
+ 
