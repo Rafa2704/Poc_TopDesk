@@ -1,0 +1,118 @@
+config {
+    type: "table",
+    schema: "dfl",
+    description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_uso",
+    }
+}
+
+  --fat_catracada_uso_excessivo
+SELECT
+  'TOP' ds_origem, --origem,
+  o.nr_card nr_cartao,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash,
+  o.qt_usage qt_uso,
+  o.dt_card_usage dt_uso,
+  o.tm_first_usage tm_primeiro_uso,
+  o.dt_last_usage dt_ultimo_uso,
+  o.tm_last_usage tm_ultimo_uso,
+  o.ds_consortium ds_consorcio,
+  o.ds_consortium_group ds_consorcio_agrupado,
+  o.nm_company ds_empresa,
+  o.nm_line ds_linha_origem,
+  o.nm_line ds_linha,
+  o.nm_station ds_estacao_origem,
+  o.nm_station ds_estacao,
+  o.cd_vehicle cd_validador,
+  o.ds_line_direction ds_linha_direcao,
+  o.cd_boarding_status cd_status_embarque,
+  o.ds_product ds_aplicacao,
+  CASE
+    WHEN o.nm_line LIKE '%INTEGRAÇÃO%' THEN 1
+    ELSE 0
+END
+  fl_integracao,
+  CURRENT_TIMESTAMP() ts_processamento,
+  SESSION_USER() ds_usuario_processamento,
+  o.cd_system_source ds_origem_extracao
+FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_excessive` o
+  --`prd-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_excessive` o
+LEFT JOIN
+  prd-autopass-bi-001.itg.tb_itg_trs_top001_card_emission a 
+ON
+  a.nr_card = o.nr_card
+LEFT JOIN 
+ ${ref("tb_his_mrd_shp001_depara_localidade_uso")} loc 
+    --dev-autopass-bi-001.his.tb_his_mrd_shp001_depara_localidade_uso est
+    ON cd_origem = 'TOP001' 
+    AND cd_localidade_uso = cd_line_detail
+WHERE
+  (1=1)
+  AND o.nr_card NOT IN (
+  SELECT
+    a.nr_card
+  FROM
+    prd-autopass-bi-001.itg.vw_itg_mrd_top001_user b
+  JOIN
+    prd-autopass-bi-001.itg.tb_itg_trs_top001_card_emission a
+  ON
+    a.cd_user = b.cd_user
+  WHERE
+    b.nm_user LIKE 'METRA%')
+UNION ALL
+SELECT
+  'BOM' origem,
+  os.nr_card,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash,
+  os.qt_usage,
+  os.dt_card_usage,
+  os.tm_first_usage,
+  os.dt_last_usage,
+  os.tm_last_usage,
+  os.ds_consortium,
+  os.ds_consortium_group,
+  os.nm_company,
+  os.nm_line,
+  os.nm_line,
+  os.nm_station,
+  os.nm_station,
+  os.cd_vehicle,
+  os.ds_line_direction,
+  os.cd_boarding_status,
+  os.ds_product,
+  CASE
+    WHEN nm_line LIKE '%INTEGRAÇÃO%' THEN 1
+    ELSE 0
+END
+  fl_integracao,
+  CURRENT_TIMESTAMP() ts_processamento,
+  SESSION_USER() ds_usuario_processamento,
+  os.cd_system_source ds_origem_extracao
+FROM
+  `prd-autopass-bi-001.itg.tb_itg_trs_bom001_card_usage_excessive` os
+  --`prd-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_excessive` os
+LEFT JOIN
+  prd-autopass-bi-001.itg.tb_itg_trs_top001_card_emission a
+ON
+  a.nr_card = os.nr_card
+LEFT JOIN 
+ ${ref("tb_his_mrd_shp001_depara_localidade_uso")} loc 
+    --dev-autopass-bi-001.his.tb_his_mrd_shp001_depara_localidade_uso est
+    ON cd_origem = 'BOM001' 
+    AND cd_localidade_uso = cd_line_detail
+
+WHERE
+  (1=1)
+  AND os.nr_card NOT IN (
+  SELECT
+    a.nr_card
+  FROM
+    prd-autopass-bi-001.itg.vw_itg_mrd_bom001_user b
+  JOIN
+    prd-autopass-bi-001.itg.tb_itg_trs_bom001_card_emission a
+  ON
+    a.cd_user = b.cd_user
+  WHERE
+    b.nm_user LIKE 'METRA%')

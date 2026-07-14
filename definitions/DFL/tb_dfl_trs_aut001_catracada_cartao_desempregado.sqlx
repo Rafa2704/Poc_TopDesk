@@ -1,0 +1,107 @@
+config {
+    type: "table", 
+    schema: "dfl",
+    description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_uso",
+    }
+}
+
+--fat_catracada_cartao_desempregado
+
+WITH union_catracadas as (SELECT 
+   'TOP' as origem
+  ,nr_card nr_cartao
+  , nr_registered_number nr_cpf
+  ,dt_card_usage dt_uso
+  ,tm_card_usage tm_uso
+  ,cd_vehicle cd_validador
+  ,cd_application cd_aplicacao
+  ,gate.ds_product ds_aplicacao_origem
+  ,coalesce(app.ds_aplicacao,gate.ds_product) ds_aplicacao
+  ,nm_company ds_empresa
+  ,ds_modal
+  ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_line
+    END as ds_linha_origem
+    , coalesce(loc.ds_linha,nm_line) ds_linha
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE nm_station
+    END as ds_estacao_origem
+  ,coalesce(loc.ds_estacao,nm_station) ds_estacao
+  ,count(*) qt_uso
+  ,gate.cd_system_source
+FROM 
+  prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate gate
+LEFT JOIN 
+ ${ref("tb_his_mrd_shp001_depara_localidade_uso")} loc 
+    --dev-autopass-bi-001.his.tb_his_mrd_shp001_depara_localidade_uso est
+    ON cd_origem = 'TOP001' 
+    AND cd_localidade_uso = cd_line_detail
+LEFT JOIN ${ref("tb_his_mrd_aut001_depara_aplicacao")} app
+--prd-autopass-ed-001.his.tb_his_mrd_aut001_depara_aplicacao app
+    ON app.cd_emissor = '14'
+    and app.cd_aplicacao = cd_application
+WHERE 
+  nr_card LIKE '14.29%'
+  AND dt_card_usage >= '2025-01-01'
+GROUP BY ALL
+  ),
+finalizacao_union as (
+    select
+    origem
+    ,nr_cartao
+    ,nr_cpf
+    ,cd_validador
+    ,dt_uso
+    ,tm_uso
+    ,cd_aplicacao
+    ,ds_aplicacao_origem
+    ,ds_aplicacao --ds_mascara_produto
+    ,ds_modal
+    ,ds_empresa
+    ,ds_linha_origem
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE ds_linha
+    END ds_linha
+    ,ds_estacao_origem
+    ,CASE 
+      WHEN ds_modal = 'PNEU' THEN 'N/A' 
+      ELSE ds_estacao
+    END  ds_estacao
+     ,CONCAT(ds_linha_origem,ds_estacao_origem) ds_estacao_linha_origem
+     ,CONCAT(ds_linha,ds_estacao) ds_estacao_linha
+    ,qt_uso
+    ,cd_system_source
+    from union_catracadas
+    )
+  select
+   origem
+  ,dt_uso
+  ,tm_uso
+  ,nr_cartao
+  ,nr_cpf
+  ,cd_aplicacao
+  ,ds_aplicacao_origem
+  ,ds_aplicacao
+  ,cd_validador
+  ,ds_empresa
+  ,ds_linha_origem
+  ,ds_linha
+  ,ds_estacao_origem
+  ,ds_estacao
+  ,ds_estacao_linha_origem
+  ,ds_estacao_linha
+  ,sum(qt_uso) as qt_uso
+  ,CURRENT_TIMESTAMP() ts_processamento
+  ,SESSION_USER() ds_usuario_processamento
+  ,cd_system_source ds_origem_extracao
+  from finalizacao_union
+  group by all
+
+
+

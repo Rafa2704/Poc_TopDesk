@@ -1,12 +1,12 @@
 config {
   type: "table",
   schema: "his",
-  name: "tb_his_mrd_shp001_depara_localidade_venda_atm",
+  name: "tb_his_mrd_shp001_depara_localidade_uso",
   tags: ["shp001"],
   description: "Histórico de De-Para de localidade de venda (canal ATM) extraído do SharePoint (pasta DEPARAS, aba ATM), via fn-shp001-completo. Mapeia o código de localidade de venda para empresa, linha e estação correspondentes. Atualizado a cada execução da extração.",
   columns: {
     cd_origem: "Sigla do sistema de origem do código de localidade de venda (ex: TMB001), chave do De-Para junto com cd_localidade_venda.",
-    cd_localidade_venda: "Código da localidade de venda (ATM) conforme cadastrado no sistema de origem.",
+    cd_localidade_uso: "Código da localidade de venda (ATM) conforme cadastrado no sistema de origem.",
     ds_empresa: "Nome da empresa/operadora associada à localidade de venda (ex: METRO, CPTM).",
     ds_linha_completa: "Nome completo da linha, concatenando nome e cor (ex: LINHA 10 - TURQUESA).",
     nr_linha: "Número identificador da linha.",
@@ -24,4 +24,4 @@ config {
 
 SELECT
 *
-FROM ${ref("tb_ext_mrd_shp001_depara_localidade_venda_atm")}
+FROM ${ref("tb_ext_mrd_shp001_depara_localidade_uso")}
