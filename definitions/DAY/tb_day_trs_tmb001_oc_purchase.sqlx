@@ -1,0 +1,34 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_oc_purchase",
+  description: "Camada DAY tipada das compras do omnichannel (oc_purchase)",
+  tags: ["vendas", "omnichannel"],
+}
+
+SELECT
+  ocp_id,
+  orc_id,
+  occv_id,
+  ocp_phone_e16,
+  ocp_username,
+  ocp_document,
+  ocp_systemcode,
+  ocp_formatedlogical,
+  ocp_productdesc,
+  SAFE_CAST(ocp_amount AS NUMERIC)                                 AS ocp_amount,
+  ocp_status,
+  DATETIME(SAFE_CAST(ocp_createdat AS TIMESTAMP), 'America/Sao_Paulo')    AS ocp_createdat,
+  ocp_createdby,
+  DATETIME(SAFE_CAST(ocp_updatedat AS TIMESTAMP), 'America/Sao_Paulo')    AS ocp_updatedat,
+  ocp_updatedby,
+  SAFE_CAST(ocp_fee AS NUMERIC)                                    AS ocp_fee,
+  SAFE_CAST(ocp_quantity AS INT64)                                 AS ocp_quantity,
+  ocp_email,
+
+ -- Campos de controle
+   "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_oc_purchase")}

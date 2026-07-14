@@ -1,0 +1,24 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_oc_payment",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+  uniqueKey: ["ocpay_id"],
+  bigquery: {
+    partitionBy: "DATE(ocpay_createdat)",
+  },
+  
+
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_trs_tmb001_oc_payment")}
+

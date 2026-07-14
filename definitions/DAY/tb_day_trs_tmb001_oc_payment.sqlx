@@ -1,0 +1,39 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_trs_tmb001_oc_payment",
+  description: "Camada DAY tipada dos pagamentos do omnichannel (oc_payment)",
+  tags: ["commercial"],
+}
+
+SELECT
+  ocpay_id,
+  ocp_id,
+  SAFE_CAST(ocpay_amount AS NUMERIC)                                    AS ocpay_amount,
+  ocpay_status,
+  ocpay_pix_txid,
+  ocpay_pix_copypaste,
+  ocpay_pix_qrb64,
+  ocpay_gateway_ref,
+  DATETIME(SAFE_CAST(ocpay_paidat AS TIMESTAMP), 'America/Sao_Paulo')             AS ocpay_paidat,
+  DATETIME(SAFE_CAST(ocpay_expiresat AS TIMESTAMP), 'America/Sao_Paulo')          AS ocpay_expiresat,
+  DATETIME(SAFE_CAST(ocpay_createdat AS TIMESTAMP), 'America/Sao_Paulo')          AS ocpay_createdat,
+  ocpay_createdby,
+  DATETIME(SAFE_CAST(ocpay_updatedat AS TIMESTAMP), 'America/Sao_Paulo')          AS ocpay_updatedat,
+  ocpay_updatedby,
+  DATETIME(SAFE_CAST(ocpay_wa_notified_at AS TIMESTAMP), 'America/Sao_Paulo')     AS ocpay_wa_notified_at,
+  DATETIME(SAFE_CAST(ocpay_email_notified_at AS TIMESTAMP), 'America/Sao_Paulo')  AS ocpay_email_notified_at,
+  DATETIME(SAFE_CAST(ocpay_qrc_confirmed_at AS TIMESTAMP), 'America/Sao_Paulo')   AS ocpay_qrc_confirmed_at,
+  ocpay_last_error,
+  ocpay_wa_wamid,
+  DATETIME(SAFE_CAST(ocpay_wa_read_at AS TIMESTAMP), 'America/Sao_Paulo')         AS ocpay_wa_read_at,
+  DATETIME(SAFE_CAST(ocpay_wa_failed_at AS TIMESTAMP), 'America/Sao_Paulo')       AS ocpay_wa_failed_at,
+  ocpay_wa_error_code,
+  DATETIME(SAFE_CAST(ocpay_wa_delivered_at AS TIMESTAMP), 'America/Sao_Paulo')    AS ocpay_wa_delivered_at,
+
+  -- Campos de controle
+   "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_oc_payment")}
