@@ -3,7 +3,7 @@ config {
     schema: "itg",
     name: "itg_trs_tmob001_uso_ultimos_30",
     description: "Tabela de usos dos ultimos 30 dias",
-    tags: ["tmob"],
+    tags: ["dfl"],
 }
 
 
