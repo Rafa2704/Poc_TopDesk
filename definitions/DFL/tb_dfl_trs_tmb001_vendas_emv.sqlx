@@ -1,0 +1,213 @@
+config {
+    type: "table", 
+    schema: "dfl",
+    description: "Tabela itg de vendas por emv ",
+    tags: ["dfl"],
+    bigquery: {
+        partitionBy: "data_uso",
+    }
+}
+
+--transações emv R0122 enriquecido
+WITH
+  selemv AS (
+    SELECT
+      tue.cd_trn_usage_emv AS id_transacao,
+      tue.data_hora_uso_sp AS data_uso,
+      tue.data_hora_uso_sp AS data_hora_uso,
+      COALESCE(rnk.status_pagamento, ep.ds_status) AS status,
+      CASE tue.cd_transaction_mode
+        WHEN '0' THEN 'diferido'
+        WHEN '1' THEN 'online'
+        ELSE 'unknown'
+        END AS modo,
+      CASE
+        WHEN ep.cd_deny IS NOT NULL
+          THEN CONCAT(ep.cd_deny, '-', COALESCE(ep.ds_deny, ''))
+        ELSE CONCAT(ep.cd_approve, '-', COALESCE(ep.ds_approve, ''))
+        END AS motivos,
+      CASE
+        WHEN
+          TIMESTAMP_DIFF(
+            CURRENT_TIMESTAMP(),
+            TIMESTAMP(tue.data_hora_uso_sp, 'America/Sao_Paulo'),
+            DAY)
+          > 16
+          THEN 'S'
+        WHEN ep.fl_authorize = 1 THEN 'S'
+        ELSE 'N'
+        END AS analise_encerrada,
+      CASE
+        WHEN tue.qt_timeout = 0 THEN 'S'
+        ELSE 'N'
+        END AS giro_catraca,
+      COALESCE(rnk.qtd_retentativas, 0) AS qtd_retentativas,
+      CASE
+        WHEN rnk.qtd_retentativas > 0
+          THEN FORMAT_DATETIME('%d/%m/%Y', rnk.ultima_tentativa)
+        ELSE NULL
+        END AS data_ultima_retentativa,
+      UPPER(COALESCE(ep.ds_debit_recovery_type, rnk.tipo_ultima_retentativa))
+        AS tipo_retentativa,
+      CASE
+        WHEN rnk.qtd_retentativas > 0
+          THEN
+            DATE_DIFF(
+              DATE(rnk.ultima_tentativa),
+              DATE(tue.data_hora_uso_sp),
+              DAY)
+        ELSE NULL
+        END AS dias_retentativa,
+      LEFT(tue.nr_pan_token, 6) AS bin,
+      ep2.ds_brand AS bandeira,
+      ep2.ds_payment_mode AS forma_pagamento,
+      CASE
+        WHEN
+          REGEXP_REPLACE(
+            NORMALIZE_AND_CASEFOLD(tto.nm_to_transport_operator, NFD),
+            r'[\pM\s\-]',
+            '')
+          IN (
+            'cptm',
+            'metro',
+            'metrolinha17',
+            'via4',
+            'viamobilidade',
+            'viamobilidadelinhas8e9')
+          THEN 'TRILHOS'
+        ELSE 'PNEUS'
+        END AS modal,
+      cc.cc_desc AS consorcio,
+      ce.ce_description AS empresa,
+      COALESCE(
+        UPPER(filg.description),
+        UPPER(tln.ds_to_line_short)) AS linha,
+      CONCAT(tln.ds_to_line_short, ' ', tln.ds_to_line_long) AS estacao,
+      ROUND(SAFE_CAST(tue.vl_usage AS NUMERIC), 2) / 100.0 AS valor,
+      eu.cd_emv_usage AS idtrn,
+      ep.cd_emv_payment AS paymentid,
+      tue.cd_to_terminal AS cd_to_terminal
+    FROM
+      (
+        SELECT
+          *,
+          DATETIME(
+            TIMESTAMP(DATETIME(dt_usage, tm_usage), 'UTC'),
+            'America/Sao_Paulo') AS data_hora_uso_sp
+        FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_trn_usage_emv`
+      ) tue
+    LEFT JOIN
+      (
+        SELECT
+          cd_emv_usage,
+          cd_emv_payment,
+          cd_emv_card,
+          nr_rnd,
+          cd_to_transport_operator
+        FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_emv_usage`
+        WHERE cd_emv_payment IS NOT NULL
+      ) eu
+      ON
+        eu.cd_emv_card = tue.nr_pan_token
+        AND eu.nr_rnd = tue.nr_rnd
+    LEFT JOIN `prd-autopass-bi-001.his.tb_his_trs_tmb001_emv_payment` ep
+      ON ep.cd_emv_payment = eu.cd_emv_payment
+    INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_emv_product` ep2
+      ON ep2.cd_emv_product = tue.cd_emv_product
+    INNER JOIN
+      `prd-autopass-bi-001.his.tb_his_mrd_tmb001_to_transport_operator` tto
+      ON tto.cd_to_transport_operator = tue.cd_to_transport_operator
+    INNER JOIN `prd-autopass-bi-001.his.tb_his_mrd_tmb001_to_line` tln
+      ON tln.cd_to_line = tue.cd_to_line
+    LEFT JOIN
+      `prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup` filg
+      ON
+        filg.id = CAST(
+          CAST(
+            SAFE_CAST(tln.cd_far_integration_line_group AS FLOAT64)
+            AS INT64)
+          AS STRING)
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_clr_entity` ce
+      ON ce.ce_id = CAST(tue.cd_to_transport_operator AS STRING) -- CORRIGIDO: era eu.cd_to_transport_operator
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_clr_consortium` cc
+      ON
+        cc.cc_id = CAST(
+          CAST(SAFE_CAST(ce.cc_id AS FLOAT64) AS INT64) AS STRING)
+    LEFT JOIN
+      (
+        SELECT
+          ep_r.cd_emv_usage_first,
+          COUNT(edr.cd_emv_debit_recovery) AS qtd_retentativas,
+          MAX(
+            DATETIME(
+              TIMESTAMP(DATETIME(edr.dt_process, edr.tm_process), 'UTC'),
+              'America/Sao_Paulo')) AS ultima_tentativa,
+          ARRAY_AGG(
+            edr.ds_type
+            ORDER BY ep_r.cd_emv_payment DESC
+            LIMIT 1)[OFFSET(0)] AS tipo_ultima_retentativa,
+          ARRAY_AGG(
+            ep_r.ds_status
+            ORDER BY ep_r.cd_emv_payment DESC
+            LIMIT 1)[OFFSET(0)] AS status_pagamento
+        FROM `prd-autopass-bi-001.his.tb_his_trs_tmb001_emv_payment` ep_r
+        LEFT JOIN
+          `prd-autopass-bi-001.his.tb_his_trs_tmb001_emv_debit_recovery` edr
+          ON
+            edr.cd_emv_payment = ep_r.cd_emv_payment
+            AND edr.ds_type = 'SCHEDULED'
+        GROUP BY ep_r.cd_emv_usage_first
+      ) rnk
+      ON rnk.cd_emv_usage_first = eu.cd_emv_usage
+    WHERE
+      TRUE
+      AND tue.cd_to_transport_operator
+        IN ('1', '2', '3', '4', '122', '123', '188')
+      AND tue.nr_pan_token IS NOT NULL
+      AND tue.data_hora_uso_sp
+        BETWEEN '2026-01-01 00:00:00'
+        AND DATETIME(DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 1 DAY), '23:59:59')
+  ),
+  sel_legenda AS (
+    SELECT
+      *,
+      CASE dias_retentativa
+        WHEN 0 THEN 'D0'
+        WHEN 1 THEN 'D+1'
+        WHEN 5 THEN 'D+5'
+        WHEN 15 THEN 'D+15'
+        ELSE
+          CASE
+            WHEN dias_retentativa IS NULL THEN NULL
+            ELSE 'Outros'
+            END
+        END AS legenda_retentativa
+    FROM selemv
+  )
+SELECT
+  id_transacao,
+  DATE(data_uso) AS data_uso,
+  data_hora_uso,
+  status,
+  modo,
+  motivos,
+  analise_encerrada,
+  giro_catraca,
+  qtd_retentativas,
+  data_ultima_retentativa,
+  tipo_retentativa,
+  dias_retentativa,
+  legenda_retentativa,
+  bin,
+  bandeira,
+  forma_pagamento,
+  modal,
+  consorcio,
+  empresa,
+  linha,
+  estacao,
+  cd_to_terminal,
+  SUM(valor) AS valor,
+  COUNT(*) AS qtd_transacoes
+FROM sel_legenda
+GROUP BY ALL
