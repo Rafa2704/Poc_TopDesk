@@ -25,4 +25,4 @@ config {
 SELECT
 *
 
-FROM ${ref("tb_day_mrd_shp001_depara_localidade_vendas_bilheteria")}
+FROM ${ref("tb_ext_mrd_shp001_depara_localidade_venda_bilheteria")}

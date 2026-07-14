@@ -1,0 +1,127 @@
+config {
+    type: "table", 
+    schema: "dfl",
+    description: "Tabela gold para o fluxo de dados df_catracada_cartao ",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_uso",
+    }
+}
+
+--fat_catracada_cartao
+SELECT
+  'TOP' ds_origem,
+  format_date('%Y-%m', dt_card_usage) ds_ano_mes_uso, --month_usage,
+  format_date('%Y-%m', dt_emission) ds_ano_mes_emissao, -- month_emission,
+  usage.nr_card AS nr_cartao,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash,
+  dt_card_usage AS dt_uso,
+  cd_application cd_aplicacao,
+  ds_product ds_aplicacao_origem, --ds_produto,
+  coalesce(app.ds_aplicacao,ds_product)  ds_aplicacao, --ds_produto,
+  CASE
+    WHEN ds_product LIKE 'COM%' THEN 'COMUM'
+    WHEN ds_product LIKE 'ESC%' THEN 'ESCOLAR'
+    WHEN ds_product LIKE 'SEN%' THEN 'SENIOR'
+    WHEN ds_product = 'V.T' THEN 'VT'
+    ELSE ds_product
+  END ds_grupo_aplicacao , --ds_grupo_produto,
+  CASE
+      WHEN emss.cd_card_design = '7'  THEN 'PURO TRANSPORTE'
+      WHEN emss.cd_card_design = '17' THEN 'HÍBRIDO'
+      WHEN emss.cd_card_design = '01' THEN 'OPERACIONAL'
+      WHEN emss.cd_card_design = '02' THEN 'PURO TRANSPORTE'
+      ELSE 'TESTE'
+  END AS ds_tipo_cartao_simplificado,
+  ds_modal,
+  fl_hot_list fl_hotlist,
+ 
+  -- [ADD]
+  usage.cd_hot_list_reason cd_motivo_hotlist,   -- [ADD]
+  coalesce(emss.ds_cancel_reason,'NAO CANCELADO') ds_motivo_hotlist, --ds_hot_list_reason,     -- [ADD]
+ 
+  cd_card_usage_type as cd_tipo_uso_cartao,
+  COUNT(cd_card_usage_internal) AS qt_uso,
+  SUM(vl_fare) vl_uso,
+  CURRENT_TIMESTAMP() ts_processamento,
+  SESSION_USER() ds_usuario_processamento,
+  usage.cd_system_source ds_origem_extracao
+FROM
+  prd-autopass-bi-001.itg.vw_itg_trs_top001_card_usage_gate usage
+  LEFT JOIN prd-autopass-bi-001.itg.vw_itg_trs_tmb001_card_emission emss
+    ON REGEXP_EXTRACT(usage.nr_card, r'^(.*)-') = REGEXP_EXTRACT(emss.nr_card, r'^(.*)-')
+  LEFT JOIN ${ref("tb_his_mrd_aut001_depara_aplicacao")} app  
+  --prd-autopass-ed-001.his.tb_his_mrd_aut001_depara_aplicacao app
+    ON app.cd_emissor = '14'
+    and app.cd_aplicacao = usage.cd_application
+WHERE
+  dt_card_usage >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 4 MONTH)
+ 
+GROUP BY all
+ 
+UNION ALL
+ 
+SELECT
+  'BOM' origem,
+  format_date('%Y-%m', dt_card_usage) month_usage,
+  NULL month_emission,
+  usage.nr_card AS nr_cartao,
+  SHA256(nr_registered_number_cpf) nr_cpf_hash,
+  dt_card_usage AS dt_uso,
+  cd_application ds_aplicacao,
+  ds_product ds_aplicacao_origem, --ds_produto,
+  coalesce(app.ds_aplicacao,ds_product)  ds_aplicacao, --ds_produto, 
+  CASE
+    WHEN ds_product LIKE 'COM%' THEN 'COMUM'
+    WHEN ds_product LIKE 'ESC%' THEN 'ESCOLAR'
+    WHEN ds_product LIKE 'SEN%' THEN 'SENIOR'
+    WHEN ds_product = 'V.T' THEN 'VT'
+    ELSE ds_product
+  END ds_grupo_produto,
+  CASE
+      WHEN emss.cd_card_design = '7'  THEN 'PURO TRANSPORTE'
+      WHEN emss.cd_card_design = '17' THEN 'HÍBRIDO'
+      WHEN emss.cd_card_design = '01' THEN 'OPERACIONAL'
+      WHEN emss.cd_card_design = '02' THEN 'PURO TRANSPORTE'
+      ELSE 'TESTE'
+  END AS ds_tipo_cartao_simplificado,
+  ds_modal,
+  fl_hot_list,
+ 
+  -- [ADD]
+  usage.cd_hot_list_reason,   -- [ADD]
+  coalesce(hlr.ds_hot_list_reason,'NAO CANCELADO') ds_hot_list_reason,     -- [ADD]
+ 
+  cd_card_usage_type as cd_tipo_uso_cartao,
+  COUNT(cd_card_usage_internal) AS qt_uso,
+  SUM(vl_fare) vl_uso,
+  CURRENT_TIMESTAMP() ts_processamento,
+  SESSION_USER() ds_usuario_processamento,
+  usage.cd_system_source ds_origem_extracao
+FROM
+  prd-autopass-bi-001.itg.vw_itg_trs_bom001_card_usage_gate usage
+  LEFT JOIN prd-autopass-bi-001.itg.tb_itg_trs_bom001_card_emission emss
+    ON usage.nr_card = emss.nr_card
+ 
+  -- [ADD] código → descrição
+  LEFT JOIN (
+    SELECT
+      cd_hot_list_reason,
+      ds_hot_list_reason
+    FROM prd-autopass-bi-001.his.tb_his_mrd_bom001_hot_list_reason
+    QUALIFY ROW_NUMBER() OVER (
+      PARTITION BY cd_hot_list_reason
+      ORDER BY dt_registration DESC
+    ) = 1
+  ) hlr
+    ON usage.cd_hot_list_reason = hlr.cd_hot_list_reason
+  -- [ADD]
+  LEFT JOIN ${ref("tb_his_mrd_aut001_depara_aplicacao")} app 
+  --prd-autopass-ed-001.his.tb_his_mrd_aut001_depara_aplicacao app
+    ON app.cd_emissor = '31'
+    and app.cd_aplicacao = usage.cd_application
+ 
+WHERE
+  dt_card_usage >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 4 MONTH)
+ 
+GROUP BY ALL
