@@ -1,0 +1,50 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_usr_user",
+  tags: ["commercial"],
+
+  
+}
+
+SELECT
+  id                                            AS id,
+  name                                          AS name,
+  socialName                                    AS socialName,
+  SAFE_CAST(birthdate AS DATE)                  AS birthdate,
+  gender                                        AS gender,
+  motherName                                    AS motherName,
+  fatherName                                    AS fatherName,
+  mailAddress                                   AS mailAddress,
+  usrMainDocumentId                             AS usrMainDocumentId,
+  usrMainPhoneId                                AS usrMainPhoneId,
+  usrMainAddressId                              AS usrMainAddressId,
+  isActive                                      AS isActive,
+  blameUser                                     AS blameUser,
+  SAFE_CAST(createdAt AS TIMESTAMP)             AS createdAt,
+  SAFE_CAST(updatedAt AS TIMESTAMP)             AS updatedAt,
+  `hash`,                                         
+  usrMainPhotoId                                AS usrMainPhotoId,
+  aggregatedData                                AS aggregatedData,
+  isOperator                                    AS isOperator,
+  externalId                                    AS externalId,
+  legacyId                                      AS legacyId,
+  filiation1                                    AS filiation1,
+  filiation2                                    AS filiation2,
+  isLocked                                      AS isLocked,
+  SAFE_CAST(statusCheckDate AS TIMESTAMP)       AS statusCheckDate,
+  usrStatusCode                                 AS usrStatusCode,
+  usrMainCommentId                              AS usrMainCommentId,
+  paymentSecret                                 AS paymentSecret,
+  nationality                                   AS nationality,
+  maritalStatus                                 AS maritalStatus,
+  SAFE_CAST(familyIncome AS NUMERIC)            AS familyIncome,
+  SAFE_CAST(personalIncome AS NUMERIC)          AS personalIncome,
+  responsible                                   AS responsible,
+
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_usr_user")}
+

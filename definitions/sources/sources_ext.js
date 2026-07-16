@@ -68,7 +68,8 @@ const tables = [
   "tb_ext_trs_tmb001_com_order_mt",
   "tb_ext_trs_tpd001_incident_snapshots",
   "tb_ext_trs_tmb001_oc_payment",
-  "tb_ext_trs_tmb001_oc_purchase"
+  "tb_ext_trs_tmb001_oc_purchase",
+  "tb_ext_mrd_tmb001_usr_user"
 
 ];
 
