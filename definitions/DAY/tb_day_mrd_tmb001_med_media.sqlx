@@ -1,0 +1,47 @@
+config {
+  type: "table",
+  schema: "day",
+  name: "tb_day_mrd_tmb001_med_media",
+  tags: ["commercial"],
+  
+}
+
+SELECT
+  id                                              AS id,
+  SAFE_CAST(sequence AS NUMERIC)                  AS sequence,
+  checkDig                                        AS checkDig,
+  formatedLogical                                 AS formatedLogical,
+  isProcessed                                     AS isProcessed,
+  csn                                              AS csn,
+  isCsnExtended                                   AS isCsnExtended,
+  SAFE_CAST(sizeInKB AS NUMERIC)                  AS sizeInKB,
+  tagType                                         AS tagType,
+  medMediaTypeId                                  AS medMediaTypeId,
+  blameUser                                       AS blameUser,
+  SAFE_CAST(createdAt AS TIMESTAMP)               AS createdAt,
+  SAFE_CAST(updatedAt AS TIMESTAMP)               AS updatedAt,
+  isActive                                        AS isActive,
+  isHotlisted                                     AS isHotlisted,
+  SAFE_CAST(recordDate AS TIMESTAMP)              AS recordDate,
+  usrUserHash                                     AS usrUserHash,
+  usrUserId                                       AS usrUserId,
+  usrOrganizationId                               AS usrOrganizationId,
+  SAFE_CAST(reissueSequence AS NUMERIC)           AS reissueSequence,
+  toIssuerCode                                    AS toIssuerCode,
+  activePersoOrderId                              AS activePersoOrderId,
+  usrTypeIds                                      AS usrTypeIds,
+  medMediaReissueFromId                           AS medMediaReissueFromId,
+  externalId                                      AS externalId,
+  toSysCode                                       AS toSysCode,
+  bss_id                                          AS bss_id,
+  medMediaTemplateId                              AS medMediaTemplateId,
+  paymentTransactionId                            AS paymentTransactionId,
+  SAFE_CAST(receiveddate_tz AS TIMESTAMP)         AS receiveddate_tz,
+  receivedby                                      AS receivedby,
+  mediadf                                         AS mediadf,
+
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_med_media")}
