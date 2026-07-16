@@ -1,0 +1,34 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_pay_transaction",
+    tags: ["commercial"],
+    description: "Tabela app_order_mt tipada — IDs sem sufixo .0, datas convertidas para America/Sao_Paulo"
+}
+
+SELECT
+    REGEXP_REPLACE(ptr_id,               r'\.0$', '') AS ptr_id,
+    SAFE_CAST(ptr_partitiondate AS DATE) AS ptr_partitiondate,
+    REGEXP_REPLACE(ppj_id,               r'\.0$', '') AS ppj_id,
+    REGEXP_REPLACE(pprv_id,              r'\.0$', '') AS pprv_id,
+    REGEXP_REPLACE(ppac_id,              r'\.0$', '') AS ppac_id,
+    REGEXP_REPLACE(pch_id,               r'\.0$', '') AS pch_id,
+    REGEXP_REPLACE(pusr_id,              r'\.0$', '') AS pusr_id,
+    ptr_nsu,
+    SAFE_CAST(ptr_value AS NUMERIC) AS ptr_value,
+    ptr_wallet,
+    DATETIME(CAST(ptr_transactiondate AS TIMESTAMP), 'America/Sao_Paulo') AS ptr_transactiondate,
+    SAFE_CAST(ptr_duedate AS DATE) AS ptr_duedate,
+    ptr_signature,
+    ptr_status,
+    DATETIME(CAST(ptr_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS ptr_createdat,
+    DATETIME(CAST(ptr_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS ptr_updatedat,
+    ptr_blameuser,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+
+FROM
+    ${ref("tb_ext_trs_tmb001_pay_transaction")}
