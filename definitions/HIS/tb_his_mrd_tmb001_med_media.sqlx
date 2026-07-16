@@ -1,0 +1,24 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_med_media",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(createdAt)",
+  },
+  
+
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_mrd_tmb001_med_media")}
+
