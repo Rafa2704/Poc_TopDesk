@@ -18,7 +18,8 @@ config {
 
 SELECT 
     *
- FROM prd-autopass-ed-001.his.tb_his_mrd_tmb001_med_media
+ FROM 
+ --prd-autopass-ed-001.his.tb_his_mrd_tmb001_med_media
  
--- ${ref("tb_day_mrd_tmb001_medmedia")}
+ ${ref("tb_day_mrd_tmb001_medmedia")}
 
