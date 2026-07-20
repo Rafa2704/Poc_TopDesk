@@ -1,7 +1,7 @@
 config {
   type: "incremental",
   schema: "his",
-  name: "tb_his_mrd_tmb001_usr_user",
+  name: "tb_his_mrd_tmb001_usruser",
   tags: ["commercial"],
   description: "Tabela dimensão",
   uniqueKey: ["id"],
@@ -17,4 +17,4 @@ SELECT
     *
  FROM 
  
- ${ref("tb_day_mrd_tmb001_usr_user")}
+ ${ref("tb_day_mrd_tmb001_usruser")}
