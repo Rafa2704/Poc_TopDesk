@@ -16,5 +16,5 @@ config {
 SELECT 
     *
  FROM 
- 
- ${ref("tb_day_mrd_tmb001_usruser")}
+ prd-autopass-ed-001.his.tb_his_mrd_tmb001_usr_user
+ --${ref("tb_day_mrd_tmb001_usruser")}
