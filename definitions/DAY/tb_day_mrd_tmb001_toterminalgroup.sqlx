@@ -1,0 +1,22 @@
+-- tb_day_mrd_tmb001_toterminalgroup
+config {
+  type: "table",
+  schema: "day",
+  tags: ["commercial"]
+}
+
+SELECT
+  REGEXP_REPLACE(id, r'\.0$', '') AS id,
+  description,
+  facilityType,
+  REGEXP_REPLACE(parentId, r'\.0$', '') AS parentId,
+  isActive,
+  blameUser,
+  SAFE_CAST(createdAt AS TIMESTAMP) AS createdAt ,
+  SAFE_CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+  remoteOperable,
+  REGEXP_REPLACE(toOperationScheduleId, r'\.0$', '') AS toOperationScheduleId,
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_tmb001_toterminalgroup")}
