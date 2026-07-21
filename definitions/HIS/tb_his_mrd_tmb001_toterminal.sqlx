@@ -1,0 +1,20 @@
+config {
+  type: "table",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_toterminal",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+
+  
+
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_mrd_tmb001_toterminal")}

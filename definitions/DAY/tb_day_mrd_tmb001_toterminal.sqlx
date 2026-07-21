@@ -1,0 +1,26 @@
+-- tb_day_mrd_tmb001_toterminal
+config {
+  type: "table",
+  schema: "day",
+  tags: ["commercial"]
+}
+
+SELECT
+  REGEXP_REPLACE(code, r'\.0$', '') AS code,
+  REGEXP_REPLACE(externalId, r'\.0$', '') AS externalId,
+  REGEXP_REPLACE(toTransportOperatorId, r'\.0$', '') AS toTransportOperatorId,
+  model,
+  REGEXP_REPLACE(toTerminalGroupId, r'\.0$', '') AS toTerminalGroupId,
+  isActive,
+  blameUser,
+  SAFE_CAST(createdAt AS TIMESTAMP) AS createdAt ,
+  SAFE_CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+  thingName,
+  description,
+  isHotlist,
+  REGEXP_REPLACE(toOperationScheduleId, r'\.0$', '') AS toOperationScheduleId,
+  password,
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_tmb001_toterminal")}

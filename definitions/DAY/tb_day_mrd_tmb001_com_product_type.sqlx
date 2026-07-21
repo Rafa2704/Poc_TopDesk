@@ -1,0 +1,14 @@
+-- tb_day_mrd_tmb001_com_product_type
+config {
+  type: "table",
+  schema: "day",
+  tags: ["commercial"]
+}
+
+SELECT
+  REGEXP_REPLACE(cpt_id, r'\.0$', '') AS cpt_id,
+  cpt_desc,
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM ${ref("tb_ext_mrd_tmb001_com_product_type")}

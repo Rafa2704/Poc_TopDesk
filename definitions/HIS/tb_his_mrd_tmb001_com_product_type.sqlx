@@ -1,0 +1,20 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_com_product_type",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+  uniqueKey: ["cpt_id"],
+  
+
+}
+
+
+
+
+
+SELECT 
+    *
+ FROM 
+ 
+ ${ref("tb_day_mrd_tmb001_com_product_type")}
