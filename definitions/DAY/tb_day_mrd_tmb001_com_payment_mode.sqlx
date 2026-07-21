@@ -1,0 +1,24 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_com_payment_mode",
+    tags: ["commercial"],
+    description: "Tabela com_payment_mode tipada — modos de pagamento"
+}
+
+SELECT
+    REGEXP_REPLACE(cpm_id,  r'\.0$', '') AS cpm_id,
+    cpm_desc,
+    cpm_isactive,
+    cpm_allow_voucher,
+    DATETIME(CAST(cpm_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS cpm_createdat,
+    DATETIME(CAST(cpm_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS cpm_updatedat,
+    cpm_createdby,
+    cpm_updatedby,
+    REGEXP_REPLACE(cpt_id, r'\.0$', '') AS cpt_id,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_com_payment_mode")}

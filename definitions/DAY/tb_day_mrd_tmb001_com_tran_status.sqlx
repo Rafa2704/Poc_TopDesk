@@ -1,0 +1,18 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_com_tran_status",
+    tags: ["commercial"],
+    description: "Tabela com_tran_status tipada — status das transações"
+}
+
+SELECT
+    cts_id,
+    cts_shortdesc,
+    cts_longdesc,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_com_tran_status")}

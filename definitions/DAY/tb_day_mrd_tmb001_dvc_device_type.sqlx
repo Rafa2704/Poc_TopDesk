@@ -1,0 +1,18 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_dvc_device_type",
+    tags: ["device"],
+    description: "Tabela dvc_device_type tipada — tipos de dispositivo"
+}
+
+SELECT
+    REGEXP_REPLACE(dt_id,          r'\.0$', '') AS dt_id,
+    dt_desc,
+    REGEXP_REPLACE(dvc_firmwareid, r'\.0$', '') AS dvc_firmwareid,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_dvc_device_type")}

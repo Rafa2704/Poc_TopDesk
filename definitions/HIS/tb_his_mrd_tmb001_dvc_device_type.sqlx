@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_dvc_device_type",
+  tags: ["commercial"],
+  description: "Tabela dvc_device_type tipada e persistida via Merge Incremental",
+  uniqueKey: ["dt_id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_dvc_device_type")}
