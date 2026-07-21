@@ -1,9 +1,11 @@
 config {
-  type: "table",
+  type: "incremental",
   schema: "his",
   name: "tb_his_mrd_tmb001_toterminal",
   tags: ["commercial"],
   description: "Tabela dimensão",
+  uniqueKey: ["id"],
+
 
   
 
@@ -14,6 +16,7 @@ config {
 
 
 SELECT 
+CONCAT(CAST(code AS STRING), '-', CAST(toTransportOperatorId AS STRING)) AS id,
     *
  FROM 
  
