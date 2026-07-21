@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_com_service",
+  tags: ["commercial"],
+  description: "Tabela com_service tipada e persistida via Merge Incremental",
+  uniqueKey: ["cs_id"]
+}
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_com_service")}

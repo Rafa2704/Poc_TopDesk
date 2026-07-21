@@ -1,0 +1,21 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_com_tran_type",
+    tags: ["commercial"],
+    description: "Tabela com_tran_type tipada — tipos de transação"
+}
+
+SELECT
+    REGEXP_REPLACE(ctt_id, r'\.0$', '') AS ctt_id,
+    ctt_desc,
+    CAST(LEFT(ctt_createdat, 8) AS TIME) AS ctt_createdat,
+    CAST(LEFT(ctt_updatedat, 8) AS TIME) AS ctt_updatedat,
+    ctt_createdby,
+    ctt_updatedby,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_com_tran_type")}

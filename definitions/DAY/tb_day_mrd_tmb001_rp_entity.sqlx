@@ -1,0 +1,25 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_rp_entity",
+    tags: ["commercial"],
+    description: "Tabela rp_entity tipada — entidades de relatório (estações e linhas)"
+}
+
+SELECT
+    REGEXP_REPLACE(rpe_id,         r'\.0$', '') AS rpe_id,
+    REGEXP_REPLACE(rpet_id,        r'\.0$', '') AS rpet_id,
+    REGEXP_REPLACE(rpe_parentid,   r'\.0$', '') AS rpe_parentid,
+    rpe_description,
+    REGEXP_REPLACE(rpe_externalid, r'\.0$', '') AS rpe_externalid,
+    rpe_isactive,
+    DATETIME(CAST(rpe_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS rpe_createdat,
+    rpe_createdby,
+    DATETIME(CAST(rpe_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS rpe_updatedat,
+    rpe_updatedby,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_rp_entity")}

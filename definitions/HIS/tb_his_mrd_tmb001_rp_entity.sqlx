@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_rp_entity",
+  tags: ["commercial"],
+  description: "Tabela rp_entity tipada e persistida via Merge Incremental",
+  uniqueKey: ["rpe_id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_rp_entity")}

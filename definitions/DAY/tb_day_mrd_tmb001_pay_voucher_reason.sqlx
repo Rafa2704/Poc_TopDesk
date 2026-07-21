@@ -1,0 +1,22 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_pay_voucher_reason",
+    tags: ["commercial"],
+    description: "Tabela pay_voucher_reason tipada — razões de emissão de voucher"
+}
+
+SELECT
+    REGEXP_REPLACE(pvr_id, r'\.0$', '') AS pvr_id,
+    pvr_desc,
+    DATETIME(CAST(pvr_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS pvr_createdat,
+    DATETIME(CAST(pvr_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS pvr_updatedat,
+    pvr_createdby,
+    pvr_updatedby,
+    pvr_status,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_pay_voucher_reason")}

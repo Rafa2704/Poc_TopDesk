@@ -74,7 +74,15 @@ const tables = [
   "tb_ext_trs_tmb001_pay_transaction",
   "tb_ext_mrd_tmb001_toterminalgroup",
   "tb_ext_mrd_tmb001_toterminal",
-  "tb_ext_mrd_tmb001_com_product_type"
+  "tb_ext_mrd_tmb001_com_product_type",
+  "tb_ext_mrd_tmb001_com_payment_mode",
+  "tb_ext_trs_tmb001_com_service",
+  "tb_ext_mrd_tmb001_com_tran_status",
+  "tb_ext_mrd_tmb001_com_tran_type",
+  "tb_ext_mrd_tmb001_dvc_device_type",
+  "tb_ext_mrd_tmb001_pay_voucher_reason",
+  "tb_ext_mrd_tmb001_pay_voucher_type",
+  "tb_ext_mrd_tmb001_rp_entity"
 
 ];
 

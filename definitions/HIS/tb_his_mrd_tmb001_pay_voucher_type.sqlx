@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_pay_voucher_type",
+  tags: ["commercial"],
+  description: "Tabela pay_voucher_type tipada e persistida via Merge Incremental",
+  uniqueKey: ["pvt_id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_pay_voucher_type")}

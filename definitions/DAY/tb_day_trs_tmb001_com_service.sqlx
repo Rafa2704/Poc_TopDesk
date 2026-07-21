@@ -1,0 +1,25 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_com_service",
+    tags: ["commercial"],
+    description: "Tabela com_service tipada — sessões de serviço por dispositivo"
+}
+
+SELECT
+    REGEXP_REPLACE(cs_id,  r'\.0$', '') AS cs_id,
+    REGEXP_REPLACE(cm_id,  r'\.0$', '') AS cm_id,
+    REGEXP_REPLACE(dv_id,  r'\.0$', '') AS dv_id,
+    DATETIME(CAST(cs_dtopen    AS TIMESTAMP), 'America/Sao_Paulo') AS cs_dtopen,
+    DATETIME(CAST(cs_dtclose   AS TIMESTAMP), 'America/Sao_Paulo') AS cs_dtclose,
+    DATETIME(CAST(cs_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS cs_createdat,
+    DATETIME(CAST(cs_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS cs_updatedat,
+    cs_createdby,
+    cs_updatedby,
+    cs_sysuser_email,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_com_service")}

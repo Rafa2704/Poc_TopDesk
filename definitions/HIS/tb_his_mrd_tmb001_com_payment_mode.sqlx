@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_com_payment_mode",
+  tags: ["commercial"],
+  description: "Tabela com_payment_mode tipada e persistida via Merge Incremental",
+  uniqueKey: ["cpm_id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_com_payment_mode")}
