@@ -1,0 +1,28 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_com_merchant",
+    tags: ["commercial"],
+    description: "Tabela com_merchant tipada — credenciados"
+}
+
+
+
+SELECT
+    REGEXP_REPLACE(cm_id,              r'\.0$', '') AS cm_id,
+    REGEXP_REPLACE(cmt_id,             r'\.0$', '') AS cmt_id,
+    cm_haslimits,
+    cm_desc,
+    REGEXP_REPLACE(cm_organization_id, r'\.0$', '') AS cm_organization_id,
+    REGEXP_REPLACE(cm_client_id,       r'\.0$', '') AS cm_client_id,
+    cm_createdby,
+    cm_updatedby,
+    DATETIME(CAST(cm_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS cm_createdat,
+    DATETIME(CAST(cm_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS cm_updatedat,
+    cm_chkpending,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_com_merchant")}
