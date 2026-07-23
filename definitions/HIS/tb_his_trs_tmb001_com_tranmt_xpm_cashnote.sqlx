@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_com_tranmt_xpm_cashnote",
+  tags: ["commercial"],
+  description: "Tabela com_tranmt_xpm_cashnote tipada e persistida via Merge Incremental",
+  uniqueKey: ["ctmxpmc_id"],
+  bigquery: {
+    partitionBy: "DATE(ctmxpmc_createdat)",
+    clusterBy: ["ctmxpmc_id"]
+  }
+}
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_com_tranmt_xpm_cashnote")}

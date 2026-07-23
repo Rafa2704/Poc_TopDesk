@@ -1,0 +1,26 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_com_tranmt_xpm_cashnote",
+    tags: ["commercial"],
+    description: "Tabela com_tranmt_xpm_cashnote tipada — notas de cédula por transação"
+}
+
+
+SELECT
+    REGEXP_REPLACE(ctmxpmc_id,          r'\.0$', '') AS ctmxpmc_id,
+    REGEXP_REPLACE(ctmxcpm_id,          r'\.0$', '') AS ctmxcpm_id,
+    CAST(ctmxpmc_denomination AS NUMERIC)            AS ctmxpmc_denomination,
+    REGEXP_REPLACE(ctmxpmc_quantity,    r'\.0$', '') AS ctmxpmc_quantity,
+    CAST(ctmxpmc_total AS NUMERIC)                   AS ctmxpmc_total,
+    DATETIME(CAST(ctmxpmc_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS ctmxpmc_createdat,
+    DATETIME(CAST(ctmxpmc_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS ctmxpmc_updatedat,
+    ctmxpmc_createdby,
+    ctmxpmc_updatedby,
+    REGEXP_REPLACE(ccf_id,              r'\.0$', '') AS ccf_id,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_com_tranmt_xpm_cashnote")}
