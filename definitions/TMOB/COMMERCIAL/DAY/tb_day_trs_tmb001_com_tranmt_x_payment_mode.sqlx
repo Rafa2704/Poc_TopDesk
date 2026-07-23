@@ -7,18 +7,18 @@ config {
 }
 
 SELECT
-    ctmxcpm_id,
-    ctm_id,
-    cpm_id,
-    ptr_id,
+    REGEXP_REPLACE(ctmxcpm_id,  r'\.0$', '') AS ctmxcpm_id,
+    REGEXP_REPLACE(ctm_id,      r'\.0$', '') AS ctm_id,
+    REGEXP_REPLACE(cpm_id,      r'\.0$', '') AS cpm_id,
+    REGEXP_REPLACE(ptr_id,      r'\.0$', '') AS ptr_id,
     ctmxcpm_status,
     DATETIME(CAST(ctmxcpm_dtpayment AS TIMESTAMP), 'America/Sao_Paulo') AS ctmxcpm_dtpayment,
-    SAFE_CAST(ctmxcpm_dtcredit AS DATE)   AS ctmxcpm_dtcredit,
+    SAFE_CAST(ctmxcpm_dtcredit AS DATE)                                  AS ctmxcpm_dtcredit,
     DATETIME(CAST(ctmxcpm_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS ctmxcpm_createdat,
     DATETIME(CAST(ctmxcpm_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS ctmxcpm_updatedat,
     ctmxcpm_createdby,
     ctmxcpm_updatedby,
-    SAFE_CAST(ctmxcpm_value   AS NUMERIC) AS ctmxcpm_value,
+    SAFE_CAST(ctmxcpm_value AS NUMERIC)                                  AS ctmxcpm_value,
     ctmxcpm_nsu_acquirer,
     ctmxcpm_aut_acquirer,
     ctmxcpm_acquirer_name,
@@ -26,10 +26,9 @@ SELECT
     ctmxcpm_pix_endtoendid,
     ctmxcpm_brand,
     ctmxcpm_conciliation_status,
+
     "TMB001" AS origem,
     CURRENT_TIMESTAMP() AS dt_processamento,
     SESSION_USER() AS usuario_processamento
 
-
-FROM
-    ${ref("tb_ext_trs_tmb001_com_tranmt_x_payment_mode")}
+FROM ${ref("tb_ext_trs_tmb001_com_tranmt_x_payment_mode")}
