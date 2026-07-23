@@ -13,4 +13,6 @@ config {
 
 SELECT 
     *
- FROM ${ref("tb_day_trs_tmb001_com_tranmt_x_payment_mode")}
+ FROM 
+ --`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode`
+  ${ref("tb_day_trs_tmb001_com_tranmt_x_payment_mode")}

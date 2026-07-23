@@ -25,6 +25,7 @@ SELECT
     ctmxcpm_pix_txid,
     ctmxcpm_pix_endtoendid,
     ctmxcpm_brand,
+    ctmxcpm_conciliation_status,
     "TMB001" AS origem,
     CURRENT_TIMESTAMP() AS dt_processamento,
     SESSION_USER() AS usuario_processamento
