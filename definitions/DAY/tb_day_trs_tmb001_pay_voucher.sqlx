@@ -1,0 +1,30 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_pay_voucher",
+    tags: ["commercial"],
+    description: "Tabela pay_voucher tipada — vouchers gerados e utilizados"
+}
+
+SELECT
+    REGEXP_REPLACE(pvc_id,       r'\.0$', '') AS pvc_id,
+    REGEXP_REPLACE(pvt_id,       r'\.0$', '') AS pvt_id,
+    REGEXP_REPLACE(pvr_id,       r'\.0$', '') AS pvr_id,
+    REGEXP_REPLACE(pvc_rnd,      r'\.0$', '') AS pvc_rnd,
+    CAST(pvc_value AS NUMERIC)               AS pvc_value,
+    REGEXP_REPLACE(ctm_id_orig,  r'\.0$', '') AS ctm_id_orig,
+    REGEXP_REPLACE(ctm_id_used,  r'\.0$', '') AS ctm_id_used,
+    DATETIME(CAST(pvc_expire_date AS TIMESTAMP), 'America/Sao_Paulo') AS pvc_expire_date,
+    pvc_comment,
+    REGEXP_REPLACE(pvc_media_type, r'\.0$', '') AS pvc_media_type,
+    REGEXP_REPLACE(pvc_media_id,   r'\.0$', '') AS pvc_media_id,
+    DATETIME(CAST(pvc_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS pvc_createdat,
+    pvc_createdby,
+    DATETIME(CAST(pvc_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS pvc_updatedat,
+    pvc_updatedby,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_pay_voucher")}
