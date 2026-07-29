@@ -1,0 +1,116 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp",
+    tags: ["treport"],
+    description: "Relatório R0115 — Vendas dinheiro canal ATM sem Bilhete Único (BU). Versão atualizada do R0050 excluindo cp.cpt_id = 5. Equivalente ao relatório legado R0115 do Postgres.",
+    bigquery: {
+        partitionBy: "dt_transaction"
+    }
+}
+
+WITH notas_agregadas AS (
+    SELECT
+        ctmxcpm_id,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 2   THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_2,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 5   THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_5,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 10  THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_10,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 20  THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_20,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 50  THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_50,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 100 THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_100,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 200 THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_200
+    FROM `dev-autopass-bi-001.his.tb_his_trs_tmb001_com_tranmt_xpm_cashnote`
+    GROUP BY ctmxcpm_id
+),
+R0115 AS (
+    SELECT
+        cm.cm_desc                                                                          AS cm_desc,
+        ttg3.description                                                                    AS empresa,
+        ttg2.description                                                                    AS linha,
+        ttg.description                                                                     AS estacao,
+        dd.tu_code                                                                          AS cod_atm,
+        cs.cs_dtopen                                                                        AS abertura_servico,
+        cs.cs_dtclose                                                                       AS fechamento_servico,
+        ct.ctm_datetime_tz                                                                  AS data_hora_trans,
+        DATE(ct.ctm_datetime_tz)                                                            AS data_trans,
+        TIME(ct.ctm_datetime_tz)                                                            AS hora_trans,
+        CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END                                AS tipo_produto,
+        cp.cp_desc                                                                          AS produto,
+        mtp.code                                                                            AS aplicacao,
+        ct.ctm_id                                                                           AS idtrn,
+        ct.ctm_datetime_tz                                                                  AS ctm_datetime_tz,
+        CASE WHEN pv.pvc_id IS NULL THEN 'Nao' ELSE 'Sim' END                             AS voucher_gerado,
+        pv.pvc_rnd                                                                          AS pvc_rnd,
+        ct.ctm_value                                                                        AS ctm_value,
+        ct.ctm_receivedvalue                                                                AS ctm_receivedvalue,
+        na.nota_2,
+        na.nota_5,
+        na.nota_10,
+        na.nota_20,
+        na.nota_50,
+        na.nota_100,
+        na.nota_200,
+        ct.ctm_externalid                                                                   AS ctm_externalid,
+        ct.ctm_legacy_id                                                                    AS ctm_legacy_id,
+        cts.cts_shortdesc                                                                   AS status
+    FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt`                ct
+    JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant`              cm    ON cm.cm_id                  = ct.cm_id
+    JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_service`               cs    ON cs.cs_id                  = ct.cs_id
+    JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode` ctxpm ON ctxpm.ctm_id              = ct.ctm_id
+                                                                                      AND ctxpm.cpm_id              = '1'
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt`           ctd   ON ctd.ctm_id                = ct.ctm_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status`      cts   ON cts.cts_id                = ct.ctm_status
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product`          cp    ON cp.cp_id                  = ctd.cp_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product_type`     cpt   ON cpt.cpt_id                = cp.cpt_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct`    mtp   ON mtp.description           = cp.cp_desc
+    LEFT JOIN notas_agregadas                                                   na    ON na.ctmxcpm_id             = ctxpm.ctmxcpm_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device`           dd    ON dd.dv_id                  = ct.dv_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type`      ddt   ON ddt.dt_id                 = dd.dt_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_pay_voucher`          pv    ON pv.ctm_id_orig            = ct.ctm_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminal`           tt    ON tt.code                   = dd.tu_code
+                                                                                      AND tt.toTransportOperatorId = cm.cm_organization_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg   ON ttg.id                    = tt.toTerminalGroupId
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg2  ON ttg2.id                   = ttg.parentId
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg3  ON ttg3.id                   = ttg2.parentId
+    WHERE ddt.dt_id = '7'
+      AND (cp.cpt_id IS NULL OR cp.cpt_id <> '5')
+
+)
+
+SELECT 
+  idtrn cd_transaction,
+  cod_atm cd_pos_device,
+  DATE(abertura_servico) dt_open_service,
+  TIME(abertura_servico) tm_open_service, 
+  fechamento_servico dt_close_service,
+  data_hora_trans dh_transaction,
+  data_trans dt_transaction,
+  hora_trans tm_transaction,
+  upper(Estacao) nm_line,
+  upper(Linha) nm_station,
+  upper(Empresa) nm_company,
+  upper(tipo_produto) ds_product_type,
+  upper(produto) ds_product,
+  aplicacao cd_product,
+  ctm_externalid cd_external,
+  ctm_legacy_id cd_legacy,
+  upper(Status) ds_status,
+ -- upper(Status_Desc) ds_status_complete,
+  upper(voucher_gerado) fl_voucher_gerado,
+  --voucher_number nr_voucher,
+  ctm_value vl_transaction,
+  ctm_receivedvalue vl_received,
+  nota_2 vl_bill_2,
+  nota_5 vl_bill_5,
+  nota_10 vl_bill_10,
+  nota_20 vl_bill_20,
+  nota_50 vl_bill_50,
+  nota_100  vl_bill_100,
+  nota_200  vl_bill_200,
+  CURRENT_TIMESTAMP() ts_processing,
+    'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    'TMB001' cd_system_source
+    FROM R0115
+    where data_trans >= '2025-01-01'

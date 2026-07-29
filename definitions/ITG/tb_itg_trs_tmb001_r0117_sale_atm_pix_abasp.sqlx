@@ -1,0 +1,85 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp",
+    tags: ["treport"],
+    description: "Relatório R0117 — Vendas ATM Abasp.",
+    bigquery: {
+        partitionBy: "dt_transaction"
+    }
+}
+
+WITH R0117 AS (
+SELECT 
+  dd.tu_code                                              AS cod_atm,
+  tl.description                                          AS estacao,
+  filg.description                                        AS linha,
+  op.op_desc                                              AS empresa,
+  ct.ctm_datetime_tz                                      AS data_hora_trans,
+  DATE(ct.ctm_datetime_tz)                                AS data_trans, --> dt_transaction
+  TIME(ct.ctm_datetime_tz)                                AS hora_trans, --> tm_transaction
+  ct.ctm_value                                            AS valor, --> vl_transaction
+  ct.ctm_receivedvalue                                    AS valor_recebido,
+  ctxpm.ctmxcpm_pix_txid                                  AS pix_txid, --> ds_pix_tx
+  ctxpm.ctmxcpm_pix_endtoendid                            AS pix_endtoendid, --> ds_pix_end_to_end
+  cp.cp_desc                                              AS produto ,--> ds_product
+  mtp.code                                                AS aplicacao, --> cd_product
+  ct.ctm_id                                               AS idtrn, --> cd_transaction
+  'tbd'                                                   AS pdv,
+  cts.cts_longdesc                                        AS Status, --> ds_status
+  CASE ctxpm.ctmxcpm_conciliation_status
+    WHEN 'C' THEN 'Conciliado'
+    WHEN 'D' THEN 'Divergência valor'
+    ELSE 'Não conciliado'
+  END                                                     AS conciliacao --> ds_conciliation
+FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt` ct
+INNER JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt` ctd 
+  ON ctd.ctm_id = ct.ctm_id
+INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product` cp 
+  ON cp.cp_id = ctd.cp_id
+INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status` cts 
+  ON ct.ctm_status = cts.cts_id
+LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct` mtp 
+  ON CAST(mtp.description AS STRING) = CAST(cp.cp_desc AS STRING)
+INNER JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode` ctxpm 
+  ON ctxpm.ctm_id = ct.ctm_id
+INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device` dd 
+  ON dd.dv_id = ct.dv_id
+INNER JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_operator` op 
+  ON op.op_id = dd.op_id
+LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toline` tl 
+  ON tl.id = dd.dv_line_id
+LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup` filg 
+  ON filg.id = tl.farIntegrationLineGroupId
+WHERE ct.ctm_status IN ('A', 'P', 'V') 
+  AND dd.dt_id = '7'
+  AND cp.cpt_id <> '5'
+  AND ctxpm.cpm_id = '5'
+  
+  AND DATE(ct.ctm_datetime_tz) >= '2025-01-01'
+)
+
+SELECT 
+  idtrn             cd_transaction,
+  cod_atm           cd_pos_device,
+  data_hora_trans   dh_transaction,
+  data_trans        dt_transaction,
+  hora_trans        tm_transaction,
+  upper(empresa)    nm_company,
+  upper(linha)      nm_line,
+  upper(estacao)    nm_station,
+  upper(produto)    ds_product,
+  aplicacao         cd_product,
+  upper(pdv)        nm_pdv,
+  pix_txid          ds_pix_tx,
+  pix_endtoendid    ds_pix_end_to_end,
+  upper(Status)            ds_status,
+  upper(Conciliacao)       ds_conciliation,
+  valor             vl_transaction,
+  valor_recebido    vl_received,
+  CURRENT_TIMESTAMP() ts_processing,
+    'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    'TMB001' cd_system_source
+FROM R0117
