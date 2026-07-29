@@ -255,13 +255,14 @@ SELECT
 FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp`
 WHERE ds_product <> 'QRCODE UNITARIO'
   AND dt_transaction >= '2026-05-01'
+  AND ds_status = 'ATIVO'
 GROUP BY ALL
 
 UNION ALL
 
 -- r0113 ATM Voucher
 SELECT
-    dt_transaction,
+    dt_usage,
  --   tm_transaction,
     ''                AS nm_company,
     'NA'              AS provider,
