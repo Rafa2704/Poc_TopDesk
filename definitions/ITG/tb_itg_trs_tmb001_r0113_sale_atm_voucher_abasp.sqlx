@@ -71,4 +71,4 @@ SELECT
     SESSION_USER() cd_created_by,
     'TMB001' cd_system_source
 FROM R0113
-where  data_criacao >= '2025-01-01'
+--where  data_criacao >= '2025-01-01'
