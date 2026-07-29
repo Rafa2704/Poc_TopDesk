@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_pay_pix",
+  tags: ["commercial"],
+  description: "Tabela pay_pix tipada e persistida via Merge Incremental",
+  uniqueKey: ["ppx_id"],
+  bigquery: {
+    partitionBy: "DATE(ppx_paymentdate)",
+    clusterBy: ["ptr_id"]
+  }
+}
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_pay_pix")}

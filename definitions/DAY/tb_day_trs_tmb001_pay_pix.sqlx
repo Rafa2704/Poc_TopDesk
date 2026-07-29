@@ -1,0 +1,34 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_pay_pix",
+    tags: ["commercial"],
+    description: "Tabela pay_pix tipada — datas convertidas para America/Sao_Paulo"
+}
+
+SELECT
+    REGEXP_REPLACE(ppx_id,    r'\.0$', '') AS ppx_id,
+    REGEXP_REPLACE(ptr_id,    r'\.0$', '') AS ptr_id,
+    ppx_description,
+    ppx_key,
+    ppx_transactionid,
+    ppx_qrcode,
+    DATETIME(CAST(ppx_date            AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_date,
+    ppx_status,
+    DATETIME(CAST(ppx_createdat       AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_createdat,
+    DATETIME(CAST(ppx_updatedat       AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_updatedat,
+    ppx_blameuser,
+    ppx_qrpayload,
+    DATETIME(CAST(ppx_duedate         AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_duedate,
+    ppx_endtoend,
+    DATETIME(CAST(ppx_paymentdate     AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_paymentdate,
+    ppx_sentnotification,
+    ppx_refundstatus,
+    DATETIME(CAST(ppx_refundrequestedat AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_refundrequestedat,
+    DATETIME(CAST(ppx_refundedat      AS TIMESTAMP), 'America/Sao_Paulo') AS ppx_refundedat,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_pay_pix")}
