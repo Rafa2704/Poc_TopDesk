@@ -1,0 +1,44 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmob001_venda_qrcode",
+    tags: ["commercial"],
+    description: "Tabela com o resultado da extração do relatorio R0097"
+}
+
+SELECT
+  SAFE_CAST(dt_transaction_br AS DATE) dt_transaction_br,
+  SAFE_CAST(tm_transaction_br AS TIME) tm_transaction_br,
+  SAFE_CAST(dt_transaction AS DATE) dt_transaction,
+  SAFE_CAST(tm_transaction AS TIME) tm_transaction,
+  cd_transaction,
+  cd_lote,
+  nr_nsu,
+  cd_qrcode_media,
+  ds_pos_device,
+  ds_serie,
+  nr_device,
+  cd_pos_device,
+  ds_device_type,
+  nr_session,
+  cd_company,
+  nm_company,
+  cd_line,
+  nm_line,
+  cd_station,
+  nm_station,
+  ds_sale_type,
+  cd_terminal,
+  ds_terminal,
+  cd_product,
+  ds_product,
+  cd_payment_mode,
+  ds_payment_mode,
+  SAFE_CAST(vl_transaction AS NUMERIC) vl_transaction,
+  ds_status_sale,
+  ds_operator,
+  "TMB001" AS origem,
+  CURRENT_TIMESTAMP() AS dt_processamento,
+  SESSION_USER() AS usuario_processamento
+FROM
+  dev-autopass-bi-001.ext.tb_ext_trs_tmob001_venda_qrcode

@@ -1,0 +1,105 @@
+config {
+    type: "table",
+    schema: "itg",
+    description: "",
+    tags: ["itg"],
+    bigquery: {
+        partitionBy: "dt_transaction",
+    }
+}
+  --R0107
+WITH R0107 AS (
+select 
+	cm.cm_desc 	as Credenciado           ,
+	rpe_station.rpe_description as Estacao ,
+	rpe_line.rpe_description	   as Linha	,
+	dd.tu_code 	as Termninal							,
+	ddt.dt_desc as Tipo_de_terminal								,
+	case when ctm.ctm_status = 'A' then 'Ativo' 
+		 when ctm.ctm_status = 'I' then 'Inativo' 
+		 when ctm.ctm_status = 'W' then 'Aguardando'
+	else ctm.ctm_status
+	end as Status_Transacao,
+   -- to_char(ctm.ctm_datetime_tz AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI:SS') Data Transação,
+   ctm.ctm_datetime_tz data_transacao,
+   -- to_char(ctm.ctm_confirm_datetime_tz AT TIME ZONE 'America/Sao_Paulo','DD/MM/YYYY HH24:MI:SS') Data Confirmação,
+   ctm.ctm_confirm_datetime_tz data_confirmacao,
+   -- replace(to_char(ctm.ctm_receivedvalue, 'FM999G999G990D00'::text), '.'::text, ','::text) 	as Valor Recebido	,
+   ctm.ctm_receivedvalue Valor_Recebido	,
+   ctm.ctm_value as Valor	,
+	cpm.cpm_desc 	as Tipo_de_Pgto						,
+	cp.cp_desc 	as Produto							,
+	ctd.ctm_receivedvalue 	as Qtd					,
+	case 
+		  when ctd.ctd_mediatype = '0'
+	   	  then 'QrCode Legado'
+	   	  when ctd.ctd_mediatype = '1'
+	   	  then mm.formatedLogical
+	   	  else ctd.ctd_mediaid
+	   end Media_Id							,
+		CASE
+            WHEN ctd.ctd_mediatype = '0' THEN 'QRCode' 
+            ELSE 'TOP' 
+        END as Tipo_midia,
+	   ctxpm.ctmxcpm_nsu_acquirer as NSU,
+	   ctxpm.ctmxcpm_aut_acquirer as Autorizacao
+  from prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt ctm
+ inner join prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd
+    on ctd.ctm_id 					= ctm.ctm_id
+ inner join prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant cm
+    on cm.cm_id   					= ctm.cm_id
+ inner join prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_type ctt
+    on ctt.ctt_id 					= ctm.ctt_id
+ inner join prd-autopass-ed-001.his.tb_his_trs_tmb001_com_service cs
+    on cs.cs_id   					= ctm.cs_id
+ inner join prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dd
+    on dd.dv_id 					= ctm.dv_id
+ inner join prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type ddt
+    on ddt.dt_id 					= dd.dt_id
+ inner join prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp
+    on cp.cp_id 					= ctd.cp_id
+  left join prd-autopass-ed-001.his.tb_his_mrd_tmb001_medmedia mm
+    on mm.csn 						= ctd.ctd_mediaid
+  left join prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode ctxpm
+    on ctxpm.ctm_id 				= ctm.ctm_id
+  left join prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_payment_mode cpm
+    on cpm.cpm_id 					= ctxpm.cpm_id
+  left join prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminal tt
+    on tt.code 						= dd.tu_code
+   and tt.toTransportOperatorId 	= cm.cm_organization_id
+  left join prd-autopass-ed-001.his.tb_his_mrd_tmb001_rp_entity rpe_station
+    on rpe_station.rpe_externalid 	= tt.toTerminalGroupId
+   and rpe_station.rpet_id 			= '3'
+  left join prd-autopass-ed-001.his.tb_his_mrd_tmb001_rp_entity rpe_line
+    on rpe_line.rpe_id 				= rpe_station.rpe_parentid
+   and rpe_line.rpet_id 			= '2'
+ where --ctm.ctm_datetime_tz between (:startDate ::timestamp AT TIME ZONE 'America/Sao_Paulo') and (:endDate::timestamp AT TIME ZONE 'America/Sao_Paulo')
+  cp.cpt_id <> '5' 
+  or cp.cpt_id is null)
+
+  SELECT 
+  Termninal cd_pos_device ,
+  upper(Tipo_de_terminal)    ds_device_type,
+  DATE(data_transacao) dt_transaction,
+  TIME(data_transacao) tm_transaction,
+  DATE(data_confirmacao) dt_confirmation,
+  TIME(data_confirmacao) tm_confirmation,
+  upper(Credenciado)  ds_sale_network ,
+  upper(Linha) nm_line,
+  upper(Estacao) nm_station ,  
+  NSU               nr_nsu_acquirer, 
+  Autorizacao       cd_acquirer_authorization,
+  upper(Media_Id)           ds_media,
+  upper(Tipo_midia)       ds_product_type,
+  upper(Produto)           ds_product,
+  upper(Status_Transacao)   ds_status,
+  upper(Tipo_de_Pgto)        ds_payment_mode,
+  Qtd               qt_transaction,
+  Valor             vl_transaction,
+  Valor_Recebido vl_received,
+  CURRENT_TIMESTAMP() ts_processing,
+    'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    'TMB001' cd_system_source
+FROM R0107

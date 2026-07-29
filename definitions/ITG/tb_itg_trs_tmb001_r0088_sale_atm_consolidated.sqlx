@@ -1,0 +1,134 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0088_sale_atm_consolidated",
+    description: "Relatório R0088 — Vendas CSV. Equivalente ao relatório legado R0088 do Postgres.",
+    tags: ["commercial"],
+    bigquery: {
+        partitionBy: "dt_transaction"                                
+    }
+}
+
+WITH R0088 AS (
+SELECT
+  cm.cm_desc                                                                AS Credenciado, --> ds_merchant
+  rpe_station.rpe_description                                               AS Estacao , --> estacao
+  rpe_line.rpe_description                                                  AS Linha , --> linha
+  dd.tu_code                                                                AS Termninal , --> cd_terminal
+  ddt.dt_desc                                                               AS TipodeTerminal , --> ds_terminal_type
+  CASE
+    WHEN ctm.ctm_status = 'A' THEN 'Ativo'
+    WHEN ctm.ctm_status = 'I' THEN 'Inativo'
+    WHEN ctm.ctm_status = 'W' THEN 'Aguardando'
+    ELSE ctm.ctm_status
+  END                                                                       AS StatusTransacao, --> ds_status
+  DATETIME(ctm.ctm_datetime_tz) AS data_hora_trans,
+  DATE(ctm.ctm_datetime_tz)     AS dt_transaction,
+  TIME(ctm.ctm_datetime_tz)     AS tm_transaction,
+  --REPLACE(FORMAT('%.2f', CAST(ctm.ctm_receivedvalue AS NUMERIC)), '.', ',') AS vl_received_formatted,
+  ctm.ctm_receivedvalue  vl_received_formatted,
+  --REPLACE(FORMAT('%.2f', CAST(ctm.ctm_value AS NUMERIC)), '.', ',')         AS Valor , --> vl_transaction
+  ctm.ctm_value  Valor,
+  cpm.cpm_desc                                                              AS TipodePgto , --> ds_payment_mode
+  cp.cp_desc                                                                AS Produto , --> ds_product
+  ctd.ctm_receivedvalue                                                     AS Qtd , --> qt_transaction
+  
+  CASE
+    WHEN ctd.ctd_mediatype = '0' THEN 'QrCode Legado'
+    WHEN ctd.ctd_mediatype = '1' THEN SAFE_CAST(mm.formatedLogical AS STRING)
+    ELSE SAFE_CAST(ctd.ctd_mediaid AS STRING)
+  END                                                                       AS MediaId , -->-> ds_media_id
+  
+  CASE
+    WHEN ctd.ctd_mediatype = '5' THEN 'BU'
+    WHEN ctd.ctd_mediatype = '0' THEN 'QRCode'
+    ELSE 'TOP'
+  END                                                                       AS Tipodemidia , -->-> ds_product_type
+  
+  ctxpm.ctmxcpm_nsu_acquirer                                                AS NSU , -->-> nr_nsu_acquirer
+  ctxpm.ctmxcpm_aut_acquirer                                                AS Autorizacao , -->-> acquirer_approval
+FROM
+  `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt` ctm
+INNER JOIN
+  `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt` ctd
+ON
+  ctd.ctm_id = ctm.ctm_id
+INNER JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_com_merchant` cm
+ON
+  cm.cm_id = ctm.cm_id
+INNER JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_com_tran_type` ctt
+ON
+  ctt.ctt_id = ctm.ctt_id
+INNER JOIN
+  `dev-autopass-bi-001.his.tb_his_trs_tmb001_com_service` cs
+ON
+  cs.cs_id = ctm.cs_id
+INNER JOIN
+  `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device` dd
+ON
+  dd.dv_id = ctm.dv_id
+INNER JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_dvc_device_type` ddt
+ON
+  ddt.dt_id = dd.dt_id
+INNER JOIN
+  `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product` cp
+ON
+  cp.cp_id = ctd.cp_id
+LEFT JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_medmedia` mm
+ON
+  mm.csn = ctd.ctd_mediaid
+LEFT JOIN 
+  `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode` ctxpm
+ON
+  ctxpm.ctm_id = ctm.ctm_id
+LEFT JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_com_payment_mode` cpm
+ON
+  cpm.cpm_id = ctxpm.cpm_id
+LEFT JOIN
+  `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminal` tt
+ON
+  tt.code = dd.tu_code
+  AND tt.toTransportOperatorId = cm.cm_organization_id
+LEFT JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_rp_entity` rpe_station
+ON
+  rpe_station.rpe_externalid = tt.toTerminalGroupId
+  AND rpe_station.rpet_id = '3'
+LEFT JOIN
+  `dev-autopass-bi-001.his.tb_his_mrd_tmb001_rp_entity` rpe_line
+ON
+  rpe_line.rpe_id = rpe_station.rpe_parentid
+  AND rpe_line.rpet_id = '2'
+WHERE DATE(ctm.ctm_datetime_tz)  >= '2025-01-01'      
+)
+
+SELECT
+  Termninal cd_pos_device ,
+  upper(TipodeTerminal)    ds_device_type,
+  data_hora_trans dh_transaction,
+  dt_transaction,
+  tm_transaction,
+  upper(Credenciado)  ds_sale_network ,
+  upper(Linha) nm_line,
+  upper(Estacao) nm_station ,  
+  NSU               nr_nsu_acquirer, 
+  Autorizacao       cd_acquirer_authorization,
+  upper(MediaId)           ds_media,
+  upper(Tipodemidia)       ds_product_type,
+  upper(Produto)           ds_product,
+  upper(StatusTransacao)   ds_status,
+  upper(TipodePgto)        ds_payment_mode,
+  Qtd               qt_transaction,
+  Valor             vl_transaction,
+  vl_received_formatted vl_received,
+  CURRENT_TIMESTAMP() ts_processing,
+    'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    'TMB001' cd_system_source
+FROM R0088

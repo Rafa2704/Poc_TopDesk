@@ -1,0 +1,74 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0087_sale_atm_voucher",
+    tags: ["commercial"],
+    description: "Relatório R0087 — Vouchers ATM gerados e utilizados. Inclui BU e TOP. Para versão sem BU consultar R0113.",
+    bigquery: {
+        partitionBy: "dt_transaction"
+    }
+}
+with R0087 AS (
+SELECT
+    pvc.pvc_createdat                                                AS pvc_createdat,
+    DATE(pvc.pvc_createdat)                                          AS data_criacao,
+    TIME(pvc.pvc_createdat)                                          AS hora_criacao,
+    pvc.pvc_value                                                    AS pvc_value,
+    ctmd.ctm_receivedvalue                                           AS ctm_receivedvalue,
+    CASE WHEN pvc.pvc_media_type = '5' THEN 'BU' ELSE 'TOP' END    AS tipo_produto,
+    pvc.pvc_media_id                                                 AS pvc_media_id,
+    pvc.pvc_rnd                                                      AS pvc_rnd,
+    dd.tu_code                                                       AS terminal_geracao,
+    ctmo.ctm_id                                                      AS idtrn_geracao,
+    pvt.pvt_desc                                                     AS pvt_desc,
+    CASE WHEN pvc.ctm_id_used IS NULL THEN 'Disponível' ELSE 'Utilizado' END AS status_voucher,
+    pvr.pvr_desc                                                     AS pvr_desc,
+    ddd.tu_code                                                      AS terminal_uso,
+    DATE(ctmd.ctm_datetime_tz)                                       AS data_uso,
+    TIME(ctmd.ctm_datetime_tz)                                       AS hora_uso,
+    pvc.pvc_expire_date                                              AS pvc_expire_date,
+    cts.cts_shortdesc                                                AS cts_shortdesc,
+    ctmd.ctm_externalid                                              AS ctm_externalid,
+    ctmo.ctm_legacy_id                                               AS ctm_legacy_id,
+    pvc.pvc_createdby                                                AS pvc_createdby,
+    cts.cts_longdesc                                                 AS cts_longdesc
+
+     FROM `dev-autopass-bi-001.his.tb_his_trs_tmb001_pay_voucher`              pvc
+         JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_reason`  pvr  ON pvr.pvr_id  = pvc.pvr_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_type`    pvt  ON pvt.pvt_id  = pvc.pvt_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt`          ctmo ON ctmo.ctm_id = pvc.ctm_id_orig
+         JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt`          ctmd ON ctmd.ctm_id = pvc.ctm_id_used
+         JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status`     cts  ON cts.cts_id  = ctmd.ctm_status
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device`          dd   ON dd.dv_id    = ctmo.dv_id
+    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device`          ddd  ON ddd.dv_id   = ctmd.dv_id
+)
+
+SELECT  
+    idtrn_geracao  cd_transaction,
+    terminal_geracao cd_pos_device,
+    pvc_createdat dh_transaction,
+    data_criacao dt_transaction,
+    hora_criacao tm_transaction,
+    upper(pvt_desc) ds_type_generation,
+    upper(pvr_desc) ds_generation,
+    terminal_uso cd_pos_device_usage,
+    data_uso dt_usage,
+    hora_uso tm_usage,
+    pvc_expire_date dt_expiration,
+    pvc_media_id cd_media,
+    pvc_rnd  nr_voucher,
+    upper(tipo_produto)  ds_product_type,    
+    upper(status_voucher)  ds_status_voucher,
+    upper(cts_shortdesc)  ds_status,
+    upper(cts_longdesc) ds_stautus_complete ,   
+    ctm_externalid  cd_external,
+    ctm_legacy_id  cd_legacy,
+    upper(pvc_createdby) ds_user_create,
+    pvc_value vl_transaction,
+    ctm_receivedvalue vl_received,
+    CURRENT_TIMESTAMP() ts_processing,
+    'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    'TMB001' cd_system_source
+FROM R0087

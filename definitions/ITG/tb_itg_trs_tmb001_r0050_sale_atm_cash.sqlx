@@ -1,0 +1,166 @@
+config {
+    type: "table",
+    schema: "itg",
+    description: "",
+    name: "tb_itg_trs_tmb001_r0050_sale_atm_cash",
+    tags: ["commercial"],
+    bigquery: {
+        partitionBy: "dt_transaction",
+    }
+}
+  --R0050
+WITH
+  notas_agregadas AS (
+  SELECT
+    ctmpc.ctmxcpm_id,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 2,   cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_2,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 5,   cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_5,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 10,  cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_10,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 20,  cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_20,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 50,  cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_50,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 100, cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_100,
+    SUM(IF (ctmpc.ctmxpmc_denomination = 200, cast(ctmpc.ctmxpmc_quantity as NUMERIC), 0)) AS nota_200
+  FROM
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_xpm_cashnote ctmpc
+  GROUP BY
+    ctmpc.ctmxcpm_id ),
+  R0050 AS (
+  SELECT
+    dd.tu_code AS cod_atm,
+    ttg.description AS Estacao,
+    ttg2.description AS Linha,
+    ttg3.description AS Empresa,
+    --to_char(cs.cs_dtopen       AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI:SS') AS abertura_servico,
+    cs.cs_dtopen AS abertura_servico,
+    --to_char(cs.cs_dtclose      AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI:SS') AS fechamento_servico,
+    cs.cs_dtclose AS fechamento_servico,
+    --to_char(ct.ctm_datetime_tz AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI:SS') AS data_hora_trans,
+    ct.ctm_datetime_tz AS data_hora_trans,
+    --to_char(ct.ctm_datetime_tz AT TIME ZONE 'America/Sao_Paulo', 'DD/MM/YYYY') AS data_trans,
+    --to_char(ct.ctm_datetime_tz AT TIME ZONE 'America/Sao_Paulo', 'HH24:MI:SS') AS hora_trans,
+    DATE(ct.ctm_datetime_tz) AS data_trans,
+    TIME(ct.ctm_datetime_tz) AS hora_trans,
+    CASE
+      WHEN cp.cpt_id = '5' THEN 'BU'
+      ELSE 'TOP'
+  END
+    AS tipo_produto,
+    cp.cp_desc AS produto,
+    mtp.code AS aplicacao,
+    ct.ctm_id AS idtrn,
+    ct.ctm_datetime_tz, -- AT TIME ZONE 'America/Sao_Paulo' AS ctm_datetime_tz,
+    CASE
+      WHEN pv.pvc_id IS NULL THEN 'Nao'
+      ELSE 'Sim'
+  END
+    AS voucher_gerado,
+    pv.pvc_rnd AS voucher_number,
+    --replace(to_char(ct.ctm_value, 		  'FM999999999D00'), '.', ',') AS valor,
+    --replace(to_char(ct.ctm_receivedvalue, 'FM999999999D00'), '.', ',') AS valor_recebido,
+    ct.ctm_value AS valor,
+    ct.ctm_receivedvalue AS valor_recebido,
+    na.nota_2,
+    na.nota_5,
+    na.nota_10,
+    na.nota_20,
+    na.nota_50,
+    na.nota_100,
+    na.nota_200,
+    ct.ctm_externalid AS external_id,
+    ct.ctm_legacy_id AS id_legado,
+    cts.cts_shortdesc AS Status,
+    cts.cts_longdesc AS Status_Desc
+  FROM
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt ct
+  JOIN
+    dev-autopass-bi-001.his.tb_his_mrd_tmb001_com_merchant cm
+  ON cm.cm_id = ct.cm_id
+  JOIN
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_service cs
+  ON cs.cs_id = ct.cs_id
+  JOIN
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode ctxpm
+  ON ctxpm.ctm_id = ct.ctm_id
+    AND ctxpm.cpm_id = '1'
+  JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status cts
+  ON cts.cts_id = ct.ctm_status
+  JOIN
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd
+  ON ctd.ctm_id = ct.ctm_id
+  JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp
+  ON cp.cp_id = ctd.cp_id
+  JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product_type cpt
+  ON cpt.cpt_id = cp.cpt_id
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct mtp
+  ON mtp.description = cp.cp_desc 
+  LEFT JOIN
+    notas_agregadas na
+  ON na.ctmxcpm_id = ctxpm.ctmxcpm_id
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dd
+  ON dd.dv_id = ct.dv_id
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type ddt
+  ON ddt.dt_id = dd.dt_id
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_pay_voucher pv
+  ON pv.ctm_id_orig = ct.ctm_id
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminal tt
+  ON tt.code = dd.tu_code 
+    AND tt.toTransportOperatorId = cm.cm_organization_id
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup ttg
+  ON ttg.id = tt.toTerminalGroupId
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup ttg2
+  ON ttg2.id = ttg.parentId
+  LEFT JOIN
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup ttg3
+  ON ttg3.id = ttg2.parentId
+  WHERE
+    ddt.dt_id = '7' )
+
+
+SELECT
+  idtrn cd_transaction,
+  cod_atm cd_pos_device,
+  DATE(abertura_servico) dt_open_service,
+  TIME(abertura_servico) tm_open_service, 
+  fechamento_servico dt_close_service,
+  data_hora_trans dh_transaction,
+  data_trans dt_transaction,
+  hora_trans tm_transaction,
+  upper(Estacao) nm_line,
+  upper(Linha) nm_station,
+  upper(Empresa) nm_company,
+  upper(tipo_produto) ds_product_type,
+  upper(produto) ds_product,
+  aplicacao cd_product,
+  external_id cd_external,
+  id_legado cd_legacy,
+  upper(Status) ds_status,
+  upper(Status_Desc) ds_status_complete,
+  upper(voucher_gerado) fl_voucher_gerado,
+  voucher_number nr_voucher,
+  valor vl_transaction,
+  valor_recebido vl_received,
+  nota_2 vl_bill_2,
+  nota_5 vl_bill_5,
+  nota_10 vl_bill_10,
+  nota_20 vl_bill_20,
+  nota_50 vl_bill_50,
+  nota_100  vl_bill_100,
+  nota_200  vl_bill_200,
+  CURRENT_TIMESTAMP() ts_processing,
+  'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+  'TMB001' cd_system_source
+FROM
+  R0050
+  WHERE data_trans >= '2025-01-01'
