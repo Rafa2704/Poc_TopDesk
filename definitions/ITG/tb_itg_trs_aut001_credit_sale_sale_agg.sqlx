@@ -279,7 +279,7 @@ SELECT
     'r0113'           AS ds_treport_name,
     ds_status
 FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp`
-WHERE dt_transaction >= '2026-05-01'
+WHERE dt_usage >= '2026-05-01'
 GROUP BY ALL
 
 UNION ALL
