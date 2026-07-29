@@ -6,7 +6,16 @@ config {
     description: "",
     bigquery: {
         partitionBy: "dt_transaction"                                         
-    }
+    },
+    dependencies: [
+        "tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp",
+        "tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp",
+        "tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp",
+        "tb_itg_trs_tmb001_r0052_sale_atm_debit",
+        "tb_itg_trs_tmb001_r0108_sale_app_pix",
+        "tb_itg_trs_tmb001_r0109_app_debit",
+        "tb_itg_trs_tmb001_r0110_sale_whatsapp_pix"
+    ]
 }
 
 WITH base AS (
