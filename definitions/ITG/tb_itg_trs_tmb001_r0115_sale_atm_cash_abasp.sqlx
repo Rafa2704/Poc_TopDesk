@@ -25,9 +25,9 @@ WITH notas_agregadas AS (
 R0115 AS (
     SELECT
         cm.cm_desc                                                                          AS cm_desc,
-        ttg3.description                                                                    AS empresa,
-        ttg2.description                                                                    AS linha,
-        ttg.description                                                                     AS estacao,
+        tto.name                                                                            AS empresa,
+        filg.description                                                                    AS linha,
+        tl.description                                                                     AS estacao,
         dd.tu_code                                                                          AS cod_atm,
         cs.cs_dtopen                                                                        AS abertura_servico,
         cs.cs_dtclose                                                                       AS fechamento_servico,
@@ -67,11 +67,16 @@ R0115 AS (
     LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device`           dd    ON dd.dv_id                  = ct.dv_id
     LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type`      ddt   ON ddt.dt_id                 = dd.dt_id
     LEFT JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_pay_voucher`          pv    ON pv.ctm_id_orig            = ct.ctm_id
-    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminal`           tt    ON tt.code                   = dd.tu_code
-                                                                                      AND tt.toTransportOperatorId = cm.cm_organization_id
-    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg   ON ttg.id                    = tt.toTerminalGroupId
-    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg2  ON ttg2.id                   = ttg.parentId
-    LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg3  ON ttg3.id                   = ttg2.parentId
+    
+
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_toline            tl            On tl.id                      = dd.dv_line_id 
+	LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup filg    on filg.id                    = tl.farIntegrationLineGroupId
+	LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_totransportoperator tto         on tto.id                     = dd.op_id 
+    -- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminal`           tt    ON tt.code                   = dd.tu_code
+    --                                                                                   AND tt.toTransportOperatorId = cm.cm_organization_id
+    -- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg   ON ttg.id                    = tt.toTerminalGroupId
+    -- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg2  ON ttg2.id                   = ttg.parentId
+    -- LEFT JOIN `prd-autopass-ed-001.his.tb_his_mrd_tmb001_toterminalgroup`      ttg3  ON ttg3.id                   = ttg2.parentId
     WHERE ddt.dt_id = '7'
       AND (cp.cpt_id IS NULL OR cp.cpt_id <> '5')
 
