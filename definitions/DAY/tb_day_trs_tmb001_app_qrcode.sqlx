@@ -1,0 +1,30 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_app_qrcode",
+    tags: ["commercial"],
+    description: "Tabela app_qrcode tipada — QRCodes gerados no APP"
+}
+
+SELECT
+    REGEXP_REPLACE(aqr_id,          r'\.0$', '') AS aqr_id,
+    REGEXP_REPLACE(au_id,           r'\.0$', '') AS au_id,
+    REGEXP_REPLACE(qr_media_id,     r'\.0$', '') AS qr_media_id,
+    REGEXP_REPLACE(pay_ptr_id,      r'\.0$', '') AS pay_ptr_id,
+    pay_ppx_transactionid,
+    REGEXP_REPLACE(qrc_qol_id,      r'\.0$', '') AS qrc_qol_id,
+    aqr_status,
+    REGEXP_REPLACE(aqr_value,       r'\.0$', '') AS aqr_value,
+    REGEXP_REPLACE(aqr_qty,         r'\.0$', '') AS aqr_qty,
+    DATETIME(CAST(aqr_paymentdate   AS TIMESTAMP), 'America/Sao_Paulo') AS aqr_paymentdate,
+    DATETIME(CAST(aqr_canceldate    AS TIMESTAMP), 'America/Sao_Paulo') AS aqr_canceldate,
+    DATETIME(CAST(aqr_createdat_tz  AS TIMESTAMP), 'America/Sao_Paulo') AS aqr_createdat_tz,
+    aqr_createdby,
+    DATETIME(CAST(aqr_updatedat_tz  AS TIMESTAMP), 'America/Sao_Paulo') AS aqr_updatedat_tz,
+    aqr_updatedby,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_app_qrcode")}

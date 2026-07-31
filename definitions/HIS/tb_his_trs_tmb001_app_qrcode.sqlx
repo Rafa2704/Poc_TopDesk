@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_app_qrcode",
+  tags: ["commercial"],
+  description: "Tabela app_qrcode tipada e persistida via Merge Incremental",
+  uniqueKey: ["aqr_id"],
+  bigquery: {
+    partitionBy: "DATE(aqr_createdat_tz)",
+    clusterBy: ["aqr_id"]
+  }
+}
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_app_qrcode")}
