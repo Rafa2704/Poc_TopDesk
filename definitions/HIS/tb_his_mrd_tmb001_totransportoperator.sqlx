@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_totransportoperator",
+  tags: ["commercial"],
+  description: "Tabela ToTransportOperator tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_totransportoperator")}

@@ -86,7 +86,8 @@ const tables = [
   "tb_ext_mrd_tmb001_com_merchant",
   "tb_ext_trs_tmb001_pay_voucher",
   "tb_ext_trs_tmb001_com_tranmt_xpm_cashnote",
-  "tb_ext_trs_tmb001_pay_pix"
+  "tb_ext_trs_tmb001_pay_pix",
+  "tb_ext_mrd_tmb001_totransportoperator"
 
 
 ];

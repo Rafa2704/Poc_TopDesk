@@ -1,0 +1,25 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_totransportoperator",
+    tags: ["commercial"],
+    description: "Tabela ToTransportOperator tipada — operadoras de transporte"
+}
+
+SELECT
+    REGEXP_REPLACE(id,                         r'\.0$', '') AS id,
+    name,
+    REGEXP_REPLACE(toCompanyAssociationId,     r'\.0$', '') AS toCompanyAssociationId,
+    REGEXP_REPLACE(toSyndicateId,              r'\.0$', '') AS toSyndicateId,
+    isActive,
+    blameUser,
+    CAST(createdAt AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt AS TIMESTAMP) AS updatedAt,
+    REGEXP_REPLACE(toTransportOperatorGroupId, r'\.0$', '') AS toTransportOperatorGroupId,
+    REGEXP_REPLACE(externalId,                 r'\.0$', '') AS externalId,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_totransportoperator")}
