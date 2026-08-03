@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_venda_qrcode",
+  description: "Tabela de venda de qrcode referente ao REL0097",
+  uniqueKey: ["cd_transaction", "cd_qrcode_media"],
+  bigquery: {
+    partitionBy: "dt_transaction_br",
+  },
+  tags: ["commercial"],
+}
+
+    SELECT *
+    FROM ${ref("tb_day_trs_tmob001_venda_qrcode")}
