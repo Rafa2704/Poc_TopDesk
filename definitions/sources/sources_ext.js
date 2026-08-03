@@ -89,7 +89,8 @@ const tables = [
   "tb_ext_trs_tmb001_pay_pix",
   "tb_ext_mrd_tmb001_totransportoperator",
   "tb_ext_mrd_tmb001_tolinegroup",
-  "tb_ext_trs_tmb001_app_qrcode"
+  "tb_ext_trs_tmb001_app_qrcode",
+  "tb_ext_trs_tmob001_venda_qrcode"
 
 
 ];
