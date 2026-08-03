@@ -11,4 +11,4 @@ config {
 }
 
     SELECT *
-    FROM ${ref("tb_day_trs_tmob001_venda_qrcode")}
+    FROM ${ref("tb_day_trs_tmb001_venda_qrcode")}

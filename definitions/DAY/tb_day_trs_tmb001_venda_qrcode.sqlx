@@ -1,7 +1,7 @@
 config {
     type: "table",
     schema: "day",
-    name: "tb_day_trs_tmob001_venda_qrcode",
+    name: "tb_day_trs_tmb001_venda_qrcode",
     tags: ["commercial"],
     description: "Tabela com o resultado da extração do relatorio R0097"
 }
