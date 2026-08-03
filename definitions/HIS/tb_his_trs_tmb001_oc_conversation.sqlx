@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_oc_conversation",
+  tags: ["commercial"],
+  description: "Tabela oc_conversation tipada e persistida via Merge Incremental",
+  uniqueKey: ["occv_id"],
+  bigquery: {
+    partitionBy: "DATE(occv_createdat)",
+    clusterBy: ["occ_id"]
+  }
+}
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_oc_conversation")}

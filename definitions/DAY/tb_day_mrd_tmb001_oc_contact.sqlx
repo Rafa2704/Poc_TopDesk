@@ -1,0 +1,26 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_oc_contact",
+    tags: ["commercial"],
+    description: "Tabela oc_contact tipada — contatos do omnichannel"
+}
+
+SELECT
+    REGEXP_REPLACE(occ_id, r'\.0$', '') AS occ_id,
+    occ_document,
+    occ_pushname,
+    occ_name,
+    occ_phone_e16,
+    occ_isactive,
+    DATETIME(CAST(occ_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS occ_createdat,
+    occ_createdby,
+    DATETIME(CAST(occ_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS occ_updatedat,
+    occ_updatedby,
+    occ_email,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_oc_contact")}

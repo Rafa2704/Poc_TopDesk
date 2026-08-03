@@ -1,0 +1,28 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_oc_conversation",
+    tags: ["commercial"],
+    description: "Tabela oc_conversation tipada — conversas do omnichannel"
+}
+
+SELECT
+    REGEXP_REPLACE(occv_id,                      r'\.0$', '') AS occv_id,
+    REGEXP_REPLACE(occ_id,                       r'\.0$', '') AS occ_id,
+    REGEXP_REPLACE(orc_id,                       r'\.0$', '') AS orc_id,
+    DATETIME(CAST(occv_startedat AS TIMESTAMP), 'America/Sao_Paulo') AS occv_startedat,
+    occv_lgpd_accepted,
+    occv_status,
+    REGEXP_REPLACE(occv_chatwoot_contactid,      r'\.0$', '') AS occv_chatwoot_contactid,
+    REGEXP_REPLACE(occv_chatwoot_conversationid, r'\.0$', '') AS occv_chatwoot_conversationid,
+    REGEXP_REPLACE(occv_chatwoot_inboxid,        r'\.0$', '') AS occv_chatwoot_inboxid,
+    DATETIME(CAST(occv_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS occv_createdat,
+    occv_createdby,
+    DATETIME(CAST(occv_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS occv_updatedat,
+    occv_updatedby,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_oc_conversation")}
