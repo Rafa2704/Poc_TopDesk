@@ -50,4 +50,4 @@ WHERE ct.cm_id   = '4'
   AND ctxpm.cpm_id = '2'
   AND cts.cts_id IN ('A', 'P', 'V')
   AND COALESCE(ctxpm.ptr_id, '0') > '0'
-  AND DATE(ct.ctm_datetime_tz) BETWEEN '2025-01-01' AND '2026-07-30'
+ -- AND DATE(ct.ctm_datetime_tz) BETWEEN '2025-01-01' AND '2026-07-30'
