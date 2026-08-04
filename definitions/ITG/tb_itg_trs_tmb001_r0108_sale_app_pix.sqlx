@@ -1,14 +1,14 @@
--- config {
---     type: "table",
---     schema: "itg",
---     description: "",
---     tags: ["treport"],
---     bigquery: {
---         partitionBy: "dt_transaction",
---     }
--- }
+config {
+    type: "table",
+    schema: "itg",
+    description: "",
+    tags: ["treport"],
+    bigquery: {
+        partitionBy: "dt_transaction",
+    }
+}
 
-  -- R0108
+  R0108
 WITH
   R0108 AS (
   SELECT
