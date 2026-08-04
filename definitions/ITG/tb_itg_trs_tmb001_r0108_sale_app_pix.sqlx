@@ -8,7 +8,7 @@ config {
     }
 }
 
-  R0108
+ -- R0108
 WITH
   R0108 AS (
   SELECT
