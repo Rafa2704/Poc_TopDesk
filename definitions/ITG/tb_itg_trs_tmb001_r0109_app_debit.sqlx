@@ -20,8 +20,9 @@ SELECT
     DATE(ct.ctm_datetime_tz)                                                            AS data_trans,
     TIME(ct.ctm_datetime_tz)                                                            AS hora_trans,
     ctd.ctm_value                                                                       AS valor,
-    ctd.ctm_receivedvalue                                                                    AS quantidade,
-    ctd.ctm_value * ctd.ctm_receivedvalue                                                    AS valor_total,
+    ctd.ctm_receivedvalue                                                               AS quantidade,
+    ct.ct.ctm_receivedvalue                                                             AS valor_total
+   -- ctd.ctm_value * ctd.ctm_receivedvalue                                               AS valor_total,
     cpm.cpm_desc                                                                        AS forma_pagamento,
     ctxpm.ctmxcpm_acquirer_name                                                         AS acquirer_name,
     ctxpm.ctmxcpm_brand                                                                 AS bandeira,
