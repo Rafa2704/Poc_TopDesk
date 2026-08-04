@@ -1,27 +1,28 @@
-config {
-    type: "table",
-    schema: "itg",
-    description: "",
-    tags: ["treport"],
-    bigquery: {
-        partitionBy: "dt_transaction",
-    }
-}
+-- config {
+--     type: "table",
+--     schema: "itg",
+--     description: "",
+--     tags: ["treport"],
+--     bigquery: {
+--         partitionBy: "dt_transaction",
+--     }
+-- }
 
   -- R0108
 WITH
   R0108 AS (
   SELECT
     dd.tu_code AS cod_terminal,
-    DATE(ct.ctm_datetime_tz) AS data_trans, 
-    TIME(ct.ctm_datetime_tz) AS hora_trans,
+    DATE(pp.ppx_paymentdate) AS data_trans, 
+    TIME(pp.ppx_paymentdate) AS hora_trans,
     --DATE(TIMESTAMP(ct.ctm_datetime_tz, 'UTC'), 'America/Sao_Paulo') AS data_trans,
     --TIME(TIMESTAMP(ct.ctm_datetime_tz, 'UTC'), 'America/Sao_Paulo') hora_trans,
     --REPLACE(FORMAT('%.2f', ctd.ctm_value), '.',',') AS valor,
     ctd.ctm_value AS valor,
     ctd.ctm_receivedvalue AS quantidade,
     -- REPLACE(FORMAT('%.2f', ctd.ctm_value * ctd.ctm_receivedvalue), '.',',') valor_total,
-    ctd.ctm_value * ctd.ctm_receivedvalue AS valor_total,
+    --ctd.ctm_value * ctd.ctm_receivedvalue AS valor_total,
+    ct.ctm_receivedvalue                                                             AS valor_total,
     cpm.cpm_desc AS forma_pagamento,
     -- ctxpm.ctmxcpm_acquirer_name 																		as acquirer_name		,
     -- ctxpm.ctmxcpm_brand 																				as bandeira				,
@@ -49,45 +50,30 @@ WITH
   FROM
     prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt ct
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant cm
-  ON
-    cm.cm_id = ct.cm_id
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant cm ON cm.cm_id = ct.cm_id
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd
-  ON
-    ctd.ctm_id = ct.ctm_id
+    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd ON ctd.ctm_id = ct.ctm_id
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp
-  ON
-    cp.cp_id = ctd.cp_id
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp ON cp.cp_id = ctd.cp_id
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product_type cpt
-  ON
-    cpt.cpt_id = cp.cpt_id
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product_type cpt ON cpt.cpt_id = cp.cpt_id
   LEFT JOIN
-    prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct mtp
-  ON
-    mtp.description = cp.cp_desc
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct mtp ON mtp.description = cp.cp_desc
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode ctxpm
-  ON
-    ctxpm.ctm_id = ct.ctm_id
+    `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode` ctxpm ON ctxpm.ctm_id = ct.ctm_id
     AND ctxpm.cpm_id = '5'
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_payment_mode cpm
-  ON
-    cpm.cpm_id = ctxpm.cpm_id
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_payment_mode cpm ON cpm.cpm_id = ctxpm.cpm_id
   INNER JOIN
-    prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dd
-  ON
-    dd.dv_id = ct.dv_id
+    prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dd ON dd.dv_id = ct.dv_id
+  inner JOIN `prd-autopass-ed-001.his.tb_his_trs_tmb001_pay_pix` pp on ctxpm.ptr_id = pp.ptr_id
   WHERE
     ct.cm_id = '4'
-    AND ct.ctt_id IN ('1',
-      '2')
-    AND dd.dt_id = '6'
-    AND ct.ctm_status IN ('A',
-      'P') )
+   -- AND ct.ctt_id IN ('1','2')
+   -- AND dd.dt_id = '6'
+    AND ct.ctm_status IN ('A','P') 
+     -- and pp.ppx_paymentdate >= '2025-01-01'
+      )
 
 
 SELECT 
