@@ -1,0 +1,28 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_oc_qrcode",
+    tags: ["commercial"],
+    description: "Tabela oc_qrcode tipada — QRCodes gerados no omnichannel"
+}
+
+SELECT
+    REGEXP_REPLACE(ocqr_id,      r'\.0$', '') AS ocqr_id,
+    REGEXP_REPLACE(ocp_id,       r'\.0$', '') AS ocp_id,
+    REGEXP_REPLACE(ocpay_id,     r'\.0$', '') AS ocpay_id,
+    REGEXP_REPLACE(qr_media_id,  r'\.0$', '') AS qr_media_id,
+    ocqr_status,
+    REGEXP_REPLACE(ocqr_value,   r'\.0$', '') AS ocqr_value,
+    REGEXP_REPLACE(ocqr_qty,     r'\.0$', '') AS ocqr_qty,
+    DATETIME(CAST(ocqr_paymentdate  AS TIMESTAMP), 'America/Sao_Paulo') AS ocqr_paymentdate,
+    DATETIME(CAST(ocqr_canceldate   AS TIMESTAMP), 'America/Sao_Paulo') AS ocqr_canceldate,
+    DATETIME(CAST(ocqr_createdat_tz AS TIMESTAMP), 'America/Sao_Paulo') AS ocqr_createdat_tz,
+    ocqr_createdby,
+    DATETIME(CAST(ocqr_updatedat_tz AS TIMESTAMP), 'America/Sao_Paulo') AS ocqr_updatedat_tz,
+    ocqr_updatedby,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_oc_qrcode")}

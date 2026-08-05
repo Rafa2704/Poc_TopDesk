@@ -1,0 +1,26 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_qrc_offloaded",
+    tags: ["commercial"],
+    description: "Tabela qrc_offloaded tipada — QRCodes offloaded"
+}
+
+SELECT
+    REGEXP_REPLACE(qol_id,       r'\.0$', '') AS qol_id,
+    REGEXP_REPLACE(usr_id,       r'\.0$', '') AS usr_id,
+    usr_document,
+    REGEXP_REPLACE(com_comt_id,  r'\.0$', '') AS com_comt_id,
+    qol_status,
+    qol_origin,
+    DATETIME(CAST(qol_createdat_tz AS TIMESTAMP), 'America/Sao_Paulo') AS qol_createdat_tz,
+    qol_createdby,
+    DATETIME(CAST(qol_updatedat_tz AS TIMESTAMP), 'America/Sao_Paulo') AS qol_updatedat_tz,
+    qol_updatedby,
+    REGEXP_REPLACE(app_apm_id,   r'\.0$', '') AS app_apm_id,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_qrc_offloaded")}
