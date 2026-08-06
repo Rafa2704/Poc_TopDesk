@@ -1,0 +1,130 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+    tags: ["cardusagegate"],
+    bigquery: {
+        partitionBy: "dt_create",
+    }
+}
+
+
+-- CREATE OR REPLACE TABLE itg.tb_itg_trs_top001_credit_sale_app
+-- PARTITION BY dt_create
+-- CLUSTER BY nr_card, cd_transaction_type, cd_terminal_type, cd_system_source
+-- AS
+-- -- VENDAS_CREDITO_APP
+WITH BASE AS (
+SELECT nr_card  
+     , qt_financial_entry
+     , vl_recharge
+     , dt_create
+     , nm_dealer
+     , nm_product
+     , ds_payment_type
+     , CASE WHEN nm_acquirer IS NOT NULL
+            THEN nm_acquirer
+            ELSE CASE WHEN ds_payment_type IN ('DEBITO','CREDITO','CARTEIRA DIGITAL') THEN 'ADYEN'
+                      WHEN ds_payment_type IN ('BALANCE') THEN 'PEFISA'
+                 END
+       END nm_acquirer
+     , nr_serial
+     , cd_terminal_type
+     , cd_transaction_type
+     , ts_processing
+     , cd_company cd_company
+     , nr_load_control
+     , cd_created_by
+     , cd_system_source
+FROM
+(SELECT SUBSTR(fd.cd_card_external, 1, 2) || '.' ||
+        SUBSTR(fd.cd_card_external, 3, 2) || '.' ||
+        SUBSTR(fd.cd_card_external, 5, 8) || '-' ||
+        SUBSTR(fd.cd_card_external, 13, 1) nr_card  --correção aplicada em 06/11
+, COUNT(fe.cd_financial_entry) qt_financial_entry
+, SUM(fe.vl_recharge) vl_recharge
+, fe.dt_create dt_create
+, dl.nm_dealer nm_dealer
+, pr.nm_product nm_product
+--, pt.ds_payment_type ds_payment_type retirado em 01/03
+, CASE WHEN pay.ds_payment_type IS NULL THEN pt.ds_payment_type ELSE pay.ds_payment_type END ds_payment_type 
+, pay.nm_acquirer
+, tr.nr_serial nr_serial
+, tr.cd_terminal_type cd_terminal_type
+, fe.cd_transaction_type cd_transaction_type
+, CURRENT_TIMESTAMP() ts_processing
+, fe.cd_company cd_company
+, CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control
+, SESSION_USER() cd_created_by
+, fe.cd_system_source cd_system_source
+FROM prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry fe
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_bar001_financial_entry_detail fd 
+ON fd.cd_financial_entry = fe.cd_financial_entry
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bar001_dealer dl 
+ON dl.cd_dealer = fe.cd_dealer 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bar001_product pr 
+ON pr.cd_product = fe.cd_product 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bar001_payment_type pt 
+ON pt.cd_payment_type = fe.cd_payment_type 
+LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_mrd_bar001_terminal  tr 
+ON tr.cd_terminal = fe.cd_terminal 
+AND tr.cd_terminal_type = 'POS'
+LEFT JOIN (SELECT DISTINCT cd_card_session
+                         , nr_transport_card
+                         , CASE WHEN ds_payment_type = 'DEBIT' THEN 'DEBITO'
+                               WHEN ds_payment_type = 'BALANCE' THEN 'CARTEIRA DIGITAL'
+                               WHEN ds_payment_type = 'CREDIT' THEN 'CREDITO'
+                               WHEN ds_payment_type = 'VIRTUAL_DEBIT' THEN 'DEBITO'
+                               ELSE ds_payment_type
+                           END ds_payment_type
+                         , CASE
+                               WHEN ds_payment_type IN ('DEBIT','CREDIT','VIRTUAL_DEBIT') THEN 'ADYEN'
+                               WHEN ds_payment_type IN ('BALANCE') THEN 'PEFISA'
+                               WHEN ds_payment_type IN ('PIX') THEN coalesce(ds_pix_provider,'PEFISA')
+                           END nm_acquirer
+                  FROM (SELECT DISTINCT cd_card_session
+                             , nr_transport_card
+                             , CASE WHEN pay.ds_type IS NOT NULL THEN pay.ds_type ELSE rec.ds_payment_type END ds_payment_type
+                             , ds_pix_provider
+                        FROM prd-autopass-bi-001.his.tb_his_trs_mdb001_recharge rec
+                        LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_item item
+                        ON rec.cd_recharge = item.cd_order_item_internal 
+                        LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_payment pay
+                        ON item.cd_order  = pay.cd_order 
+                        LEFT OUTER JOIN prd-autopass-bi-001.his.tb_his_trs_mdb001_order_payment_detail det --alterado em 05/02
+                        ON det.cd_order  = pay.cd_order 
+                        WHERE rec.ds_status = 'COMPLETE')) pay   --incluido em 01/03
+ON pay.cd_card_session = nr_nsu_session_card 
+--AND pay.nr_transport_card = cd_card_external
+WHERE 1 = 1
+AND fe.cd_dealer in ('13', '3', '163')
+AND fe.cd_product <> '85'
+AND fe.cd_issuer = '14'   
+AND fe.cd_status = 'CONFIRMED'
+GROUP BY fe.dt_create
+, dl.nm_dealer
+, pr.nm_product
+, CASE WHEN pay.ds_payment_type IS NULL THEN pt.ds_payment_type ELSE pay.ds_payment_type END
+--, pay.nm_acquirer
+, tr.nr_serial
+, tr.cd_terminal_type
+, fe.cd_transaction_type
+, SUBSTR(fd.cd_card_external, 1, 2) || '.' ||
+  SUBSTR(fd.cd_card_external, 3, 2) || '.' ||
+  SUBSTR(fd.cd_card_external, 5, 8) || '-' ||
+  SUBSTR(fd.cd_card_external, 13, 1)
+, fe.cd_company
+, fe.cd_system_source
+, pay.nm_acquirer
+)
+)
+
+select *
+-- SUM(qt_financial_entry) qt_transaction,
+--   SUM(vl_recharge) vl_amount,
+-- CASE WHEN nm_dealer = 'VOUD' THEN 'VOUD' ELSE 'APP TOP' END canal,
+-- ds_payment_type
+from BASE
+
+--WHERE dt_create between '2026-03-01' and '2026-03-31'
+group by all 

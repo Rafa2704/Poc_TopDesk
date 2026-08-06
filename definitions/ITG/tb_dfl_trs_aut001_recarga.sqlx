@@ -1,0 +1,246 @@
+config {
+    type: "table", 
+    schema: "itg",
+    description: "Tabela itg de vendas por cartão ",
+    tags: ["cardusagegate"],
+    bigquery: {
+        partitionBy: "dt_transaction",
+    }
+}
+
+
+
+
+
+
+
+WITH base AS (
+-- REDE DE VENDAS
+SELECT
+  dt_create dt_transaction,
+  '00:00:00' tm_transaction,
+  'N/A' abrangencia,
+  'N/A' provider,
+  'NA' provider_type,
+  nm_dealer,
+  'REDE DE VENDAS' AS canal,
+  'NA' nm_station,
+  'NA' nm_line,
+  '-1' pos_id,
+  nm_product,
+  ds_payment_type,
+  SUM(qt_cd_financial_entry) qt_transaction,
+  SUM(vl_recharge) vl_amount
+FROM `itg.vw_itg_trs_bar001_sale_network`
+WHERE cd_issuer = '14' AND nm_dealer <> 'PAKMAN'
+  AND dt_create >= '2024-11-05'
+GROUP BY dt_create, nm_dealer, nm_product, ds_payment_type
+UNION ALL
+-- APP TOP / VOUD
+SELECT
+  dt_create dt_transaction,
+  '00:00:00' tm_transaction,
+  'NA' abrangencia,
+  'NA' provider,
+  'NA' provider_type,
+  'NA' nm_dealer,
+  CASE WHEN nm_dealer = 'VOUD' THEN 'VOUD' ELSE 'APP TOP' END canal,
+  'NA' AS nm_station,
+  'NA' AS nm_line,
+  '-1' AS pos_id,
+  nm_product,
+  ds_payment_type,
+  SUM(qt_financial_entry) qt_transaction,
+  SUM(vl_recharge) vl_amount
+FROM dev-autopass-bi-001.itg.tb_itg_trs_top001_credit_sale_app
+--`itg.vw_itg_trs_top001_credit_sale_app`
+WHERE dt_create >= '2024-11-05'
+GROUP BY dt_create, CASE WHEN nm_dealer = 'VOUD' THEN 'VOUD' ELSE 'APP TOP' END, nm_product, ds_payment_type
+UNION ALL
+-- WHATSAPP
+SELECT
+  dt_create dt_transaction,
+  '00:00:00' tm_transaction,
+  'NA' AS abrangencia,
+  'NA' AS provider,
+  'NA' AS provider_type,
+  'NA' AS nm_dealer,
+  'WHATS' AS canal,
+  'NA' AS nm_station,
+  'NA' AS nm_line,
+  '-1' AS pos_id,
+  nm_product,
+  ds_payment_type,
+  SUM(qt_financial_entry) qt_transaction,
+  SUM(vl_recharge) vl_amount
+FROM `itg.vw_itg_trs_top001_credit_sale_whatsapp`
+WHERE dt_create >= '2024-11-05'
+GROUP BY dt_create, nm_product, ds_payment_type
+UNION ALL
+-- ===== PAR 1: ATM =====
+-- >>> LEGADO | corte até 30/04/2025
+SELECT
+  dt_transaction,
+  FORMAT_TIME('%H:00:00', tm_transaction) tm_transaction,
+  nm_client abrangencia,
+  'NA' AS provider,
+  'NA' AS provider_type,
+  'NA' AS nm_dealer,
+  'ATM' AS canal,
+  nm_station,
+  nm_line,
+  cd_pos_device pos_id,
+  ds_product nm_product,
+  ds_payment_mode,
+  COUNT(1) qt_transaction,
+  SUM(vl_amount) vl_amount
+FROM `itg.vw_itg_trs_top001_credit_sale_atm`
+WHERE dt_transaction BETWEEN '2024-11-05' AND '2025-04-30'
+GROUP BY dt_transaction, FORMAT_TIME('%H:00:00', tm_transaction), nm_client, nm_station, nm_line, cd_pos_device, nm_product, ds_payment_mode
+UNION ALL
+-- >>> ATUAL | a partir de 01/05/2025
+SELECT
+  dt_transaction_br,
+  FORMAT_TIME('%H:%M:%S', tm_transaction_br) tm_transaction_br,
+  CASE
+    WHEN ds_terminal_group_level_3 LIKE '%METRO%' THEN 'METRO'
+    WHEN ds_terminal_group_level_3 LIKE '%CPTM%' THEN 'CPTM'
+  END abrangencia,
+  'NA' AS provider,
+  'NA' AS provider_type,
+  'NA' AS nm_dealer,
+  'ATM' AS canal,
+  ds_terminal_group AS nm_station,
+  ds_terminal_group_level_2 AS nm_line,
+  cd_pos_device pos_id,
+  ds_product nm_product,
+  ds_payment_mode,
+  COUNT(1) qt_transaction,
+  SUM(vl_transaction) vl_amount
+FROM `prd-autopass-bi-001.itg.vw_itg_trs_tmb001_credit_sale_atm`
+WHERE dt_transaction_br >= '2025-05-01'
+GROUP BY
+  dt_transaction_br,
+  tm_transaction_br,
+  abrangencia,
+  nm_station,
+  nm_line,
+  pos_id,
+  nm_product,
+  ds_payment_mode
+UNION ALL
+-- ===== PAR 2: WEB / VT =====
+-- >>> LEGADO | corte até 31/12/2023
+SELECT
+  dt_recharge_account dt_transaction,
+  '00:00:00' tm_transaction,
+  'NA' AS abrangencia,
+  ds_provider_usage provider,
+  ds_provider_type_usage provider_type,
+  'NA' AS nm_dealer,
+  'WEB' AS canal,
+  'NA' AS nm_station,
+  'NA' AS nm_line,
+  '-1' AS pos_id,
+  'VT TOP' AS nm_product,
+  'BOLETO' AS ds_payment_type,
+  COUNT(DISTINCT nr_receipt) qt_transaction,
+  SUM(vl_amount) vl_amount
+FROM `itg.vw_itg_trs_top001_credit_sale_web`
+WHERE cd_provider_usage NOT IN ('99999','2','173703','73','4','74','189075','189076','187697','189099')
+  AND dt_recharge_account BETWEEN '2024-11-05' AND '2023-12-31'
+GROUP BY dt_recharge_account, ds_provider_usage, ds_provider_type_usage
+UNION ALL
+-- >>> ATUAL/NOVA | a partir de 01/01/2024
+SELECT
+  dt_credit dt_transaction,
+  '00:00:00' tm_transaction,
+  'NA' AS abrangencia,
+  ds_provider provider,
+  ds_provider_type provider_type,
+  'NA' AS nm_dealer,
+  'WEB' AS canal,
+  'NA' AS nm_station,
+  'NA' AS nm_line,
+  '-1' AS pos_id,
+  'VT TOP' AS nm_product,
+  'BOLETO' AS ds_payment_type,
+  COUNT(DISTINCT cd_sales_order) qt_transaction,
+  SUM(vl_amount) vl_amount
+FROM `prd-autopass-ed-001.his.tb_his_trs_tmb001_vendas_vt`
+WHERE dt_credit >= '2024-01-01'
+GROUP BY dt_credit, ds_provider, ds_provider_type
+UNION ALL
+-- ATM AYIT (encerrada)
+SELECT
+  dt_transaction,
+  '00:00:00' tm_transaction,
+  'TRILHOS' AS abrangencia,
+  'NA' AS provider,
+  'NA' AS provider_type,
+  'NA' AS nm_dealer,
+  'ATM AYIT' AS canal,
+  'NA' AS nm_station,
+  'NA' AS nm_line,
+  '-1' AS pos_id,
+  nm_issuer_product AS nm_product,
+  ds_payment_mode AS ds_payment_type,
+  COUNT(vl_recharge) qt_transaction,
+  SUM(vl_recharge) vl_amount
+FROM `itg.vw_itg_trs_ayt001_transaction_sale_atm`
+WHERE ds_record_status = 'TRN_EFETIVADA'
+  AND cd_issuer = '14'
+  AND nm_issuer_product IN ('COMUM','ESCOLAR')
+  AND dt_transaction >= '2024-11-05'
+GROUP BY dt_transaction, tm_transaction, nm_issuer_product, ds_payment_mode
+)
+SELECT
+  base.*,
+  CASE canal
+    WHEN 'APP TOP'        THEN 'DIGITAL'
+    WHEN 'ATM'            THEN 'FISICO'
+    WHEN 'ATM AYIT'       THEN 'FISICO'
+    WHEN 'REDE DE VENDAS' THEN 'FISICO'
+    WHEN 'WEB'            THEN 'DIGITAL'
+    WHEN 'WHATS'          THEN 'DIGITAL'
+    WHEN 'VOUD'           THEN 'DIGITAL'
+    ELSE NULL
+  END AS tipo_canal,
+  CASE
+    WHEN CONTAINS_SUBSTR(nm_product, 'ESC') THEN 'ESCOLAR'
+    WHEN CONTAINS_SUBSTR(nm_product, 'VT') OR CONTAINS_SUBSTR(nm_product, 'VALE TRANSPORTE') THEN 'VT'
+    WHEN CONTAINS_SUBSTR(nm_product, 'COMU') THEN 'COMUM'
+    ELSE 'VERIFICAR_GRUPO'
+  END AS grupo_produtos,
+  CASE canal
+    WHEN 'APP TOP'        THEN 'APP'
+    WHEN 'ATM'            THEN 'ATM'
+    WHEN 'ATM AYIT'       THEN 'ATM'
+    WHEN 'REDE DE VENDAS' THEN 'REDE DE VENDAS'
+    WHEN 'WEB'            THEN 'WEB'
+    WHEN 'WHATS'          THEN 'WHATS'
+    WHEN 'VOUD'           THEN 'APP'
+    ELSE 'VERIFICAR_CANAL'
+  END AS grupo_canal,
+  CASE
+    WHEN CONTAINS_SUBSTR(ds_payment_type, 'DÉB') OR CONTAINS_SUBSTR(ds_payment_type, 'DEB') THEN 'DEBITO'
+    WHEN CONTAINS_SUBSTR(ds_payment_type, 'CRÉD') OR CONTAINS_SUBSTR(ds_payment_type, 'CRED') THEN 'CREDITO'
+    ELSE ds_payment_type
+  END AS grupo_tipo_pagamento,
+  CASE TRIM(nm_line)
+    WHEN 'LINHA 4 - AMARELA'   THEN 'VIA QUATRO'
+    WHEN 'LINHA 5 - LILAS'     THEN 'VIA MOBILIDADE'
+    WHEN 'LINHA 15 - PRATA'    THEN 'METRO'
+    WHEN 'LINHA 1 - AZUL'      THEN 'METRO'
+    WHEN 'LINHA 2 - VERDE'     THEN 'METRO'
+    WHEN 'LINHA 3 - VERMELHA'  THEN 'METRO'
+    WHEN 'LINHA 8 - DIAMANTE'  THEN 'VIA MOBILIDADE'
+    WHEN 'LINHA 9 - ESMERALDA' THEN 'VIA MOBILIDADE'
+    WHEN 'LINHA 7 - RUBI'      THEN 'CPTM'
+    WHEN 'LINHA 10 - TURQUESA' THEN 'CPTM'
+    WHEN 'LINHA 11 - CORAL'    THEN 'CPTM'
+    WHEN 'LINHA 12 - SAFIRA'   THEN 'CPTM'
+    WHEN 'LINHA 13 - JADE'     THEN 'CPTM'
+    ELSE abrangencia
+  END AS abrangencia2
+FROM base
