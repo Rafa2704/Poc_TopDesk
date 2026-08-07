@@ -94,7 +94,9 @@ const tables = [
   "tb_ext_mrd_tmb001_oc_contact",
   "tb_ext_trs_tmb001_oc_conversation",
   "tb_ext_trs_tmb001_oc_qrcode",
-  "tb_ext_trs_tmb001_qrc_offloaded"
+  "tb_ext_trs_tmb001_qrc_offloaded",
+  "tb_ext_trs_tpd001_incidentoptionalsecondtabsearchlist1items",
+  "tb_ext_trs_tpd001_incidentoptionalsecondtabs"
 
 
 ];

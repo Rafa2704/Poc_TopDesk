@@ -1,0 +1,36 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tpd001_incidentoptionalsecondtabs",
+    tags: ["topdesk"],
+    description: "Tabela incidentoptionalsecondtabs tipada — abas opcionais de incidentes TOPdesk"
+}
+
+SELECT
+    SAFE_CAST(date1 AS DATETIME) AS date1,
+    SAFE_CAST(date2 AS DATETIME) AS date2,
+    SAFE_CAST(date3 AS DATETIME) AS date3,
+    SAFE_CAST(date4 AS DATETIME) AS date4,
+    SAFE_CAST(date5 AS DATETIME) AS date5,
+    id,
+    logical1,
+    logical2,
+    logical3,
+    logical4,
+    logical5,
+    SAFE_CAST(number1 AS NUMERIC) AS number1,
+    SAFE_CAST(number2 AS NUMERIC) AS number2,
+    SAFE_CAST(number3 AS NUMERIC) AS number3,
+    SAFE_CAST(number4 AS NUMERIC) AS number4,
+    SAFE_CAST(number5 AS NUMERIC) AS number5,
+    searchlist1ItemId,
+    searchlist2ItemId,
+    searchlist3ItemId,
+    searchlist4ItemId,
+    searchlist5ItemId,
+
+    "TPD001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_incidentoptionalsecondtabs")}
