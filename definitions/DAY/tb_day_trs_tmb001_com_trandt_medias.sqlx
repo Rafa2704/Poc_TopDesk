@@ -1,0 +1,22 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_com_trandt_medias",
+    tags: ["commercial"],
+    description: "Tabela com_trandt_medias tipada — mídias por detalhe de transação"
+}
+
+SELECT
+    REGEXP_REPLACE(ctd_id,            r'\.0$', '') AS ctd_id,
+    REGEXP_REPLACE(ctdm_mediatype,    r'\.0$', '') AS ctdm_mediatype,
+    REGEXP_REPLACE(ctdm_mediaid,      r'\.0$', '') AS ctdm_mediaid,
+    ctdm_formatedlogical,
+    REGEXP_REPLACE(ctdm_serie,        r'\.0$', '') AS ctdm_serie,
+    DATETIME(CAST(ctdm_createdat AS TIMESTAMP), 'America/Sao_Paulo') AS ctdm_createdat,
+    DATETIME(CAST(ctdm_updatedat AS TIMESTAMP), 'America/Sao_Paulo') AS ctdm_updatedat,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_com_trandt_medias")}

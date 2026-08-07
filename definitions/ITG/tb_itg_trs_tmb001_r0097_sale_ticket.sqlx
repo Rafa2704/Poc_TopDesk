@@ -1,0 +1,165 @@
+config {
+  type: "table",
+  schema: "itg",
+  tags: ["commercial"],
+  name: "tb_itg_trs_tmb001_r0097_sale_ticket",
+  bigquery: {
+    partitionBy: "dt_transaction"
+    }
+}
+WITH
+  r0097 AS (
+    SELECT
+      ctm.ctm_datetime_tz AS data,
+      dv.op_id AS empresa_id,
+      ctm.cm_id AS redevendas_id,
+      cm.cm_desc AS redevendas,
+      op.op_desc AS empresa,
+      tl.farIntegrationLineGroupId AS linha_id,
+      filg.description AS linha,
+      dv.dv_line_id AS estacao_id,
+      coalesce(tl.description, ' ') AS estacao,
+      dv.tu_code AS terminal,
+      tu.tu_desc AS equipamento,
+      Coalesce(ctm.ctm_externalid, ctm.ctm_id) AS transacao,
+      --qm.qrBatchId AS lote,
+      ctd.cp_id AS produto_id,
+      cp.cp_desc AS produto,
+      ctxpm.cpm_id AS pagamento_id,
+      cpm.cpm_desc AS pagamento,
+      1 AS quantidade,
+       ctd.ctm_receivedvalue               as qtd,
+       ctd.ctm_value valor, 
+      ctd.ctm_value * ctd.ctm_receivedvalue AS valor_total,
+      ctm.ctm_value / ctd.ctm_receivedvalue AS tarifa,
+      'Venda QRCode' AS tipo,
+      uu.name AS operador,
+      uo.hrid AS matricula,
+      ctm.cs_id AS sessao,
+      cts.cts_id AS Cod_Status,
+      cts.cts_shortdesc AS Status,
+      CASE WHEN ctdm_serie IS NULL THEN '-' ELSE ctdm.ctdm_serie END AS serie,
+      ctdm.ctdm_mediaid AS qrcode,
+      cm.cm_desc AS rede_de_vendas,
+      ddt.dt_desc AS tipo_dispositivo,
+      ctxpm.ctmxcpm_nsu_acquirer AS NSU
+    FROM prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt ctm
+    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant cm
+      ON cm.cm_id = ctm.cm_id
+    INNER JOIN prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd 
+      ON ctd.ctm_id = ctm.ctm_id
+    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp
+      ON cp.cp_id = ctd.cp_id
+    INNER JOIN
+      prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode ctxpm
+      ON ctxpm.ctm_id = ctm.ctm_id
+    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_payment_mode cpm
+      ON cpm.cpm_id = ctxpm.cpm_id
+    INNER JOIN prd-autopass-ed-001.his.tb_his_trs_tmb001_com_service cs
+      ON cs.cs_id = ctm.cs_id
+    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dv
+      ON dv.dv_id = ctm.dv_id
+    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type ddt
+      ON ddt.dt_id = dv.dt_id
+    LEFT JOIN dev-autopass-bi-001.his.tb_his_trs_tmb001_com_trandt_medias ctdm
+      ON ctdm.ctd_id = ctd.ctd_id
+    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_dvc_transit_unit tu
+      ON
+        cast(tu.op_id as string) = dv.op_id
+        AND cast(tu.tu_code as string) = dv.tu_code
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_operator op
+      ON op.op_id = dv.op_id
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_toline tl
+      ON tl.id = dv.dv_line_id
+    LEFT JOIN
+      prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup filg
+      ON filg.id = tl.farIntegrationLineGroupId
+    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_sysuser su
+      ON
+        su.email = cs.cs_sysuser_email
+        AND su.systemType = 'pos'
+    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_usroperator uo
+      ON uo.id = su.usrOperatorId
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_usruser uu
+      ON cast(uu.id as string) = cast(uo.usrUserId as string)
+    LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_tmb001_qr_media qm
+      ON cast(qm.cd_qr_media as string) = ctdm.ctdm_mediaid
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status cts
+      ON cts.cts_id = ctm.ctm_status
+    WHERE
+      TRUE
+      AND ddt.dt_id IN ('7', '8')
+      AND ctdm.ctdm_mediatype = '0'
+
+)
+SELECT
+  Data_trans dh_transaction,
+  Dt_trans dt_transaction,
+  tm_trans tm_transaction,
+  redevendas_id AS cd_sale_network,
+  upper(redevendas) AS ds_sale_network,
+  upper(Linha) nm_line,
+  upper(Estacao) nm_station,
+  Terminal cd_pos_device,
+  Equipamento ds_terminal,
+  upper(Produto) ds_product,
+  upper(Tipo) ds_product_type,
+  upper(Pagamento) ds_payment_mode,
+  Transacao cd_transaction,
+  NSU nr_nsu,
+  qtd qt_transaction,
+  Valor vl_transaction,
+  valor_total,
+  Operador ds_operator,
+  Matricula nr_registration,
+  Sessao ds_session,
+  Cod_Status cd_status,
+  upper(Status) ds_status,
+  QrCode cd_qrcode_media,
+  TipoDispositivo ds_device_type,
+  Serie ds_serie,
+  CURRENT_TIMESTAMP() ts_processing,
+  'AUT001' cd_company,
+  CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+  SESSION_USER() cd_created_by,
+  'TMB001' cd_system_source
+FROM
+  (
+    SELECT
+      coalesce(redevendas, ' ') AS redevendas,
+      coalesce(Linha, ' ') AS Linha,
+      coalesce(Estacao, ' ') AS Estacao,
+      data AS Data_trans,
+      date(data) AS Dt_trans,
+      time(data) AS tm_trans,
+      tipo AS Tipo,
+      terminal AS Terminal,
+      equipamento AS Equipamento,
+      produto AS Produto,
+      pagamento AS Pagamento,
+      transacao AS Transacao,
+      NSU AS NSU,
+      Valor Valor,
+      qtd,
+      valor_total,
+      tipo AS TipoVenda,
+      Operador AS Operador,
+      Matricula AS Matricula,
+      Sessao AS Sessao,
+      Cod_Status,
+      Status AS Status,
+      Qrcode AS QrCode,
+      tipo_dispositivo AS TipoDispositivo,
+      serie AS Serie,
+      redevendas_id,
+      coalesce(Empresa, 'AAAAA')
+        || coalesce(
+          Linha,
+          'AAAAA')
+        || coalesce(
+          Estacao,
+          'AAAAA')
+        || data AS Ordem
+    FROM
+      r0097
+  ) Sel1
