@@ -11,4 +11,5 @@ config {
   }
 }
 
-SELECT * FROM ${ref("tb_day_trs_tmb001_com_trandt_medias")}
+SELECT * FROM `dev-autopass-bi-001.his.tb_his_trs_tmb001_com_trandt_medias` 
+--${ref("tb_day_trs_tmb001_com_trandt_medias")}
