@@ -96,7 +96,8 @@ const tables = [
   "tb_ext_trs_tmb001_oc_qrcode",
   "tb_ext_trs_tmb001_qrc_offloaded",
   "tb_ext_trs_tpd001_incidentoptionalsecondtabsearchlist1items",
-  "tb_ext_trs_tpd001_incidentoptionalsecondtabs"
+  "tb_ext_trs_tpd001_incidentoptionalsecondtabs",
+  "tb_ext_trs_tmb001_com_trandt_medias"
 
 
 ];

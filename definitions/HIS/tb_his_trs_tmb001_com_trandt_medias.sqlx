@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_com_trandt_medias",
+  tags: ["commercial"],
+  description: "Tabela com_trandt_medias tipada e persistida via Merge Incremental",
+  uniqueKey: ["ctd_id", "ctdm_mediatype", "ctdm_mediaid"],
+  bigquery: {
+    partitionBy: "DATE(ctdm_createdat)",
+    clusterBy: ["ctd_id", "ctdm_mediaid"]
+  }
+}
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_com_trandt_medias")}
