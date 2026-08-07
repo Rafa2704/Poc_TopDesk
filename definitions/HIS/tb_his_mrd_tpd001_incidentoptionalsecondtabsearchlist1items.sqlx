@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tpd001_incidentoptionalsecondtabsearchlist1items",
+  tags: ["topdesk"],
+  description: "Tabela incidentoptionalsecondtabsearchlist1items tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tpd001_incidentoptionalsecondtabsearchlist1items")}

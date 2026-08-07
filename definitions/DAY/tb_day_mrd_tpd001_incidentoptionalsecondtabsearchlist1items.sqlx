@@ -1,0 +1,18 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tpd001_incidentoptionalsecondtabsearchlist1items",
+    tags: ["topdesk"],
+    description: "Tabela incidentoptionalsecondtabsearchlist1items tipada — itens da lista de busca TOPdesk"
+}
+
+SELECT
+    id,
+    name,
+    SAFE_CAST(`order` AS INT64) AS `order`,
+
+    "TPD001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tpd001_incidentoptionalsecondtabsearchlist1items")}
