@@ -1,7 +1,7 @@
 config {
   type: "table",
   schema: "itg",
-  tags: ["commercial"],
+  tags: ["FORA"],
   name: "tb_itg_trs_tmb001_r0097_sale_ticket",
   bigquery: {
     partitionBy: "dt_transaction"
