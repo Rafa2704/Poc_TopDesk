@@ -61,7 +61,7 @@ WITH
       ON dv.dv_id = ctm.dv_id
     INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type ddt
       ON ddt.dt_id = dv.dt_id
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_trs_tmb001_com_trandt_medias ctdm
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt_medias ctdm
       ON ctdm.ctd_id = ctd.ctd_id
     LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_dvc_transit_unit tu
       ON
