@@ -1,0 +1,31 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_usrdocument",
+    tags: ["commercial"],
+    description: "Tabela UsrDocument tipada — documentos de usuários"
+}
+
+SELECT
+    REGEXP_REPLACE(id,                 r'\.0$', '') AS id,
+    REGEXP_REPLACE(usrUserId,          r'\.0$', '') AS usrUserId,
+    value,
+    SAFE_CAST(expirationDate AS DATE)              AS expirationDate,
+    complement,
+    isActive,
+    blameUser,
+    CAST(createdAt  AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt  AS TIMESTAMP) AS updatedAt,
+    REGEXP_REPLACE(usrDocumentTypeId,  r'\.0$', '') AS usrDocumentTypeId,
+    SAFE_CAST(expeditionDate AS DATE)              AS expeditionDate,
+    presignUrls,
+    filenames,
+    REGEXP_REPLACE(externalId,         r'\.0$', '') AS externalId,
+    valueUnique,
+    reissueSequence,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_usrdocument")}

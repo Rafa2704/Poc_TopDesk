@@ -1,0 +1,14 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_usrdocument",
+  tags: ["commercial"],
+  description: "Tabela UsrDocument tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"],
+  bigquery: {
+    partitionBy: "DATE(createdAt)",
+    clusterBy: ["id", "value"]
+  }
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_usrdocument")}
