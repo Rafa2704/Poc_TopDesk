@@ -63,7 +63,7 @@ WITH
       ON ddt.dt_id = dv.dt_id
     LEFT JOIN prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt_medias ctdm
       ON ctdm.ctd_id = ctd.ctd_id
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_dvc_transit_unit tu
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_transit_unit tu
       ON
         cast(tu.op_id as string) = dv.op_id
         AND cast(tu.tu_code as string) = dv.tu_code
@@ -74,11 +74,11 @@ WITH
     LEFT JOIN
       prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup filg
       ON filg.id = tl.farIntegrationLineGroupId
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_sysuser su
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_sysuser su
       ON
         su.email = cs.cs_sysuser_email
         AND su.systemType = 'pos'
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_usroperator uo
+    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_usroperator uo
       ON uo.id = su.usrOperatorId
     LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_usruser uu
       ON cast(uu.id as string) = cast(uo.usrUserId as string)

@@ -57,7 +57,7 @@ SELECT
    -- SUM(qt_ticket)      AS qt_sale,
     SUM(qt_transaction)  qt_venda,
     SUM(valor_total)      AS vl_sale,
-    'r0097'             AS ds_treport_name
+    'h0097'             AS ds_treport_name
 FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0097_sale_ticket` 
 WHERE ds_device_type = 'POS'
 --(ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM'
