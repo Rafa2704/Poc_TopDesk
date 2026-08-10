@@ -1,0 +1,15 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_trs_tmb001_trn_usageqrcode",
+  tags: ["commercial"],
+  description: "Tabela trn_usageqrcode tipada e persistida via Merge Incremental",
+  uniqueKey: ["tuq_id"],
+  bigquery: {
+    partitionBy: "DATE(tuq_createdat_tz)",
+    clusterBy: ["tuq_id"]
+  }
+}
+
+
+SELECT * FROM ${ref("tb_day_trs_tmb001_trn_usageqrcode")}
