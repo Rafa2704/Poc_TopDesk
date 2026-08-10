@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_sysuser",
+  tags: ["commercial"],
+  description: "Tabela SysUser tipada e persistida via Merge Incremental",
+  uniqueKey: ["sub"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_sysuser")}

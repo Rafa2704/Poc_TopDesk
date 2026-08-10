@@ -1,0 +1,31 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_usroperator",
+    tags: ["commercial"],
+    description: "Tabela UsrOperator tipada — operadores de transporte"
+}
+
+SELECT
+    REGEXP_REPLACE(id,                         r'\.0$', '') AS id,
+    REGEXP_REPLACE(usrUserId,                  r'\.0$', '') AS usrUserId,
+    REGEXP_REPLACE(toTransportOperatorId,      r'\.0$', '') AS toTransportOperatorId,
+    REGEXP_REPLACE(toTransportOperatorGroupId, r'\.0$', '') AS toTransportOperatorGroupId,
+    REGEXP_REPLACE(toOperatorGroupId,          r'\.0$', '') AS toOperatorGroupId,
+    CAST(admissionDate AS TIMESTAMP) AS admissionDate,
+    CAST(resignDate    AS TIMESTAMP) AS resignDate,
+    REGEXP_REPLACE(hrid,                       r'\.0$', '') AS hrid,
+    isMaster,
+    isActive,
+    blameUser,
+    CAST(createdAt  AS TIMESTAMP) AS createdAt,
+    CAST(updatedAt  AS TIMESTAMP) AS updatedAt,
+    comment,
+    REGEXP_REPLACE(externalId, r'\.0$', '') AS externalId,
+    operatorPin,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_usroperator")}

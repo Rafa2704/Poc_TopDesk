@@ -1,0 +1,28 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_sysuser",
+    tags: ["commercial"],
+    description: "Tabela SysUser tipada — usuários do sistema"
+}
+
+SELECT
+    sub,
+    email,
+    REGEXP_REPLACE(sysUserGroupId,  r'\.0$', '') AS sysUserGroupId,
+    isActive,
+    blameUser,
+   CAST(createdAt  AS TIMESTAMP) AS createdAt,
+   CAST(updatedAt  AS TIMESTAMP) AS updatedAt,
+    systemType,
+    REGEXP_REPLACE(comMerchantId,   r'\.0$', '') AS comMerchantId,
+    REGEXP_REPLACE(usrOperatorId,   r'\.0$', '') AS usrOperatorId,
+    createBySub,
+   CAST(lastActive AS TIMESTAMP) AS lastActive,
+    sysSession,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_sysuser")}

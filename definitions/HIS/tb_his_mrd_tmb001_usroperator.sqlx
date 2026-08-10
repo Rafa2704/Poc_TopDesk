@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_usroperator",
+  tags: ["commercial"],
+  description: "Tabela UsrOperator tipada e persistida via Merge Incremental",
+  uniqueKey: ["id"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_usroperator")}

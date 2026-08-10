@@ -1,0 +1,23 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_mrd_tmb001_dvc_transit_unit",
+    tags: ["commercial"],
+    description: "Tabela dvc_transit_unit tipada — unidades de trânsito"
+}
+
+SELECT
+    REGEXP_REPLACE(op_id,   r'\.0$', '') AS op_id,
+    REGEXP_REPLACE(tu_code, r'\.0$', '') AS tu_code,
+    REGEXP_REPLACE(tut_id,  r'\.0$', '') AS tut_id,
+    tu_desc,
+    tu_status,
+    tu_regdate,
+    tu_reguser,
+    REGEXP_REPLACE(tug_id,  r'\.0$', '') AS tug_id,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_mrd_tmb001_dvc_transit_unit")}
