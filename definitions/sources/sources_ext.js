@@ -100,7 +100,8 @@ const tables = [
   "tb_ext_trs_tmb001_com_trandt_medias",
   "tb_ext_mrd_tmb001_dvc_transit_unit",
   "tb_ext_mrd_tmb001_sysuser",
-  "tb_ext_mrd_tmb001_usroperator"
+  "tb_ext_mrd_tmb001_usroperator",
+  "tb_ext_mrd_tmb001_usrdocument"
 
 
 ];
