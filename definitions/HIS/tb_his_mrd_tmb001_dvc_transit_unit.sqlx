@@ -1,0 +1,10 @@
+config {
+  type: "incremental",
+  schema: "his",
+  name: "tb_his_mrd_tmb001_dvc_transit_unit",
+  tags: ["commercial"],
+  description: "Tabela dvc_transit_unit tipada e persistida via Merge Incremental",
+  uniqueKey: ["op_id", "tu_code"]
+}
+
+SELECT * FROM ${ref("tb_day_mrd_tmb001_dvc_transit_unit")}

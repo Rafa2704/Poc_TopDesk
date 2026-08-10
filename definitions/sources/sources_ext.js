@@ -97,7 +97,10 @@ const tables = [
   "tb_ext_trs_tmb001_qrc_offloaded",
   "tb_ext_trs_tpd001_incidentoptionalsecondtabsearchlist1items",
   "tb_ext_trs_tpd001_incidentoptionalsecondtabs",
-  "tb_ext_trs_tmb001_com_trandt_medias"
+  "tb_ext_trs_tmb001_com_trandt_medias",
+  "tb_ext_mrd_tmb001_dvc_transit_unit",
+  "tb_ext_mrd_tmb001_sysuser",
+  "tb_ext_mrd_tmb001_usroperator"
 
 
 ];
