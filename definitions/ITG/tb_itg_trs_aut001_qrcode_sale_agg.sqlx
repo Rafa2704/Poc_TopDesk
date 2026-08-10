@@ -14,9 +14,12 @@ config {
         "tb_itg_trs_tmb001_r0123_sale_atm_debit",
         "tb_itg_trs_tmb001_r0108_sale_app_pix",
         "tb_itg_trs_tmb001_r0109_app_debit",
-        "tb_itg_trs_tmb001_r0110_sale_whatsapp_pix"
+        "tb_itg_trs_tmb001_r0110_sale_whatsapp_pix",
+        "tb_itg_trs_tmb001_r0097_sale_ticket"
     ]
 }
+
+
 
 
 
@@ -36,10 +39,32 @@ SELECT
     SUM(vl_sale)      AS vl_sale,
     'n/a'             AS ds_treport_name
 FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_qrcode_sale_agg`
-WHERE (ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM'
+WHERE ((ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM')
+AND cd_pos_device <> '267'
 GROUP BY ALL
 
 UNION ALL
+
+SELECT
+    dt_transaction,
+    cd_pos_device,
+    ds_sale_network        AS nm_company,
+    nm_line,
+    nm_station,
+    ds_status    AS ds_status,
+    ds_device_type,
+    ds_payment_mode,
+   -- SUM(qt_ticket)      AS qt_sale,
+    SUM(qt_transaction)  qt_venda,
+    SUM(valor_total)      AS vl_sale,
+    'r0097'             AS ds_treport_name
+FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0097_sale_ticket` 
+WHERE ds_device_type = 'POS'
+--(ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM'
+GROUP BY ALL
+
+UNION ALL
+
 
 
 select 
