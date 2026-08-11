@@ -102,7 +102,8 @@ const tables = [
   "tb_ext_mrd_tmb001_sysuser",
   "tb_ext_mrd_tmb001_usroperator",
   "tb_ext_mrd_tmb001_usrdocument",
-  "tb_ext_trs_tmb001_trn_usageqrcode"
+  "tb_ext_trs_tmb001_trn_usageqrcode",
+  "tb_ext_trs_tmb001_app_onboardingrequest"
 
 
 ];
