@@ -1,0 +1,46 @@
+config {
+    type: "table",
+    schema: "day",
+    name: "tb_day_trs_tmb001_app_onboardingrequest",
+    tags: ["commercial"],
+    description: "Tabela app_onboardingrequest tipada — requisições de onboarding do APP"
+}
+
+SELECT
+    REGEXP_REPLACE(aor_id,       r'\.0$', '') AS aor_id,
+    aor_token,
+    aor_document,
+    aor_documenttype,
+    REGEXP_REPLACE(aor_legacyid, r'\.0$', '') AS aor_legacyid,
+    aor_legacyuuid,
+    aor_name,
+    aor_birthdate,
+    aor_statuscode,
+    aor_statusdescription,
+    aor_emailmasked,
+    aor_phonemasked,
+    aor_channel,
+    aor_status,
+    REGEXP_REPLACE(aor_attempts, r'\.0$', '') AS aor_attempts,
+    DATETIME(CAST(aor_createdat          AS TIMESTAMP), 'America/Sao_Paulo') AS aor_createdat,
+    DATETIME(CAST(aor_expiresat          AS TIMESTAMP), 'America/Sao_Paulo') AS aor_expiresat,
+    DATETIME(CAST(aor_validatedat        AS TIMESTAMP), 'America/Sao_Paulo') AS aor_validatedat,
+    DATETIME(CAST(aor_finishedat         AS TIMESTAMP), 'America/Sao_Paulo') AS aor_finishedat,
+    aor_keycloakuserid,
+    aor_errormessage,
+    aor_email,
+    aor_phone,
+    aor_legacypasswordhash,
+    DATETIME(CAST(aor_passwordvalidatedat AS TIMESTAMP), 'America/Sao_Paulo') AS aor_passwordvalidatedat,
+    aor_contacttype,
+    aor_challengecode,
+    DATETIME(CAST(aor_challengesentat    AS TIMESTAMP), 'America/Sao_Paulo') AS aor_challengesentat,
+    DATETIME(CAST(aor_verifiedat         AS TIMESTAMP), 'America/Sao_Paulo') AS aor_verifiedat,
+    aor_lastchallengepreview,
+    aor_fromlegacy,
+
+    "TMB001" AS origem,
+    CURRENT_TIMESTAMP() AS dt_processamento,
+    SESSION_USER() AS usuario_processamento
+
+FROM ${ref("tb_ext_trs_tmb001_app_onboardingrequest")}
