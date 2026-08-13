@@ -2,7 +2,7 @@ config {
     type: "table",
     schema: "itg",
     name: "tb_itg_trs_tmb001_r0052_sale_atm_debit",
-    tags: ["treport"],
+    tags: ["commercial"],
     description: "Relatório R0052 — Vendas débito canal ATM (dt_id=7). Inclui todas as transações de débito realizadas em terminais ATM, incluindo Bilhete Único (BU). Para a versão sem BU consultar R0107. Equivalente ao relatório legado R0052 do Postgres.",
     bigquery: {
         partitionBy: "dt_transaction"
