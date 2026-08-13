@@ -2,6 +2,7 @@ config {
   type: "table",
   schema: "itg",
   tags: ["commercial"],
+  description: "Relatório R0097 — Vendas de bilhetes e tickets. Ainda reflete o relatório h0097 (h=homolog no treport).",
   name: "tb_itg_trs_tmb001_r0097_sale_ticket",
   bigquery: {
     partitionBy: "dt_transaction"
