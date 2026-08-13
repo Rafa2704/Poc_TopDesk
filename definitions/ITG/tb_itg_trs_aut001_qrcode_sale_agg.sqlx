@@ -1,0 +1,220 @@
+config {
+    type: "table", 
+    schema: "itg",
+    name: "tb_itg_trs_aut001_qrcode_sale_agg",
+    tags: ["treport"],
+    description: "Relatório R0051 — Vendas ATM Pix (dt_id=7). Inclui todas as transações de Pix realizadas em terminais ATM, incluindo Bilhete Único (BU). Para a versão sem BU consultar R0107. Equivalente ao relatório legado R0051 do Postgres.",
+    bigquery: {
+        partitionBy: "dt_transaction"                                         
+    },
+   
+}
+
+
+
+
+
+
+WITH BASE AS (
+-- fluxo atual
+SELECT
+    dt_transaction,
+    cd_pos_device,
+    nm_company        AS nm_company,
+    nm_line,
+    nm_station,
+    ds_status_sale    AS ds_status,
+    ds_device_type,
+    ds_payment_mode,
+    SUM(qt_ticket)      AS qt_sale,
+    SUM(vl_sale)      AS vl_sale,
+    'n/a'             AS ds_treport_name
+FROM `prd-autopass-bi-001.itg.tb_itg_trs_top001_qrcode_sale_agg`
+WHERE ((ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM')
+AND cd_pos_device <> '267'
+GROUP BY ALL
+
+UNION ALL
+
+SELECT
+    dt_transaction,
+    cd_pos_device,
+    ds_sale_network        AS nm_company,
+    nm_line,
+    nm_station,
+    ds_status     AS ds_status,
+   'BILHETERIA'   AS  ds_device_type,
+    ds_payment_mode,
+   -- SUM(qt_ticket)      AS qt_sale,
+    SUM(qt_transaction)  qt_venda,
+    SUM(valor_total)      AS vl_sale,
+    'h0097'             AS ds_treport_name
+FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0097_sale_ticket` 
+WHERE ds_device_type = 'POS'
+--(ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM'
+GROUP BY ALL
+
+UNION ALL
+
+
+
+select 
+  dt_transaction,
+  cd_pos_device,
+  nm_company,
+  nm_line,
+  nm_station,
+  ds_status,
+  'ATM' ds_device_type,
+  'PIX' ds_payment_mode,
+  SUM(vl_received) / 5.4 AS qt_venda,
+ -- count(cd_transaction) qt_venda,
+  sum(vl_received) vl_recebido,
+  'r0117' as ds_treport_name
+from  `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp`
+where ds_product like '%QRCODE%'
+and dt_transaction >= '2026-05-01'
+group by all
+ 
+ union all
+ select dt_transaction,cd_pos_device, nm_company, nm_line, nm_station, ds_status,
+ 'ATM' ds_device_type,
+ 'DINHEIRO' ds_payment_mode,
+  SUM(vl_received) / 5.4 AS qt_venda,
+-- COUNT(cd_transaction)qt_venda,
+ sum(vl_received) vl_recebido,
+ 'r0115' as ds_treport_name
+ from `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp`
+ where ds_product like '%QRCODE%'
+ and dt_transaction >= '2026-05-01'
+ group by all
+ 
+ union all
+ select dt_transaction,cd_pos_device, ''nm_company, ''nm_line, ''nm_station, ds_status,
+ 'ATM' ds_device_type,
+ 'VOUCHER' ds_payment_mode,
+  SUM(vl_received) / 5.4 AS qt_venda,
+ --COUNT(cd_transaction)qt_venda,
+ sum(vl_received) vl_recebido,
+  'r0113' as ds_treport_name
+ from `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp`
+ where ds_product_type like '%QRCODE%'
+ and dt_transaction >= '2026-05-01'
+ group by all
+ 
+union all
+select dt_transaction,cd_pos_device, nm_company, nm_line, nm_station, ds_status,
+'ATM' ds_device_type,
+'DÉBITO' ds_payment_mode,
+ SUM(vl_received) / 5.4 AS qt_venda,
+--COUNT(cd_transaction)qt_venda,
+sum(vl_received) vl_recebido ,
+'r0123' as ds_treport_name
+
+from dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0123_sale_atm_debit
+--`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0052_sale_atm_debit`
+where ds_product like '%QRCODE%'
+and dt_transaction >= '2026-05-01'
+group by all
+
+
+-- -- orbi atm 2025 em diante
+-- SELECT
+--     dt_transaction,
+--     cd_pos_device,
+--     ds_sale_network,
+--     nm_line,
+--     nm_station,
+--     ds_status,
+--     ds_device_type,
+--     ds_payment_mode,
+--     SUM(qt_transaction) AS qt_sale,
+--     SUM(vl_received)    AS vl_sale,
+--     'r0107'             AS ds_treport_name
+-- FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0107_sale_atm_consolidated_abasp`
+-- WHERE ds_device_type = 'ATM'
+--   AND ds_product LIKE '%QRCODE%'
+--   AND dt_transaction >= '2025-01-01'
+-- GROUP BY ALL
+
+UNION ALL
+
+-- apps pix novo
+SELECT
+    dt_transaction,
+    cd_pos_device,
+   SAFE_CAST(NULL AS STRING)              AS nm_company,
+   SAFE_CAST(NULL AS STRING)              AS nm_line,
+   SAFE_CAST(NULL AS STRING)              AS nm_station,
+    ds_status,
+    'Novo App Pix'    AS ds_device_type,
+    ds_payment_mode,
+     SUM(vl_total) / 5.4 AS qt_venda,
+   -- SUM(qt_transaction) AS qt_sale,
+    SUM(vl_total)       AS vl_sale,
+    'r0108'             AS ds_treport_name
+FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0108_sale_app_pix`
+WHERE ds_product = 'QRCODE UNITARIO'
+GROUP BY ALL
+
+UNION ALL
+
+-- app débito novo
+SELECT
+    data_trans        AS dt_transaction,
+   SAFE_CAST(NULL AS STRING)             AS cd_pos_device,
+   SAFE_CAST(NULL AS STRING)              AS nm_company,
+   SAFE_CAST(NULL AS STRING)              AS nm_line,
+   SAFE_CAST(NULL AS STRING)              AS nm_station,
+    status_orbi       AS ds_status,
+    'Novo App Debit'  AS ds_device_type,
+    forma_pagamento   AS ds_payment_mode,
+     SUM(valor_total) / 5.4 AS qt_venda,
+   -- SUM(quantidade)   AS qt_sale,
+    SUM(valor_total)  AS vl_sale,
+    'r0109'           AS ds_treport_name
+FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
+WHERE produto = 'QRCODE UNITARIO'
+GROUP BY ALL
+
+UNION ALL
+
+-- orbi novo whatsapp
+SELECT
+    dt_transaction,
+    cd_pos_device,
+   SAFE_CAST(NULL AS STRING)                AS nm_company,
+    SAFE_CAST(NULL AS STRING)                AS nm_line,
+   SAFE_CAST(NULL AS STRING)                AS nm_station,
+    ds_status,
+    'Novo Whatsapp'   AS ds_device_type,
+    ds_payment_mode,
+     SUM(vl_total) / 5.4 AS qt_venda,
+  --  COUNT(cd_transaction) AS qt_sale,
+    SUM(vl_total)         AS vl_sale,
+    'r0110'               AS ds_treport_name
+FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0110_sale_whatsapp_pix`
+WHERE ds_product LIKE '%QRCODE%'
+  AND dt_transaction >= '2026-05-01'
+GROUP BY ALL
+)
+
+SELECT
+    dt_transaction,
+    cd_pos_device,
+    nm_company,
+    nm_line,
+    nm_station,
+    ds_status,
+    ds_device_type,
+    ds_payment_mode,
+    ds_treport_name,
+    SUM(qt_sale) AS qt_sale,
+    SUM(vl_sale) AS vl_sale
+FROM BASE
+GROUP BY ALL
+
+
+ 
+
+ 
