@@ -49,7 +49,8 @@ SELECT
     SUM(qt_transaction)  qt_venda,
     SUM(valor_total)      AS vl_sale,
     'h0097'             AS ds_treport_name
-FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0097_sale_ticket` 
+FROM ${ref("tb_itg_trs_tmb001_r0097_sale_ticket")}
+--`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0097_sale_ticket` 
 WHERE ds_device_type = 'POS'
 --(ds_device_type = 'ATM' AND dt_transaction < '2026-05-01') OR ds_device_type <> 'ATM'
 GROUP BY ALL
@@ -71,7 +72,8 @@ select
  -- count(cd_transaction) qt_venda,
   sum(vl_received) vl_recebido,
   'r0117' as ds_treport_name
-from  `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp`
+from ${ref("tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp")}
+-- `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp`
 where ds_product like '%QRCODE%'
 and dt_transaction >= '2026-05-01'
 group by all
@@ -84,7 +86,8 @@ group by all
 -- COUNT(cd_transaction)qt_venda,
  sum(vl_received) vl_recebido,
  'r0115' as ds_treport_name
- from `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp`
+ from  ${ref("tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp")}
+ --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp`
  where ds_product like '%QRCODE%'
  and dt_transaction >= '2026-05-01'
  group by all
@@ -97,7 +100,8 @@ group by all
  --COUNT(cd_transaction)qt_venda,
  sum(vl_received) vl_recebido,
   'r0113' as ds_treport_name
- from `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp`
+ from ${ref("tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp")}
+ --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp`
  where ds_product_type like '%QRCODE%'
  and dt_transaction >= '2026-05-01'
  group by all
@@ -111,7 +115,8 @@ select dt_transaction,cd_pos_device, nm_company, nm_line, nm_station, ds_status,
 sum(vl_received) vl_recebido ,
 'r0123' as ds_treport_name
 
-from dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0123_sale_atm_debit
+from ${ref("tb_itg_trs_tmb001_r0123_sale_atm_debit")}
+--dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0123_sale_atm_debit
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0052_sale_atm_debit`
 where ds_product like '%QRCODE%'
 and dt_transaction >= '2026-05-01'
@@ -153,7 +158,8 @@ SELECT
    -- SUM(qt_transaction) AS qt_sale,
     SUM(vl_total)       AS vl_sale,
     'r0108'             AS ds_treport_name
-FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0108_sale_app_pix`
+FROM ${ref("tb_itg_trs_tmb001_r0108_sale_app_pix")}
+--`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0108_sale_app_pix`
 WHERE ds_product = 'QRCODE UNITARIO'
 GROUP BY ALL
 
@@ -173,7 +179,8 @@ SELECT
    -- SUM(quantidade)   AS qt_sale,
     SUM(valor_total)  AS vl_sale,
     'r0109'           AS ds_treport_name
-FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
+FROM ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
+--`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
 WHERE produto = 'QRCODE UNITARIO'
 GROUP BY ALL
 
@@ -193,7 +200,8 @@ SELECT
   --  COUNT(cd_transaction) AS qt_sale,
     SUM(vl_total)         AS vl_sale,
     'r0110'               AS ds_treport_name
-FROM `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0110_sale_whatsapp_pix`
+FROM ${ref("tb_itg_trs_tmb001_r0110_sale_whatsapp_pix")}
+--`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0110_sale_whatsapp_pix`
 WHERE ds_product LIKE '%QRCODE%'
   AND dt_transaction >= '2026-05-01'
 GROUP BY ALL
