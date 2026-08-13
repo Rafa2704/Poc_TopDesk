@@ -3,6 +3,7 @@ config {
     schema: "itg",
     name: "tb_itg_trs_aut001_credit_sale_sale_agg",
     tags: ["treport"],
+    description: "Visão consolidada e agregada de vendas de créditos/recargas por canal, produto, modalidade de pagamento e operadora. Unifica dados legados e novos relatórios (Rede de Vendas, App TOP, WhatsApp, ATM, Web/VT).",
     description: "",
     bigquery: {
         partitionBy: "dt_transaction"                                         

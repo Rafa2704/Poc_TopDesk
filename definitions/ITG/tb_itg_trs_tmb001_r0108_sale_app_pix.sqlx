@@ -3,6 +3,7 @@ config {
   schema: "itg",
   description: "",
   tags: ["commercial"],
+  description: "Relatório R0108 — Vendas PIX via aplicativo. Inclui informações detalhadas de conciliação e transações PIX.",
   bigquery: {
     partitionBy: "dt_transaction",
   }

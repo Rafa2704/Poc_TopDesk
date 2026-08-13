@@ -3,7 +3,7 @@ config {
     schema: "itg",
     name: "tb_itg_trs_aut001_qrcode_sale_agg",
     tags: ["treport"],
-    description: "Relatório R0051 — Vendas ATM Pix (dt_id=7). Inclui todas as transações de Pix realizadas em terminais ATM, incluindo Bilhete Único (BU). Para a versão sem BU consultar R0107. Equivalente ao relatório legado R0051 do Postgres.",
+    description: "Visão consolidada e agregada das vendas de QRCode por dispositivo, linha, estação e modalidade de pagamento. Consolida dados legados e novos relatórios (R0097, R0108, R0109, R0110, R0113, R0115, R0117 e R0123).",
     bigquery: {
         partitionBy: "dt_transaction"                                         
     },

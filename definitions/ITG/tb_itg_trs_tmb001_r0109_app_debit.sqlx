@@ -3,8 +3,7 @@ config {
     schema: "itg",
     name: "tb_itg_trs_tmb001_r0109_app_debit",
     tags: ["commercial"],
-    description: "Relatório R0110 — Vendas PIX canal WhatsApp novo (cm_id=6). Inclui status de conciliação. Exclui BU. Equivalente ao relatório legado R0110 do Postgres.",
-    bigquery: {
+    description: "Relatório R0109 — Vendas débito via aplicativo. Registra pagamentos efetuados na modalidade débito pelo app.",    bigquery: {
         partitionBy: "data_trans"
     }
 }
