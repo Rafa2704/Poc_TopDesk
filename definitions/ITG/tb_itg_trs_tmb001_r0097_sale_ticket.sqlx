@@ -1,12 +1,13 @@
 config {
   type: "table",
   schema: "itg",
-  tags: ["FORA"],
+  tags: ["commercial"],
   name: "tb_itg_trs_tmb001_r0097_sale_ticket",
   bigquery: {
     partitionBy: "dt_transaction"
-    }
+  }
 }
+
 WITH
   r0097 AS (
     SELECT
@@ -28,8 +29,8 @@ WITH
       ctxpm.cpm_id AS pagamento_id,
       cpm.cpm_desc AS pagamento,
       1 AS quantidade,
-       ctd.ctm_receivedvalue               as qtd,
-       ctd.ctm_value valor, 
+      ctd.ctm_receivedvalue as qtd,
+      ctd.ctm_value valor, 
       ctd.ctm_value * ctd.ctm_receivedvalue AS valor_total,
       ctm.ctm_value / ctd.ctm_receivedvalue AS tarifa,
       'Venda QRCode' AS tipo,
@@ -43,55 +44,51 @@ WITH
       cm.cm_desc AS rede_de_vendas,
       ddt.dt_desc AS tipo_dispositivo,
       ctxpm.ctmxcpm_nsu_acquirer AS NSU
-    FROM prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt ctm
-    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant cm
+    FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ctm
+    INNER JOIN ${ref("tb_his_mrd_tmb001_com_merchant")} cm
       ON cm.cm_id = ctm.cm_id
-    INNER JOIN prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd 
+    INNER JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd 
       ON ctd.ctm_id = ctm.ctm_id
-    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp
+    INNER JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp
       ON cp.cp_id = ctd.cp_id
-    INNER JOIN
-      prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode ctxpm
+    INNER JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm
       ON ctxpm.ctm_id = ctm.ctm_id
-    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_payment_mode cpm
+    INNER JOIN ${ref("tb_his_mrd_tmb001_com_payment_mode")} cpm
       ON cpm.cpm_id = ctxpm.cpm_id
-    INNER JOIN prd-autopass-ed-001.his.tb_his_trs_tmb001_com_service cs
+    INNER JOIN ${ref("tb_his_trs_tmb001_com_service")} cs
       ON cs.cs_id = ctm.cs_id
-    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dv
+    INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dv
       ON dv.dv_id = ctm.dv_id
-    INNER JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device_type ddt
+    INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device_type")} ddt
       ON ddt.dt_id = dv.dt_id
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_trs_tmb001_com_trandt_medias ctdm
+    LEFT JOIN ${ref("tb_his_trs_tmb001_com_trandt_medias")} ctdm
       ON ctdm.ctd_id = ctd.ctd_id
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_dvc_transit_unit tu
-      ON
-        cast(tu.op_id as string) = dv.op_id
-        AND cast(tu.tu_code as string) = dv.tu_code
-    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_operator op
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_transit_unit")} tu
+      ON cast(tu.op_id as string) = dv.op_id
+      AND cast(tu.tu_code as string) = dv.tu_code
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_operator")} op
       ON op.op_id = dv.op_id
-    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_toline tl
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_toline")} tl
       ON tl.id = dv.dv_line_id
-    LEFT JOIN
-      prd-autopass-ed-001.his.tb_his_mrd_tmb001_farintegrationlinegroup filg
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg
       ON filg.id = tl.farIntegrationLineGroupId
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_sysuser su
-      ON
-        su.email = cs.cs_sysuser_email
-        AND su.systemType = 'pos'
-    LEFT JOIN dev-autopass-bi-001.his.tb_his_mrd_tmb001_usroperator uo
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_sysuser")} su
+      ON su.email = cs.cs_sysuser_email
+      AND su.systemType = 'pos'
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_usroperator")} uo
       ON uo.id = su.usrOperatorId
-    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_usruser uu
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_usruser")} uu
       ON cast(uu.id as string) = cast(uo.usrUserId as string)
     LEFT JOIN prd-autopass-bi-001.his.tb_his_mrd_tmb001_qr_media qm
       ON cast(qm.cd_qr_media as string) = ctdm.ctdm_mediaid
-    LEFT JOIN prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status cts
+    LEFT JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts
       ON cts.cts_id = ctm.ctm_status
     WHERE
       TRUE
       AND ddt.dt_id IN ('7', '8')
       AND ctdm.ctdm_mediatype = '0'
-
 )
+
 SELECT
   Data_trans dh_transaction,
   Dt_trans dt_transaction,
@@ -153,12 +150,8 @@ FROM
       serie AS Serie,
       redevendas_id,
       coalesce(Empresa, 'AAAAA')
-        || coalesce(
-          Linha,
-          'AAAAA')
-        || coalesce(
-          Estacao,
-          'AAAAA')
+        || coalesce(Linha, 'AAAAA')
+        || coalesce(Estacao, 'AAAAA')
         || data AS Ordem
     FROM
       r0097
