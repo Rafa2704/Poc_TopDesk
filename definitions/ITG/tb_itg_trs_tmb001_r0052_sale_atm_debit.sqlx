@@ -10,6 +10,7 @@ config {
 }
 
 
+
 WITH R0052 AS (
 SELECT
     dd.tu_code                                                                              AS cod_atm,
@@ -35,16 +36,16 @@ FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
 JOIN  ${ref("tb_his_mrd_tmb001_com_merchant")}  cm    ON cm.cm_id    = ct.cm_id
 -- `prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant`               cm    ON cm.cm_id    = ct.cm_id
 
-JOIN ${ref("tb_his_trs_tmb001_com_trandt")}
+JOIN ${ref("tb_his_trs_tmb001_com_trandt")}  ctd   ON ctd.ctm_id  = ct.ctm_id
 --`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt`                 ctd   ON ctd.ctm_id  = ct.ctm_id
 
-JOIN ${ref("tb_his_mrd_tmb001_com_product")}
+JOIN ${ref("tb_his_mrd_tmb001_com_product")}  cp    ON cp.cp_id    = ctd.cp_id
 --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product`                cp    ON cp.cp_id    = ctd.cp_id
 
-JOIN ${ref("tb_his_mrd_tmb001_com_product_type")}
+JOIN ${ref("tb_his_mrd_tmb001_com_product_type")} cpt   ON cpt.cpt_id  = cp.cpt_id
 --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product_type`           cpt   ON cpt.cpt_id  = cp.cpt_id
 
-LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")}
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp   ON mtp.description = cp.cp_desc
 --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct`     mtp   ON mtp.description = cp.cp_desc
 
 JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm ON ctxpm.ctm_id = ct.ctm_id
