@@ -2,7 +2,7 @@ config {
     type: "table", 
     schema: "dfl",
     description: "Tabela itg de vendas por emv ",
-    tags: ["dfl"],
+    tags: ["emv"],
     bigquery: {
         partitionBy: "data_uso",
     }
