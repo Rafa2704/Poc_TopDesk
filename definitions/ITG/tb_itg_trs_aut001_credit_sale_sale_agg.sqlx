@@ -402,6 +402,8 @@ SELECT
     WHEN 'WEB'            THEN 'DIGITAL'
     WHEN 'WHATS'          THEN 'DIGITAL'
     WHEN 'VOUD'           THEN 'DIGITAL'
+    WHEN 'NOVO APP'       THEN 'DIGITAL'
+
     ELSE NULL
   END AS tipo_canal,
 
@@ -423,6 +425,7 @@ SELECT
     WHEN 'WHATS'          THEN 'WHATS'
     WHEN 'VOUD'           THEN 'APP'
     WHEN 'Novo Whatsapp'  THEN 'WHATS'
+    WHEN 'NOVO APP'       THEN 'APP'
     ELSE 'VERIFICAR_CANAL'
   END AS grupo_canal,
   CASE
