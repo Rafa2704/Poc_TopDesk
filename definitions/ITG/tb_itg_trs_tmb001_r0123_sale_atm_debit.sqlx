@@ -13,7 +13,7 @@ WITH R0123 AS (
 SELECT
     cm.cm_desc                                                                          AS rede_de_vendas,
     dd.tu_code                                                                          AS cod_atm,
-    tl.shortDesc                                                                        AS estacao,
+    tl.description                                                                        AS estacao,
     filg.description                                                                    AS linha,
     dd.op_id                                                                            AS empresa,
     ct.ctm_datetime_tz                                                                 AS data_hora_trans,
