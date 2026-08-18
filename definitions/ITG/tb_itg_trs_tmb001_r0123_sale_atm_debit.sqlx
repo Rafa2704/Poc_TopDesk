@@ -9,6 +9,7 @@ config {
     }
 }
 
+--TESTE
 WITH R0123 AS (
 SELECT
     cm.cm_desc                                                                          AS rede_de_vendas,
