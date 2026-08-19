@@ -12,7 +12,8 @@ WITH ultimo_uso AS (
   SELECT 
     LEFT(nr_card, 14) AS cartao_sem_digito,
     MAX(dt_card_usage) AS dt_ultimo_uso
-  FROM ${ref('tb_itg_trs_top001_card_usage_gate')}
+  FROM 
+  --${ref('tb_itg_trs_top001_card_usage_gate')}
   `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`
   GROUP BY LEFT(nr_card, 14)
 ),
