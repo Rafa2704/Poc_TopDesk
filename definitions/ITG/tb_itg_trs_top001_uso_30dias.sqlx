@@ -18,8 +18,15 @@ SELECT
   ds_consortium,
   ds_modal,
   nm_station,
+  cd_transport_provider,
+  cd_application,
+  cd_line_detail,
+  vl_fare,
+  cd_clearing,
+  cd_vehicle,
   fl_hot_list,
   dt_hot_list
-FROM ${ref('tb_itg_trs_top001_card_usage_gate')}
--- `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`
+FROM
+-- ${ref('tb_itg_trs_top001_card_usage_gate')}
+ `prd-autopass-bi-001.itg.tb_itg_trs_top001_card_usage_gate`
 WHERE dt_card_usage >= DATE_SUB(CURRENT_DATE('America/Sao_Paulo'), INTERVAL 30 DAY)
