@@ -1,0 +1,68 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0087_sale_atm_voucher",
+    tags: ["commercial"],
+    description: "Relatório R0087 — Vouchers ATM gerados e utilizados. Inclui BU e TOP. Para versão sem BU consultar R0113.",
+    bigquery: {
+        partitionBy: "DATE(data_uso)"
+    }
+}
+with R0087 AS (
+SELECT  pvc.pvc_createdat  AS data_hora_criacao,
+        DATE(pvc.pvc_createdat)  AS data_criacao,
+        TIME(pvc.pvc_createdat)  AS hora_criacao,
+        pvc.pvc_value           As valor,
+        ctmd.ctm_receivedvalue  As Valor_Recebido	,
+        CASE
+            WHEN pvc.pvc_media_type = '5' THEN 'BU'
+            ELSE 'TOP'
+        END AS tipo_produto,
+        pvc.pvc_media_id AS numero_media,
+        pvc.pvc_rnd AS numero_voucher,
+        dd.tu_code AS terminal_geracao,
+        ctmo.ctm_id as idtrn_geracao,
+        pvt.pvt_desc AS modo_geracao,
+        CASE
+            WHEN pvc.ctm_id_used IS NULL THEN 'Disponível'
+            ELSE 'Utilizado'
+        END AS status_voucher,
+        pvr.pvr_desc AS razao_voucher,
+        ddd.tu_code AS terminal_uso,
+        ctmd.ctm_datetime_tz  AS data_uso,
+        ctmd.ctm_datetime_tz  AS hora_uso,
+        pvc.pvc_expire_date  AS data_expiracao,
+        cts.cts_shortdesc   as status_orbi,
+        ctmd.ctm_externalid as external_id,
+        ctmo.ctm_legacy_id  as id_legado,
+        pvc.pvc_createdby   as usuario_emissor,
+        cts.cts_longdesc    as dsc_status_orbi 
+    
+   FROM ${ref("tb_his_trs_tmb001_pay_voucher")} pvc 
+   --`prd-autopass-ed-001.his.tb_his_trs_tmb001_pay_voucher`              pvc
+   JOIN ${ref("tb_his_mrd_tmb001_pay_voucher_reason")} pvr  ON pvr.pvr_id  = pvc.pvr_id
+   --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_reason` pvr  ON pvr.pvr_id  = pvc.pvr_id
+   LEFT JOIN ${ref("tb_his_mrd_tmb001_pay_voucher_type")} pvt  ON pvt.pvt_id  = pvc.pvt_id
+   --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_type`   pvt  ON pvt.pvt_id  = pvc.pvt_id
+   LEFT JOIN ${ref("tb_his_trs_tmb001_com_tranmt")} ctmo ON ctmo.ctm_id = pvc.ctm_id_orig
+   --`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt`      ctmo ON ctmo.ctm_id = pvc.ctm_id_orig
+   JOIN ${ref("tb_his_trs_tmb001_com_tranmt")} ctmd ON ctmd.ctm_id = pvc.ctm_id_used 
+   --`prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt`          ctmd ON ctmd.ctm_id = pvc.ctm_id_used                                                                                                                                                         
+   JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts  On cts.cts_id  = ctmd.ctm_status
+   --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status`      cts  On cts.cts_id  = ctmd.ctm_status  
+   LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_device")}  dd   ON dd.dv_id    = ctmo.dv_id
+   --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device`          dd   ON dd.dv_id    = ctmo.dv_id
+   LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_device")}  ddd  ON ddd.dv_id   = ctmd.dv_id
+   --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device`          ddd  ON ddd.dv_id   = ctmd.dv_id
+--    WHERE DATE(ctmo.ctm_datetime_tz) >= '2026-06-01'
+--    AND DATE(ctmd.ctm_datetime_tz) >= '2026-06-01'
+
+     )
+
+SELECT  
+  *,
+    'AUT001' cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    'TMB001' cd_system_source
+FROM R0087
