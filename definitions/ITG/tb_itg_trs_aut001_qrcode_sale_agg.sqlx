@@ -167,21 +167,21 @@ UNION ALL
 
 -- app débito novo
 SELECT
-    data_trans        AS dt_transaction,
+    dt_transaction        AS dt_transaction,
    SAFE_CAST(NULL AS STRING)             AS cd_pos_device,
    SAFE_CAST(NULL AS STRING)              AS nm_company,
    SAFE_CAST(NULL AS STRING)              AS nm_line,
    SAFE_CAST(NULL AS STRING)              AS nm_station,
-    status_orbi       AS ds_status,
+    ds_status       AS ds_status,
     'NOVO APP'  AS ds_device_type,
-    forma_pagamento   AS ds_payment_mode,
-     SUM(valor_total) / 5.4 AS qt_venda,
+    ds_payment_mode   AS ds_payment_mode,
+     SUM(vl_total) / 5.4 AS qt_venda,
    -- SUM(quantidade)   AS qt_sale,
-    SUM(valor_total)  AS vl_sale,
+    SUM(vl_total)  AS vl_sale,
     'r0109'           AS ds_treport_name
 FROM ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
-WHERE produto = 'QRCODE UNITARIO'
+WHERE ds_product = 'QRCODE UNITARIO'
 GROUP BY ALL
 
 UNION ALL

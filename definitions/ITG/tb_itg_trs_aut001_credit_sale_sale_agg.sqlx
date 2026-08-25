@@ -336,7 +336,7 @@ UNION ALL
 
 -- r0109 App Débito novo
 SELECT
-    data_trans        AS dt_transaction,
+    dt_transaction        AS dt_transaction,
   --  hora_trans        AS tm_transaction,
    SAFE_CAST(NULL AS STRING)              AS nm_company,
     'NA'              AS provider,
@@ -346,15 +346,15 @@ SELECT
     SAFE_CAST(NULL AS STRING)              AS nm_station,
     SAFE_CAST(NULL AS STRING)              AS nm_line,
     SAFE_CAST(NULL AS STRING)              AS cd_pos_device,
-    produto           AS ds_product,
-    forma_pagamento   AS ds_payment_mode,
-    SUM(quantidade)   AS qt_venda,
-    SUM(valor_total)  AS vl_recebido,
+    ds_product           AS ds_product,
+    ds_payment_mode   AS ds_payment_mode,
+    SUM(qt_transaction)   AS qt_venda,
+    SUM(vl_total)  AS vl_recebido,
     'r0109'           AS ds_treport_name,
-     status_orbi      AS ds_status 
+     ds_status      AS ds_status 
 FROM ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
-WHERE produto <> 'QRCODE UNITARIO'
+WHERE ds_product <> 'QRCODE UNITARIO'
 GROUP BY ALL
 
 UNION ALL
