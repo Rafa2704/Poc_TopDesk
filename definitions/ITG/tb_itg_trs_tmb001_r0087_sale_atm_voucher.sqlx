@@ -5,7 +5,7 @@ config {
     tags: ["commercial"],
     description: "Relatório R0087 — Vouchers ATM gerados e utilizados. Inclui BU e TOP. Para versão sem BU consultar R0113.",
     bigquery: {
-        partitionBy: "DATE(data_uso)"
+        partitionBy: "dt_transaction"
     }
 }
 with R0087 AS (
@@ -41,7 +41,7 @@ SELECT  pvc.pvc_createdat  AS data_hora_criacao,
    FROM ${ref("tb_his_trs_tmb001_pay_voucher")} pvc 
    --`prd-autopass-ed-001.his.tb_his_trs_tmb001_pay_voucher`              pvc
    JOIN ${ref("tb_his_mrd_tmb001_pay_voucher_reason")} pvr  ON pvr.pvr_id  = pvc.pvr_id
-   --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_reason` pvr  ON pvr.pvr_id  = pvc.pvr_id
+  --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_reason` pvr  ON pvr.pvr_id  = pvc.pvr_id
    LEFT JOIN ${ref("tb_his_mrd_tmb001_pay_voucher_type")} pvt  ON pvt.pvt_id  = pvc.pvt_id
    --`prd-autopass-ed-001.his.tb_his_mrd_tmb001_pay_voucher_type`   pvt  ON pvt.pvt_id  = pvc.pvt_id
    LEFT JOIN ${ref("tb_his_trs_tmb001_com_tranmt")} ctmo ON ctmo.ctm_id = pvc.ctm_id_orig
@@ -59,8 +59,30 @@ SELECT  pvc.pvc_createdat  AS data_hora_criacao,
 
      )
 
-SELECT  
-  *,
+SELECT   
+    idtrn_geracao  cd_transaction,
+    terminal_geracao cd_pos_device,
+    data_hora_criacao dh_transaction,
+    data_criacao dt_transaction,
+    hora_criacao tm_transaction,
+    upper(modo_geracao) ds_type_generation,
+    upper(razao_voucher) ds_generation,
+    terminal_uso cd_pos_device_usage,
+    date(data_uso) dt_usage,
+    time(hora_uso) tm_usage,
+    date(data_expiracao) dt_expiration,
+    time(data_expiracao) tm_expiration,
+    numero_media cd_media,
+    numero_voucher  nr_voucher,
+    upper(tipo_produto)  ds_product_type,    
+    upper(status_voucher)  ds_status_voucher,
+    upper(status_orbi)  ds_status,
+    upper(dsc_status_orbi) ds_status_complete ,   
+    external_id  cd_external,
+    id_legado  cd_legacy,
+    valor vl_transaction,
+    Valor_Recebido vl_received,
+    usuario_emissor   as ds_user_issuer,
     'AUT001' cd_company,
     CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
     SESSION_USER() cd_created_by,
