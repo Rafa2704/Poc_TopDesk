@@ -47,7 +47,7 @@ SELECT
     ds_payment_mode,
    -- SUM(qt_ticket)      AS qt_sale,
     SUM(qt_transaction)  qt_venda,
-    SUM(valor_total)      AS vl_sale,
+    SUM(vl_total)      AS vl_sale,
     'h0097'             AS ds_treport_name
 FROM ${ref("tb_itg_trs_tmb001_r0097_sale_ticket")}
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0097_sale_ticket` 
@@ -68,9 +68,9 @@ select
   ds_status,
   'ATM' ds_device_type,
   'PIX' ds_payment_mode,
-  SUM(vl_received) / 5.4 AS qt_venda,
+  SUM(vl_total) / 5.4 AS qt_venda,
  -- count(cd_transaction) qt_venda,
-  sum(vl_received) vl_recebido,
+  sum(vl_total) vl_recebido,
   'r0117' as ds_treport_name
 from ${ref("tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp")}
 -- `dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp`
@@ -82,9 +82,9 @@ group by all
  select dt_transaction,cd_pos_device, nm_company, nm_line, nm_station, ds_status,
  'ATM' ds_device_type,
  'DINHEIRO' ds_payment_mode,
-  SUM(vl_received) / 5.4 AS qt_venda,
+  SUM(vl_total) / 5.4 AS qt_venda,
 -- COUNT(cd_transaction)qt_venda,
- sum(vl_received) vl_recebido,
+ sum(vl_total) vl_recebido,
  'r0115' as ds_treport_name
  from  ${ref("tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp")}
  --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp`
@@ -96,9 +96,9 @@ group by all
  select dt_transaction,cd_pos_device, ''nm_company, ''nm_line, ''nm_station, ds_status,
  'ATM' ds_device_type,
  'VOUCHER' ds_payment_mode,
-  SUM(vl_received) / 5.4 AS qt_venda,
+  SUM(vl_total) / 5.4 AS qt_venda,
  --COUNT(cd_transaction)qt_venda,
- sum(vl_received) vl_recebido,
+ sum(vl_total) vl_recebido,
   'r0113' as ds_treport_name
  from ${ref("tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp")}
  --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp`
@@ -110,12 +110,12 @@ union all
 select dt_transaction,cd_pos_device, nm_company, nm_line, nm_station, ds_status,
 'ATM' ds_device_type,
 'DEBITO' ds_payment_mode,
- SUM(vl_received) / 5.4 AS qt_venda,
+ SUM(vl_total) / 5.4 AS qt_venda,
 --COUNT(cd_transaction)qt_venda,
-sum(vl_received) vl_recebido ,
+sum(vl_total) vl_recebido ,
 'r0123' as ds_treport_name
 
-from ${ref("tb_itg_trs_tmb001_r0123_sale_atm_debit")}
+from ${ref("tb_itg_trs_tmb001_r0123_sale_atm_debit_abasp")}
 --dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0123_sale_atm_debit
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0052_sale_atm_debit`
 where ds_product like '%QRCODE%'
@@ -179,8 +179,9 @@ SELECT
    -- SUM(quantidade)   AS qt_sale,
     SUM(vl_total)  AS vl_sale,
     'r0109'           AS ds_treport_name
-FROM ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
+FROM ${ref("tb_itg_trs_tmb001_r0109_sale_app_debit")}
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
+--dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit
 WHERE ds_product = 'QRCODE UNITARIO'
 GROUP BY ALL
 
