@@ -1,0 +1,119 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0123_sale_atm_debit_abasp",
+    tags: ["commercial"],
+    description: "Relatório R0123 — Vendas débito canal ATM (dt_id=7). Inclui todas as transações de débito realizadas em terminais ATM, incluindo Bilhete Único (BU). Para a versão sem BU consultar R0107. Equivalente ao relatório legado R0052 do Postgres.",
+    bigquery: {
+        partitionBy: "dt_transaction"
+    }
+}
+select
+  cd_transaction,
+  cd_com_transaction, 
+  cd_pos_device,
+  dh_transaction,
+  dt_transaction,
+  tm_transaction,
+  nm_company,
+  nm_line,
+  nm_station, 
+  ds_product_type,
+  cd_product_type,
+  ds_product,
+  cd_product,
+  nr_nsu_acquirer,
+  cd_acquirer_authorization,
+  ds_status,
+  vl_transaction,
+  vl_total,  
+  CURRENT_TIMESTAMP() ts_processing,
+  cd_company,
+  CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+  SESSION_USER() cd_created_by,
+  cd_system_source 
+from
+  ${ref("tb_itg_tmb001_sale_master")}
+WHERE cd_report_origin = 'R0123_R0052'
+AND filtrobu <> '5'
+
+
+
+-- config {
+--     type: "table",
+--     schema: "itg",
+--     name: "tb_itg_trs_tmb001_r0123_sale_atm_debit",
+--     tags: ["commercial"],
+--     description: "Relatório R0123 — Vendas débito canal ATM (dt_id=7). Inclui todas as transações de débito realizadas em terminais ATM, incluindo Bilhete Único (BU). Para a versão sem BU consultar R0107. Equivalente ao relatório legado R0052 do Postgres.",
+--     bigquery: {
+--         partitionBy: "dt_transaction"
+--     }
+-- }
+
+-- --TESTE
+-- WITH R0123 AS (
+-- SELECT
+--     cm.cm_desc                                                                          AS rede_de_vendas,
+--     dd.tu_code                                                                          AS cod_atm,
+--     tl.description                                                                        AS estacao,
+--     filg.description                                                                    AS linha,
+--     dd.op_id                                                                            AS empresa,
+--     ct.ctm_datetime_tz                                                                 AS data_hora_trans,
+--     DATE(ct.ctm_datetime_tz)                                                           AS data_trans,
+--     TIME(ct.ctm_datetime_tz)                                                           AS hora_trans,
+--     ct.ctm_receivedvalue                                                               AS valor_recebido,
+--     ctd.ctm_value * ctd.ctm_receivedvalue                                             AS valor,
+--     ctxpm.ctmxcpm_nsu_acquirer                                                         AS nsu_adquirente,
+--     ctxpm.ctmxcpm_aut_acquirer                                                         AS cod_aprov_adquirente,
+--     cp.cpt_id,
+--     CASE
+--         WHEN cp.cpt_id = '0' THEN 'QRCODE'
+--         WHEN cp.cpt_id = '5' THEN 'BU'
+--         ELSE 'TOP'
+--     END                                                                                AS tipo_produto,
+--     cp.cp_id                                                                           AS codigo_produto,
+--     cp.cp_desc                                                                         AS produto,
+--     cp.cp_desc                                                                         AS aplicacao,
+--     ct.ctm_id                                                                          AS idtrn,
+--     ct.ctm_status                                                                      AS status_orbi,
+--     ct.ctt_id
+-- FROM ${ref("tb_his_trs_tmb001_com_tranmt")}                                            ct
+-- JOIN ${ref("tb_his_mrd_tmb001_com_merchant")}                                         cm    ON cm.cm_id    = ct.cm_id
+-- JOIN ${ref("tb_his_trs_tmb001_com_trandt")}                                           ctd   ON ctd.ctm_id  = ct.ctm_id
+-- JOIN ${ref("tb_his_mrd_tmb001_com_product")}                                          cp    ON cp.cp_id    = ctd.cp_id
+-- JOIN ${ref("tb_his_mrd_tmb001_com_product_type")}                                     cpt   ON cpt.cpt_id  = cp.cpt_id
+-- JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")}                            ctxpm ON ctxpm.ctm_id = ct.ctm_id
+-- JOIN ${ref("tb_his_mrd_tmb001_dvc_device")}                                           dd    ON dd.dv_id    = ct.dv_id
+-- JOIN ${ref("tb_his_mrd_tmb001_toline")}                                               tl    ON tl.id       = dd.dv_line_id
+-- JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")}                              filg  ON filg.id     = tl.farIntegrationLineGroupId
+-- WHERE dd.dt_id    = '7'
+--   AND ctxpm.cpm_id = '2'
+--   AND (cpt.cpt_id != '5' OR cpt.cpt_id IS NULL)
+--   AND DATE(ct.ctm_datetime_tz) >= '2025-01-01' 
+-- )
+
+-- SELECT
+--     idtrn  cd_transaction,
+--     ctt_id   cd_com_transaction, 
+--     cod_atm cd_pos_device,
+--     data_hora_trans  dh_transaction,
+--     data_trans  dt_transaction,
+--     hora_trans tm_transaction,
+--     upper(empresa)  nm_company,
+--     upper(linha)  nm_line,
+--     upper(estacao)  nm_station, 
+--     upper(tipo_produto)  ds_product_type,
+--     codigo_produto  cd_product_type,
+--     upper(produto)  ds_product,
+--     aplicacao  cd_product,
+--     nsu_adquirente  nr_nsu_acquirer,
+--     cod_aprov_adquirente  cd_acquirer_authorization,
+--     upper(status_orbi)  ds_status,
+--     valor  vl_transaction,
+--     valor_recebido  vl_received,  
+--     CURRENT_TIMESTAMP() ts_processing,
+--     'AUT001' cd_company,
+--     CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+--     SESSION_USER() cd_created_by,
+--     'TMB001' cd_system_source         
+-- FROM R0123

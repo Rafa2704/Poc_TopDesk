@@ -217,7 +217,7 @@ SELECT
     ds_product,
     'PIX'             AS ds_payment_mode,
     COUNT(cd_transaction) AS qt_venda,
-    SUM(vl_received)      AS vl_recebido,
+    SUM(vl_total)      AS vl_recebido,
     'r0117'           AS ds_treport_name,
     ds_status
 FROM  ${ref("tb_itg_trs_tmb001_r0117_sale_atm_pix_abasp")} 
@@ -243,7 +243,7 @@ SELECT
     ds_product,
     'DINHEIRO'        AS ds_payment_mode,
     COUNT(cd_transaction) AS qt_venda,
-    SUM(vl_received)      AS vl_recebido,
+    SUM(vl_total)      AS vl_recebido,
     'r0115'           AS ds_treport_name,
     ds_status
 FROM ${ref("tb_itg_trs_tmb001_r0115_sale_atm_cash_abasp")} 
@@ -270,7 +270,7 @@ SELECT
     ds_product_type   AS ds_product,
     'VOUCHER'         AS ds_payment_mode,
     COUNT(cd_transaction) AS qt_venda,
-    SUM(vl_received)      AS vl_recebido,
+    SUM(vl_total)      AS vl_recebido,
     'r0113'           AS ds_treport_name,
     ds_status
 FROM ${ref("tb_itg_trs_tmb001_r0113_sale_atm_voucher_abasp")}
@@ -295,10 +295,10 @@ SELECT
     ds_product,
     'DEBITO'          AS ds_payment_mode,
     COUNT(cd_transaction) AS qt_venda,
-    SUM(vl_received)      AS vl_recebido,
+    SUM(vl_total)      AS vl_recebido,
     'r0123'           AS ds_treport_name,
     ds_status
-FROM  ${ref("tb_itg_trs_tmb001_r0123_sale_atm_debit")}
+FROM  ${ref("tb_itg_trs_tmb001_r0123_sale_atm_debit_abasp")}
 --dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0123_sale_atm_debit
 --`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0052_sale_atm_debit`
 WHERE ds_product_type <> 'BU'
@@ -352,8 +352,9 @@ SELECT
     SUM(vl_total)  AS vl_recebido,
     'r0109'           AS ds_treport_name,
      ds_status      AS ds_status 
-FROM ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
---`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
+FROM
+-- ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
+`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
 WHERE ds_product <> 'QRCODE UNITARIO'
 GROUP BY ALL
 

@@ -1,0 +1,141 @@
+config {
+    type: "table",
+    schema: "itg",
+    name: "tb_itg_trs_tmb001_r0109_sale_app_debit",
+    tags: ["commercial"],
+    description: "Relatório R0109 — Vendas débito via aplicativo. Registra pagamentos efetuados na modalidade débito pelo app.",    bigquery: {
+        partitionBy: "dt_transaction"
+    }
+}
+
+SELECT
+    cd_transaction,
+    cd_transaction_cielo,
+    cd_acquirer_authorization,
+    dh_transaction,
+    dt_transaction,
+    tm_transaction,
+    cd_pos_device,
+    ds_product_type,
+    cd_product_type,
+    ds_product,
+    cd_product,
+    ds_status,
+    ds_pix_tx,
+    ds_pix_end_to_end,
+    ds_payment_mode,
+    ds_acquirer,
+    ds_card_brand,
+    vl_transaction,
+    qt_transaction,
+    vl_total,
+    CURRENT_TIMESTAMP() ts_processing,
+    cd_company,
+    CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+    SESSION_USER() cd_created_by,
+    cd_system_source	
+  from
+  ${ref("tb_itg_tmb001_sale_master")}
+WHERE cd_report_origin = 'R0109'
+
+
+
+
+
+
+
+-- config {
+--     type: "table",
+--     schema: "itg",
+--     name: "tb_itg_trs_tmb001_r0109_app_debit",
+--     tags: ["commercial"],
+--     description: "Relatório R0109 — Vendas débito via aplicativo. Registra pagamentos efetuados na modalidade débito pelo app.",    bigquery: {
+--         partitionBy: "dt_transaction"
+--     }
+-- }
+-- with rel0109 as (
+-- SELECT
+--     dd.tu_code                                                                          AS cod_terminal,
+--     ct.ctm_datetime_tz                                                                 AS data_hora_trans,
+--     DATE(ct.ctm_datetime_tz)                                                           AS data_trans,
+--     TIME(ct.ctm_datetime_tz)                                                           AS hora_trans,
+--     ctd.ctm_value                                                                      AS valor,
+--     ctd.ctm_receivedvalue                                                              AS quantidade,
+--     ct.ctm_receivedvalue                                                               AS valor_total,
+--    -- ctd.ctm_value * ctd.ctm_receivedvalue                                             AS valor_total,
+--     cpm.cpm_desc                                                                       AS forma_pagamento,
+--     ctxpm.ctmxcpm_acquirer_name                                                         AS acquirer_name,
+--     ctxpm.ctmxcpm_brand                                                                AS bandeira,
+--     ctxpm.ctmxcpm_nsu_acquirer                                                         AS Id_Transacao_Cielo,
+--     ctxpm.ctmxcpm_aut_acquirer                                                         AS cod_aprov_adquirente,
+--     ctxpm.ctmxcpm_pix_txid                                                              AS pix_tx_id,
+--     ctxpm.ctmxcpm_pix_endtoendid                                                       AS pix_end_to_end,
+--     CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END                                 AS tipo_produto,
+--     cp.cp_id                                                                           AS codigo_produto,
+--     cp.cp_desc                                                                         AS produto,
+--     mtp.code                                                                           AS aplicacao,
+--     ct.ctm_id                                                                          AS idtrn,
+--     cts.cts_shortdesc                                                                  AS status_orbi
+-- FROM ${ref("tb_his_trs_tmb001_com_tranmt")}                                            ct
+-- --prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt ct
+-- JOIN ${ref("tb_his_mrd_tmb001_com_merchant")}                                         cm  
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_merchant cm 
+-- ON cm.cm_id    = ct.cm_id
+-- JOIN ${ref("tb_his_trs_tmb001_com_trandt")}                                           ctd
+-- --prd-autopass-ed-001.his.tb_his_trs_tmb001_com_trandt ctd
+-- ON ctd.ctm_id  = ct.ctm_id
+-- JOIN ${ref("tb_his_mrd_tmb001_com_product")}                                          cp  
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product cp
+-- ON cp.cp_id    = ctd.cp_id
+-- JOIN ${ref("tb_his_mrd_tmb001_com_product_type")}                                     cpt  
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_product_type cpt
+-- ON cpt.cpt_id  = cp.cpt_id
+-- LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")}                               mtp  
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_medtransitproduct mtp 
+-- ON mtp.description = cp.cp_desc
+-- JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")}                            ctxpm 
+-- --prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode ctxpm
+-- ON ctxpm.ctm_id = ct.ctm_id
+-- JOIN ${ref("tb_his_mrd_tmb001_com_payment_mode")}                                     cpm 
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_payment_mode cpm 
+-- ON cpm.cpm_id  = ctxpm.cpm_id
+-- JOIN ${ref("tb_his_mrd_tmb001_dvc_device")}                                           dd   
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_dvc_device dd
+-- ON dd.dv_id    = ct.dv_id
+-- JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")}                                      cts
+-- --prd-autopass-ed-001.his.tb_his_mrd_tmb001_com_tran_status cts
+-- ON cts.cts_id  = ct.ctm_status
+-- WHERE ct.cm_id   = '4'
+--   AND dd.dt_id   = '6'
+--   AND ctxpm.cpm_id = '2'
+--   AND cts.cts_id IN ('A', 'P', 'V')
+--   AND COALESCE(ctxpm.ptr_id, '0') > '0'
+--  )
+
+-- SELECT 
+--     idtrn cd_transaction,
+--     Id_Transacao_Cielo cd_transaction_cielo,
+--     cod_aprov_adquirente  cd_acquirer_authorization,
+--     data_hora_trans dh_transaction,
+--     data_trans dt_transaction,
+--     hora_trans tm_transaction,
+--     cod_terminal cd_pos_device,
+--     upper(tipo_produto)  ds_product_type,
+--     codigo_produto  cd_product_type,
+--     upper(produto)  ds_product,
+--     aplicacao  cd_product,
+--     upper(status_orbi)  ds_status,
+--     pix_tx_id  ds_pix_tx,
+--     pix_end_to_end  ds_pix_end_to_end,
+--     upper(forma_pagamento)  ds_payment_mode,
+--     upper(acquirer_name)  ds_acquirer,
+--     upper(bandeira) ds_card_brand,
+--     valor vl_transaction,
+--     quantidade qt_transaction,
+--     valor_total vl_total,
+--     CURRENT_TIMESTAMP() ts_processing,
+--     'AUT001' cd_company,
+--     CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) nr_load_control,
+--     SESSION_USER() cd_created_by,
+--     'TMB001' cd_system_source	
+-- FROM rel0109
