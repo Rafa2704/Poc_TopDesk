@@ -353,8 +353,8 @@ SELECT
     'r0109'           AS ds_treport_name,
      ds_status      AS ds_status 
 FROM
--- ${ref("tb_itg_trs_tmb001_r0109_app_debit")}
-`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
+ ${ref("tb_itg_trs_tmb001_r0109_sale_app_debit")}
+--`dev-autopass-bi-001.itg.tb_itg_trs_tmb001_r0109_app_debit`
 WHERE ds_product <> 'QRCODE UNITARIO'
 GROUP BY ALL
 
