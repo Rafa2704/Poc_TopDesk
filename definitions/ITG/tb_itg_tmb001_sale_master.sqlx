@@ -1,0 +1,972 @@
+config {
+  type: "table",
+  schema: "itg",
+  name: "tb_itg_tmb001_sale_master",
+  tags: ["commercial"],
+  description: "Tabela dimensão",
+   bigquery: {
+    partitionBy: "dt_transaction",
+    clusterBy: ["ds_product", "cd_report_origin", "filtrobu"],
+  },
+}
+
+WITH
+
+R0087_R0113 AS (
+SELECT
+  pvc.pvc_createdat        AS data_hora_criacao,
+  DATE(pvc.pvc_createdat)  AS data_criacao,
+  TIME(pvc.pvc_createdat)  AS hora_criacao,
+  pvc.pvc_value            AS valor,
+  ctmd.ctm_receivedvalue   AS valor_recebido,
+  CASE WHEN pvc.pvc_media_type = '5' THEN 'BU' ELSE 'TOP' END AS tipo_produto,
+  pvc.pvc_media_id  AS numero_media,
+  pvc.pvc_rnd       AS numero_voucher,
+  dd.tu_code        AS terminal_geracao,
+  ctmo.ctm_id       AS idtrn_geracao,
+  pvt.pvt_desc      AS modo_geracao,
+  CASE WHEN pvc.ctm_id_used IS NULL THEN 'Disponível' ELSE 'Utilizado' END AS status_voucher,
+  pvr.pvr_desc      AS razao_voucher,
+  ddd.tu_code       AS terminal_uso,
+  ctmd.ctm_datetime_tz AS data_uso,
+  ctmd.ctm_datetime_tz AS hora_uso,
+  pvc.pvc_expire_date  AS data_expiracao,
+  cts.cts_shortdesc AS status_orbi,
+  ctmd.ctm_externalid AS external_id,
+  ctmo.ctm_legacy_id  AS id_legado,
+  pvc.pvc_createdby   AS usuario_emissor,
+  cts.cts_longdesc    AS dsc_status_orbi,
+  pvc.pvc_media_type  AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_pay_voucher")} pvc
+JOIN ${ref("tb_his_mrd_tmb001_pay_voucher_reason")} pvr ON pvr.pvr_id = pvc.pvr_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_pay_voucher_type")} pvt ON pvt.pvt_id = pvc.pvt_id
+LEFT JOIN ${ref("tb_his_trs_tmb001_com_tranmt")} ctmo ON ctmo.ctm_id = pvc.ctm_id_orig
+JOIN ${ref("tb_his_trs_tmb001_com_tranmt")} ctmd ON ctmd.ctm_id = pvc.ctm_id_used
+JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts ON cts.cts_id = ctmd.ctm_status
+LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd ON dd.dv_id = ctmo.dv_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} ddd ON ddd.dv_id = ctmd.dv_id
+
+-- WHERE TRUE 
+--   AND DATE(ctmd.ctm_datetime_tz) >= '2026-08-01'
+--    AND DATE(ctmo.ctm_datetime_tz) >= '2026-08-01'
+),
+
+R0097 AS (
+SELECT
+  ctm.ctm_datetime_tz AS Data_trans,
+  DATE(ctm.ctm_datetime_tz) AS Dt_trans,
+  TIME(ctm.ctm_datetime_tz) AS tm_trans,
+  ctm.cm_id AS redevendas_id,
+  coalesce(cm.cm_desc, ' ') AS redevendas,
+  coalesce(filg.description, ' ') AS Linha,
+  coalesce(tl.description, ' ') AS Estacao,
+  op.op_desc                    AS empresa, -- incluido 
+  dv.tu_code AS Terminal,
+  tu.tu_desc AS Equipamento,
+  coalesce(ctm.ctm_externalid, ctm.ctm_id) AS Transacao,
+  cp.cp_desc AS Produto,
+  mtp.code AS aplicacao,
+  cpm.cpm_desc AS Pagamento,
+  ctd.ctm_receivedvalue AS qtd,
+  ctd.ctm_value AS Valor,
+  ctd.ctm_value * ctd.ctm_receivedvalue AS valor_total,
+  --'Venda QRCode' AS Tipo, --alterado
+  'QRCODE' AS Tipo,
+  cp.cp_id AS codigo_produto, --incluido
+  uu.name AS Operador,
+  SAFE_CAST(uo.hrid AS STRING)  AS Matricula,
+  ctm.cs_id AS Sessao,
+  cts.cts_id AS Cod_Status,
+  cts.cts_shortdesc AS Status,
+  ctdm.ctdm_mediaid AS QrCode,
+  ddt.dt_desc AS TipoDispositivo,
+  CASE WHEN ctdm.ctdm_serie IS NULL THEN '-' ELSE ctdm.ctdm_serie END AS Serie,
+  ctxpm.ctmxcpm_nsu_acquirer AS NSU,
+  cp.cpt_id AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ctm
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_merchant")} cm ON cm.cm_id = ctm.cm_id
+INNER JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd ON ctd.ctm_id = ctm.ctm_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp ON cp.cp_id = ctd.cp_id
+INNER JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm ON ctxpm.ctm_id = ctm.ctm_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_payment_mode")} cpm ON cpm.cpm_id = ctxpm.cpm_id
+INNER JOIN ${ref("tb_his_trs_tmb001_com_service")} cs ON cs.cs_id = ctm.cs_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dv ON dv.dv_id = ctm.dv_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device_type")} ddt ON ddt.dt_id = dv.dt_id
+LEFT JOIN ${ref("tb_his_trs_tmb001_com_trandt_medias")} ctdm ON ctdm.ctd_id = ctd.ctd_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_transit_unit")} tu ON cast(tu.op_id AS string) = dv.op_id AND cast(tu.tu_code AS string) = dv.tu_code
+LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_operator")} op ON op.op_id = dv.op_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_toline")} tl ON tl.id = dv.dv_line_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg ON filg.id = tl.farIntegrationLineGroupId
+LEFT JOIN ${ref("tb_his_mrd_tmb001_sysuser")} su ON su.email = cs.cs_sysuser_email AND su.systemType = 'pos'
+LEFT JOIN ${ref("tb_his_mrd_tmb001_usroperator")} uo ON uo.id = su.usrOperatorId
+LEFT JOIN ${ref("tb_his_mrd_tmb001_usruser")} uu ON cast(uu.id AS string) = cast(uo.usrUserId AS string)
+LEFT JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts ON cts.cts_id = ctm.ctm_status
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp ON mtp.description = cp.cp_desc --incluido
+WHERE ddt.dt_id IN ('7', '8')
+  AND ctdm.ctdm_mediatype = '0'
+  -- AND DATE(ctm.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+),
+
+R0108 AS (
+SELECT
+  dd.tu_code AS cod_terminal,
+  DATE(pp.ppx_paymentdate) AS data_trans,
+  TIME(pp.ppx_paymentdate) AS hora_trans,
+  ctd.ctm_value AS valor,
+  ctd.ctm_receivedvalue AS quantidade,
+  ct.ctm_receivedvalue AS valor_total,
+  cpm.cpm_desc AS forma_pagamento,
+  ctxpm.ctmxcpm_nsu_acquirer AS nsu_adquirente,
+  ctxpm.ctmxcpm_pix_txid AS pix_tx_id,
+  ctxpm.ctmxcpm_pix_endtoendid AS pix_end_to_end,
+  CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END AS tipo_produto,
+  cp.cp_id AS codigo_produto,
+  cp.cp_desc AS produto,
+  mtp.code AS aplicacao,
+  ct.ctm_id AS idtrn,
+  ct.ctm_status AS status_orbi,
+  ct.ctt_id AS ctt_id,
+  CASE ctxpm.ctmxcpm_status WHEN 'C' THEN 'Conciliado' WHEN 'D' THEN 'Divergência valor' ELSE 'Não conciliado' END AS conciliacao,
+  cp.cpt_id AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_merchant")} cm ON cm.cm_id = ct.cm_id
+INNER JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd ON ctd.ctm_id = ct.ctm_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp ON cp.cp_id = ctd.cp_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_product_type")} cpt ON cpt.cpt_id = cp.cpt_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp ON mtp.description = cp.cp_desc
+INNER JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm ON ctxpm.ctm_id = ct.ctm_id AND ctxpm.cpm_id = '5'
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_payment_mode")} cpm ON cpm.cpm_id = ctxpm.cpm_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd ON dd.dv_id = ct.dv_id
+INNER JOIN ${ref("tb_his_trs_tmb001_pay_pix")} pp ON ctxpm.ptr_id = pp.ptr_id
+WHERE ct.cm_id = '4'
+  AND ct.ctm_status IN ('A','P')
+  -- AND DATE(ct.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+),
+
+R0109 AS (
+SELECT
+  dd.tu_code AS cod_terminal,
+  ct.ctm_datetime_tz AS data_hora_trans,
+  DATE(ct.ctm_datetime_tz) AS data_trans,
+  TIME(ct.ctm_datetime_tz) AS hora_trans,
+  ctd.ctm_value AS valor,
+  ctd.ctm_receivedvalue AS quantidade,
+  ct.ctm_receivedvalue AS valor_total,
+  cpm.cpm_desc AS forma_pagamento,
+  ctxpm.ctmxcpm_acquirer_name AS acquirer_name,
+  ctxpm.ctmxcpm_brand AS bandeira,
+  ctxpm.ctmxcpm_nsu_acquirer AS Id_Transacao_Cielo,
+  ctxpm.ctmxcpm_aut_acquirer AS cod_aprov_adquirente,
+  ctxpm.ctmxcpm_pix_txid AS pix_tx_id,
+  ctxpm.ctmxcpm_pix_endtoendid AS pix_end_to_end,
+  CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END AS tipo_produto,
+  cp.cp_id AS codigo_produto,
+  cp.cp_desc AS produto,
+  mtp.code AS aplicacao,
+  ct.ctm_id AS idtrn,
+  cts.cts_shortdesc AS status_orbi,
+  cp.cpt_id AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
+JOIN ${ref("tb_his_mrd_tmb001_com_merchant")} cm ON cm.cm_id = ct.cm_id
+JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd ON ctd.ctm_id = ct.ctm_id
+JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp ON cp.cp_id = ctd.cp_id
+JOIN ${ref("tb_his_mrd_tmb001_com_product_type")} cpt ON cpt.cpt_id = cp.cpt_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp ON mtp.description = cp.cp_desc
+JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm ON ctxpm.ctm_id = ct.ctm_id
+JOIN ${ref("tb_his_mrd_tmb001_com_payment_mode")} cpm ON cpm.cpm_id = ctxpm.cpm_id
+JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd ON dd.dv_id = ct.dv_id
+JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts ON cts.cts_id = ct.ctm_status
+WHERE ct.cm_id = '4'
+  AND dd.dt_id = '6'
+  AND ctxpm.cpm_id = '2'
+  AND cts.cts_id IN ('A', 'P', 'V')
+  AND COALESCE(ctxpm.ptr_id, '0') > '0'
+  -- AND DATE(ct.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+),
+
+R0110 AS (
+SELECT
+  dd.tu_code AS cod_terminal,
+  pp.ppx_paymentdate AS data_hora_trans,
+  DATE(ct.ctm_datetime_tz) AS data_trans,
+  TIME(ct.ctm_datetime_tz) AS hora_trans,
+  ctd.ctm_value AS valor,
+  ctd.ctm_receivedvalue AS quantidade,
+  ctd.ctm_value * ctd.ctm_receivedvalue AS valor_total,
+  cpm.cpm_desc AS forma_pagamento,
+  ctxpm.ctmxcpm_acquirer_name AS acquirer_name,
+  ctxpm.ctmxcpm_brand AS bandeira,
+  ctxpm.ctmxcpm_nsu_acquirer AS nsu_adquirente,
+  ctxpm.ctmxcpm_aut_acquirer AS cod_aprov_adquirente,
+  ctxpm.ctmxcpm_pix_txid AS pix_tx_id,
+  ctxpm.ctmxcpm_pix_endtoendid AS pix_end_to_end,
+  CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END AS tipo_produto,
+  cp.cp_id AS codigo_produto,
+  cp.cp_desc AS produto,
+  mtp.code AS aplicacao,
+  ct.ctm_id AS idtrn,
+  cts.cts_shortdesc AS status_orbi,
+  CASE ctxpm.ctmxcpm_conciliation_status WHEN 'C' THEN 'Conciliado' WHEN 'D' THEN 'Divergência valor' ELSE 'Não conciliado' END AS conciliacao,
+  cp.cpt_id AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
+JOIN ${ref("tb_his_mrd_tmb001_com_merchant")} cm ON cm.cm_id = ct.cm_id
+JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd ON ctd.ctm_id = ct.ctm_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp ON cp.cp_id = ctd.cp_id
+JOIN ${ref("tb_his_mrd_tmb001_com_product_type")} cpt ON cpt.cpt_id = cp.cpt_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp ON mtp.description = cp.cp_desc
+JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm ON ctxpm.ctm_id = ct.ctm_id
+JOIN ${ref("tb_his_mrd_tmb001_com_payment_mode")} cpm ON cpm.cpm_id = ctxpm.cpm_id
+JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd ON dd.dv_id = ct.dv_id
+JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts ON cts.cts_id = ct.ctm_status
+JOIN ${ref("tb_his_trs_tmb001_pay_pix")} pp ON ctxpm.ptr_id = pp.ptr_id
+WHERE ct.cm_id = '6'
+ -- AND (cp.cpt_id != '5' OR cp.cpt_id IS NULL)
+  -- AND DATE(ct.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+),
+
+R0117_R0051 AS (
+SELECT 
+  dd.tu_code                                              AS cod_atm,
+  tl.description                                          AS estacao,
+  filg.description                                        AS linha,
+  op.op_desc                                              AS empresa,
+  ct.ctm_datetime_tz                                      AS data_hora_trans,
+  DATE(ct.ctm_datetime_tz)                                AS data_trans,
+  TIME(ct.ctm_datetime_tz)                                AS hora_trans,
+  ct.ctm_value                                            AS valor,
+  ct.ctm_receivedvalue                                    AS valor_recebido,
+  ctxpm.ctmxcpm_pix_txid                                  AS pix_txid,
+  ctxpm.ctmxcpm_pix_endtoendid                            AS pix_endtoendid,
+  cp.cp_desc                                              AS produto,
+  mtp.code                                                AS aplicacao,
+  CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END      AS tipo_produto, --INCLUIDO
+  cp.cp_id                                                AS codigo_produto, --INCLUIDO
+  ct.ctm_id                                               AS idtrn,
+  'tbd'                                                   AS pdv,
+  cts.cts_longdesc                                        AS Status,
+  CASE ctxpm.ctmxcpm_conciliation_status
+    WHEN 'C' THEN 'Conciliado'
+    WHEN 'D' THEN 'Divergência valor'
+    ELSE 'Não conciliado'
+  END                                                     AS conciliacao,
+  cp.cpt_id                                               AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
+INNER JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd 
+  ON ctd.ctm_id = ct.ctm_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp 
+  ON cp.cp_id = ctd.cp_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")} cts 
+  ON ct.ctm_status = cts.cts_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp 
+  ON mtp.description = cp.cp_desc
+INNER JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm 
+  ON ctxpm.ctm_id = ct.ctm_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd 
+  ON dd.dv_id = ct.dv_id
+INNER JOIN ${ref("tb_his_mrd_tmb001_dvc_operator")} op 
+  ON op.op_id = dd.op_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_toline")} tl 
+  ON tl.id = dd.dv_line_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg 
+  ON filg.id = tl.farIntegrationLineGroupId
+WHERE ct.ctm_status IN ('A', 'P', 'V') 
+  AND dd.dt_id = '7'
+  --AND cp.cpt_id <> '5'
+  AND ctxpm.cpm_id = '5'
+  -- AND DATE(ct.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+),
+
+R0123_R0052 AS (
+SELECT
+    cm.cm_desc                                                                          AS rede_de_vendas,
+    dd.tu_code                                                                          AS cod_atm,
+    tl.description                                                                      AS estacao,
+    filg.description                                                                    AS linha,
+    tto.name                                                                            AS empresa,
+    --dd.op_id                                                                          AS empresa, SUBSTITUIDO POR PADRONIZAÇAO
+    ct.ctm_datetime_tz                                                                  AS data_hora_trans,
+    DATE(ct.ctm_datetime_tz)                                                            AS data_trans,
+    TIME(ct.ctm_datetime_tz)                                                            AS hora_trans,
+    ct.ctm_receivedvalue                                                                AS valor_recebido,
+    ctd.ctm_value * ctd.ctm_receivedvalue                                               AS valor,
+    ctxpm.ctmxcpm_nsu_acquirer                                                          AS nsu_adquirente,
+    ctxpm.ctmxcpm_aut_acquirer                                                          AS cod_aprov_adquirente,
+    cp.cpt_id                                                                           AS cpt_id,
+    CASE
+        WHEN cp.cpt_id = '0' THEN 'QRCODE'
+        WHEN cp.cpt_id = '5' THEN 'BU'
+        ELSE 'TOP'
+    END                                                                                 AS tipo_produto,
+    cp.cp_id                                                                            AS codigo_produto,
+    cp.cp_desc                                                                          AS produto,
+    mtp.code                                                                            AS aplicacao,
+    --cp.cp_desc                                                                        AS aplicacao,  SUBSTITUIDO POR PADRONIZAÇAO
+    ct.ctm_id                                                                           AS idtrn,
+    ct.ctm_status                                                                       AS status_orbi,
+    ct.ctt_id                                                                           AS ctt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")} ct
+JOIN ${ref("tb_his_mrd_tmb001_com_merchant")} cm ON cm.cm_id = ct.cm_id
+JOIN ${ref("tb_his_trs_tmb001_com_trandt")} ctd ON ctd.ctm_id = ct.ctm_id
+JOIN ${ref("tb_his_mrd_tmb001_com_product")} cp ON cp.cp_id = ctd.cp_id
+JOIN ${ref("tb_his_mrd_tmb001_com_product_type")} cpt ON cpt.cpt_id = cp.cpt_id
+JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")} ctxpm ON ctxpm.ctm_id = ct.ctm_id
+JOIN ${ref("tb_his_mrd_tmb001_dvc_device")} dd ON dd.dv_id = ct.dv_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_totransportoperator")} tto   ON tto.id = dd.op_id --INSERIDO POR PADRONIZAÇÃO
+JOIN ${ref("tb_his_mrd_tmb001_toline")} tl ON tl.id = dd.dv_line_id
+JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")} filg ON filg.id = tl.farIntegrationLineGroupId
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")} mtp ON mtp.description = cp.cp_desc --inserido
+WHERE dd.dt_id = '7'
+  AND ctxpm.cpm_id = '2'
+  -- AND DATE(ct.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+),
+
+R0115_R0050 AS (
+WITH notas_agregadas AS (
+    SELECT
+        ctmxcpm_id,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 2   THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_2,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 5   THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_5,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 10  THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_10,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 20  THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_20,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 50  THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_50,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 100 THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_100,
+        SUM(CASE WHEN CAST(ctmxpmc_denomination AS INT64) = 200 THEN CAST(ctmxpmc_quantity AS INT64) END) AS nota_200
+    FROM ${ref("tb_his_trs_tmb001_com_tranmt_xpm_cashnote")}
+    GROUP BY ctmxcpm_id
+)
+SELECT
+    cm.cm_desc                                                                          AS cm_desc,
+    tto.name                                                                           AS empresa,
+    filg.description                                                                    AS linha,
+    tl.description                                                                      AS estacao,
+    dd.tu_code                                                                          AS cod_atm,
+    cs.cs_dtopen                                                                        AS abertura_servico,
+    cs.cs_dtclose                                                                       AS fechamento_servico,
+    ct.ctm_datetime_tz                                                                 AS data_hora_trans,
+    DATE(ct.ctm_datetime_tz)                                                           AS data_trans,
+    TIME(ct.ctm_datetime_tz)                                                           AS hora_trans,
+    CASE WHEN cp.cpt_id = '5' THEN 'BU' ELSE 'TOP' END                                 AS tipo_produto,
+    cp.cp_id                                                                          AS codigo_produto,
+    cp.cp_desc                                                                         AS produto,
+    mtp.code                                                                           AS aplicacao,
+    ct.ctm_id                                                                          AS idtrn,
+    CASE WHEN pv.pvc_id IS NULL THEN 'Nao' ELSE 'Sim' END                              AS voucher_gerado,
+    ct.ctm_value                                                                       AS ctm_value,
+    ct.ctm_receivedvalue                                                               AS ctm_receivedvalue,
+    na.nota_2,
+    na.nota_5,
+    na.nota_10,
+    na.nota_20,
+    na.nota_50,
+    na.nota_100,
+    na.nota_200,
+    ct.ctm_externalid                                                                  AS ctm_externalid,
+    ct.ctm_legacy_id                                                                   AS ctm_legacy_id,
+    cts.cts_shortdesc                                                                  AS Status,
+    cp.cpt_id                                                                          AS cpt_id
+FROM ${ref("tb_his_trs_tmb001_com_tranmt")}                                            ct
+JOIN ${ref("tb_his_mrd_tmb001_com_merchant")}                                         cm    ON cm.cm_id                  = ct.cm_id
+JOIN ${ref("tb_his_trs_tmb001_com_service")}                                          cs    ON cs.cs_id                  = ct.cs_id
+JOIN ${ref("tb_his_trs_tmb001_com_tranmt_x_payment_mode")}                            ctxpm ON ctxpm.ctm_id              = ct.ctm_id
+                                                                                       AND ctxpm.cpm_id              = '1'
+LEFT JOIN ${ref("tb_his_trs_tmb001_com_trandt")}                                      ctd   ON ctd.ctm_id                = ct.ctm_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_com_tran_status")}                                 cts   ON cts.cts_id                = ct.ctm_status
+LEFT JOIN ${ref("tb_his_mrd_tmb001_com_product")}                                     cp    ON cp.cp_id                  = ctd.cp_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_com_product_type")}                                cpt   ON cpt.cpt_id                = cp.cpt_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_medtransitproduct")}                               mtp   ON mtp.description           = cp.cp_desc
+LEFT JOIN notas_agregadas                                                             na    ON na.ctmxcpm_id             = ctxpm.ctmxcpm_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_device")}                                      dd    ON dd.dv_id                  = ct.dv_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_dvc_device_type")}                                 ddt   ON ddt.dt_id                 = dd.dt_id
+LEFT JOIN ${ref("tb_his_trs_tmb001_pay_voucher")}                                     pv    ON pv.ctm_id_orig            = ct.ctm_id
+LEFT JOIN ${ref("tb_his_mrd_tmb001_toline")}                                         tl    ON tl.id                     = dd.dv_line_id 
+LEFT JOIN ${ref("tb_his_mrd_tmb001_farintegrationlinegroup")}                        filg  ON filg.id                   = tl.farIntegrationLineGroupId
+LEFT JOIN ${ref("tb_his_mrd_tmb001_totransportoperator")}                            tto   ON tto.id                    = dd.op_id 
+WHERE ddt.dt_id = '7'
+  -- AND DATE(ct.ctm_datetime_tz) >= '2026-08-01'
+  -- AND DATE(ctd.ctd_createdat) >= '2026-08-01'
+  -- AND DATE(ctxpm.ctmxcpm_dtpayment) >= '2026-08-01'
+)
+,
+
+UNIAO AS (
+SELECT
+  idtrn_geracao                                 AS cd_transaction,
+  'N/A'                                         AS cd_com_transaction,
+  terminal_geracao                              AS cd_pos_device,
+  data_hora_criacao                             AS dh_transaction,
+  data_criacao                                  AS dt_transaction,
+  hora_criacao                                  AS tm_transaction,
+  upper(modo_geracao)                           AS ds_type_generation,
+  upper(razao_voucher)                          AS ds_generation,
+  terminal_uso                                  AS cd_pos_device_usage,
+  date(data_uso)                                AS dt_usage,
+  time(hora_uso)                                AS tm_usage,
+  date(data_expiracao)                          AS dt_expiration,
+  time(data_expiracao)                          AS tm_expiration,
+  numero_media                                  AS cd_media,
+  numero_voucher                                AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type,
+  'N/A'                                         AS cd_product_type,
+  upper(status_voucher)                         AS ds_status_voucher,
+  upper(status_orbi)                            AS ds_status,
+  upper(dsc_status_orbi)                        AS ds_status_complete,
+  external_id                                   AS cd_external,
+  id_legado                                     AS cd_legacy,
+  valor                                         AS vl_transaction,
+  valor_recebido                                AS vl_total,
+  usuario_emissor                               AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  'N/A'                                         AS nm_line,
+  'N/A'                                         AS nm_station,
+  'N/A'                                         AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  'N/A'                                         AS ds_product,
+  'N/A'                                         AS cd_product,
+  'VOUCHER'                                     AS ds_payment_mode,
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'ATM'                                         AS ds_device_type, --INCLUIDO
+  'N/A'                                         AS ds_serie,
+  'N/A'                                         AS ds_pix_tx,
+  'N/A'                                         AS ds_pix_end_to_end,
+  'N/A'                                         AS nr_nsu_acquirer,
+  'N/A'                                         AS cd_acquirer_authorization,
+  'N/A'                                         AS ds_conciliation,
+  CAST(NULL AS NUMERIC)                         AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  'N/A'                                         AS ds_acquirer,
+  'N/A'                                         AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0087_R0113'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0087_R0113
+
+UNION ALL
+
+SELECT
+  Transacao                                     AS cd_transaction,
+  'N/A'                                         AS cd_com_transaction,
+  Terminal                                      AS cd_pos_device,
+  Data_trans                                    AS dh_transaction,
+  Dt_trans                                      AS dt_transaction,
+  tm_trans                                      AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(Tipo)                                   AS ds_product_type,
+  'N/A'                                         AS cd_product_type,
+  'N/A'                                         AS ds_status_voucher,
+  upper(Status)                                 AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  'N/A'                                         AS cd_external,
+  'N/A'                                         AS cd_legacy,
+  Valor                                         AS vl_transaction,
+  valor_total                                   AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  redevendas_id                                 AS cd_sale_network,
+  upper(redevendas)                             AS ds_sale_network,
+  upper(Linha)                                  AS nm_line,
+  upper(Estacao)                                AS nm_station,
+  upper(Empresa)                                AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  Equipamento                                   AS ds_terminal,
+  upper(Produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  upper(Pagamento)                              AS ds_payment_mode,
+  NSU                                           AS nr_nsu,
+  Operador                                      AS ds_operator,
+  Matricula                                     AS nr_registration,
+  Sessao                                        AS ds_session,
+  Cod_Status                                    AS cd_status,
+  QrCode                                        AS cd_qrcode_media,
+  TipoDispositivo                               AS ds_device_type,
+  Serie                                         AS ds_serie,
+  'N/A'                                         AS ds_pix_tx,
+  'N/A'                                         AS ds_pix_end_to_end,
+  'N/A'                                         AS nr_nsu_acquirer,
+  'N/A'                                         AS cd_acquirer_authorization,
+  'N/A'                                         AS ds_conciliation,
+  qtd                                           AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  'N/A'                                         AS ds_acquirer,
+  'N/A'                                         AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0097'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0097
+
+UNION ALL
+
+SELECT
+  idtrn                                         AS cd_transaction,
+  ctt_id                                        AS cd_com_transaction,
+  cod_terminal                                  AS cd_pos_device,
+  CAST(NULL AS DATETIME)                        AS dh_transaction,
+  data_trans                                    AS dt_transaction,
+  hora_trans                                    AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type,
+  codigo_produto                                AS cd_product_type,
+  'N/A'                                         AS ds_status_voucher,
+  upper(status_orbi)                            AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  'N/A'                                         AS cd_external,
+  'N/A'                                         AS cd_legacy,
+  valor                                         AS vl_transaction,
+  valor_total                                   AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  'N/A'                                         AS nm_line,
+  'N/A'                                         AS nm_station,
+  'N/A'                                         AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  upper(produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  upper(forma_pagamento)                        AS ds_payment_mode,
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'APP'                                         AS ds_device_type,
+  'N/A'                                         AS ds_serie,
+  pix_tx_id                                     AS ds_pix_tx,
+  pix_end_to_end                                AS ds_pix_end_to_end,
+  nsu_adquirente                                AS nr_nsu_acquirer,
+  'N/A'                                         AS cd_acquirer_authorization,
+  upper(conciliacao)                            AS ds_conciliation,
+  quantidade                                    AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  'N/A'                                         AS ds_acquirer,
+  'N/A'                                         AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0108'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0108
+
+UNION ALL
+
+SELECT
+  idtrn                                         AS cd_transaction,
+  'N/A'                                         AS cd_com_transaction,
+  cod_terminal                                  AS cd_pos_device,
+  data_hora_trans                               AS dh_transaction,
+  data_trans                                    AS dt_transaction,
+  hora_trans                                    AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type,
+  codigo_produto                                AS cd_product_type,
+  'N/A'                                         AS ds_status_voucher,
+  upper(status_orbi)                            AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  'N/A'                                         AS cd_external,
+  'N/A'                                         AS cd_legacy,
+  valor                                         AS vl_transaction,
+  valor_total                                   AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  'N/A'                                         AS nm_line,
+  'N/A'                                         AS nm_station,
+  'N/A'                                         AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  upper(produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  upper(forma_pagamento)                        AS ds_payment_mode,
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'APP'                                         AS ds_device_type,
+  'N/A'                                         AS ds_serie,
+  pix_tx_id                                     AS ds_pix_tx,
+  pix_end_to_end                                AS ds_pix_end_to_end,
+  'N/A'                                         AS nr_nsu_acquirer,
+  cod_aprov_adquirente                          AS cd_acquirer_authorization,
+  'N/A'                                         AS ds_conciliation,
+  quantidade                                    AS qt_transaction,
+  Id_Transacao_Cielo                            AS cd_transaction_cielo,
+  upper(acquirer_name)                          AS ds_acquirer,
+  upper(bandeira)                               AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0109'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0109
+
+UNION ALL
+
+SELECT
+  idtrn                                         AS cd_transaction,
+  'N/A'                                         AS cd_com_transaction,
+  cod_terminal                                  AS cd_pos_device,
+  data_hora_trans                               AS dh_transaction,
+  data_trans                                    AS dt_transaction,
+  hora_trans                                    AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type,
+  codigo_produto                                AS cd_product_type,
+  'N/A'                                         AS ds_status_voucher,
+  upper(status_orbi)                            AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  'N/A'                                         AS cd_external,
+  'N/A'                                         AS cd_legacy,
+  valor                                         AS vl_transaction,
+  valor_total                                   AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  'N/A'                                         AS nm_line,
+  'N/A'                                         AS nm_station,
+  'N/A'                                         AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  upper(produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  upper(forma_pagamento)                        AS ds_payment_mode,
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'WHATSAPP'                                    AS ds_device_type,
+  'N/A'                                         AS ds_serie,
+  pix_tx_id                                     AS ds_pix_tx,
+  pix_end_to_end                                AS ds_pix_end_to_end,
+  nsu_adquirente                                AS nr_nsu_acquirer,
+  cod_aprov_adquirente                          AS cd_acquirer_authorization,
+  upper(conciliacao)                            AS ds_conciliation,
+  quantidade                                    AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  upper(acquirer_name)                          AS ds_acquirer,
+  upper(bandeira)                               AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0110'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0110
+
+UNION ALL
+
+SELECT
+  idtrn                                         AS cd_transaction,
+  'N/A'                                         AS cd_com_transaction,
+  cod_atm                                       AS cd_pos_device,
+  data_hora_trans                               AS dh_transaction,
+  data_trans                                    AS dt_transaction,
+  hora_trans                                    AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type, --incluido
+  codigo_produto                                AS cd_product_type, --incluido
+  'N/A'                                         AS ds_status_voucher,
+  upper(Status)                                 AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  'N/A'                                         AS cd_external,
+  'N/A'                                         AS cd_legacy,
+  valor                                         AS vl_transaction,
+  valor_recebido                                AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  upper(linha)                                  AS nm_line,
+  upper(estacao)                                AS nm_station,
+  upper(empresa)                                AS nm_company,
+  upper(pdv)                                    AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  upper(produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  'PIX'                                         AS ds_payment_mode, --INCLUIDO
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'ATM'                                         AS ds_device_type,
+  'N/A'                                         AS ds_serie,
+  pix_txid                                      AS ds_pix_tx,
+  pix_endtoendid                                AS ds_pix_end_to_end,
+  'N/A'                                         AS nr_nsu_acquirer,
+  'N/A'                                         AS cd_acquirer_authorization,
+  upper(Conciliacao)                            AS ds_conciliation,
+  CAST(NULL AS NUMERIC)                         AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  'N/A'                                         AS ds_acquirer,
+  'N/A'                                         AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0117_R0051'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0117_R0051
+
+UNION ALL
+
+SELECT
+  idtrn                                         AS cd_transaction,
+  ctt_id                                        AS cd_com_transaction,
+  cod_atm                                       AS cd_pos_device,
+  data_hora_trans                               AS dh_transaction,
+  data_trans                                    AS dt_transaction,
+  hora_trans                                    AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type,
+  codigo_produto                                AS cd_product_type,
+  'N/A'                                         AS ds_status_voucher,
+  upper(status_orbi)                            AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  'N/A'                                         AS cd_external,
+  'N/A'                                         AS cd_legacy,
+  valor                                         AS vl_transaction,
+  valor_recebido                                AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  upper(linha)                                  AS nm_line,
+  upper(estacao)                                AS nm_station,
+  upper(empresa)                                AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  upper(produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  'DEBITO'                                      AS ds_payment_mode,
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'ATM'                                         AS ds_device_type,
+  'N/A'                                         AS ds_serie,
+  'N/A'                                         AS ds_pix_tx,
+  'N/A'                                         AS ds_pix_end_to_end,
+  nsu_adquirente                                AS nr_nsu_acquirer,
+  cod_aprov_adquirente                          AS cd_acquirer_authorization,
+  'N/A'                                         AS ds_conciliation,
+  CAST(NULL AS NUMERIC)                         AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  'N/A'                                         AS ds_acquirer,
+  'N/A'                                         AS ds_card_brand,
+  CAST(NULL AS DATE)                            AS dt_open_service,
+  CAST(NULL AS TIME)                            AS tm_open_service,
+  CAST(NULL AS DATETIME)                        AS dt_close_service,
+  'N/A'                                         AS fl_voucher_gerado,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_2,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_5,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_10,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_20,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_50,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_100,
+  CAST(NULL AS NUMERIC)                         AS vl_bill_200,
+  'R0123_R0052'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0123_R0052
+
+UNION ALL
+
+SELECT
+  idtrn                                         AS cd_transaction,
+  'N/A'                                         AS cd_com_transaction,
+  cod_atm                                       AS cd_pos_device,
+  data_hora_trans                               AS dh_transaction,
+  data_trans                                    AS dt_transaction,
+  hora_trans                                    AS tm_transaction,
+  'N/A'                                         AS ds_type_generation,
+  'N/A'                                         AS ds_generation,
+  'N/A'                                         AS cd_pos_device_usage,
+  CAST(NULL AS DATE)                            AS dt_usage,
+  CAST(NULL AS TIME)                            AS tm_usage,
+  CAST(NULL AS DATE)                            AS dt_expiration,
+  CAST(NULL AS TIME)                            AS tm_expiration,
+  'N/A'                                         AS cd_media,
+  'N/A'                                         AS nr_voucher,
+  upper(tipo_produto)                           AS ds_product_type,
+  codigo_produto                                AS cd_product_type, --incluido
+  'N/A'                                         AS ds_status_voucher,
+  upper(Status)                                 AS ds_status,
+  'N/A'                                         AS ds_status_complete,
+  ctm_externalid                                AS cd_external,
+  ctm_legacy_id                                 AS cd_legacy,
+  ctm_value                                     AS vl_transaction,
+  ctm_receivedvalue                             AS vl_total,
+  'N/A'                                         AS ds_user_issuer,
+  'N/A'                                         AS cd_sale_network,
+  'N/A'                                         AS ds_sale_network,
+  upper(Linha)                                  AS nm_line,
+  upper(Estacao)                                AS nm_station,
+  upper(Empresa)                                AS nm_company,
+  'N/A'                                         AS nm_pdv,
+  'N/A'                                         AS ds_terminal,
+  upper(produto)                                AS ds_product,
+  aplicacao                                     AS cd_product,
+  'DINHEIRO'                                    AS ds_payment_mode,--INCLUIDO
+  'N/A'                                         AS nr_nsu,
+  'N/A'                                         AS ds_operator,
+  'N/A'                                         AS nr_registration,
+  'N/A'                                         AS ds_session,
+  'N/A'                                         AS cd_status,
+  'N/A'                                         AS cd_qrcode_media,
+  'ATM'                                         AS ds_device_type,
+  'N/A'                                         AS ds_serie,
+  'N/A'                                         AS ds_pix_tx,
+  'N/A'                                         AS ds_pix_end_to_end,
+  'N/A'                                         AS nr_nsu_acquirer,
+  'N/A'                                         AS cd_acquirer_authorization,
+  'N/A'                                         AS ds_conciliation,
+  CAST(NULL AS NUMERIC)                         AS qt_transaction,
+  'N/A'                                         AS cd_transaction_cielo,
+  'N/A'                                         AS ds_acquirer,
+  'N/A'                                         AS ds_card_brand,
+  date(abertura_servico)                        AS dt_open_service,
+  time(abertura_servico)                        AS tm_open_service,
+  fechamento_servico                            AS dt_close_service,
+  upper(voucher_gerado)                         AS fl_voucher_gerado,
+  nota_2                                        AS vl_bill_2,
+  nota_5                                        AS vl_bill_5,
+  nota_10                                       AS vl_bill_10,
+  nota_20                                       AS vl_bill_20,
+  nota_50                                       AS vl_bill_50,
+  nota_100                                      AS vl_bill_100,
+  nota_200                                      AS vl_bill_200,
+  'R0115_R0050'                                      AS cd_report_origin,
+  cpt_id                                       AS filtrobu
+FROM R0115_R0050
+)
+
+SELECT
+  *,
+  CURRENT_TIMESTAMP() AS ts_processing,
+  'AUT001' AS cd_company,
+  CAST(FORMAT_TIMESTAMP("%Y%m%d%H%M%S", CURRENT_TIMESTAMP()) AS INT64) AS nr_load_control,
+  SESSION_USER() AS cd_created_by,
+  'TMB001' AS cd_system_source
+FROM UNIAO
+WHERE TRUE 
+ --AND DATE(dt_transaction) >= '2026-08-01'
