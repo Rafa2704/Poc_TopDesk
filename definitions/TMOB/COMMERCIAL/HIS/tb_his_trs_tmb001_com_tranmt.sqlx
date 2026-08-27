@@ -13,4 +13,8 @@ config {
 
 SELECT 
     *
- FROM ${ref("tb_day_trs_tmb001_com_tranmt")}
+ FROM 
+  `prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt`
+ FOR SYSTEM_TIME AS OF TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 HOUR);
+ 
+ --${ref("tb_day_trs_tmb001_com_tranmt")}
