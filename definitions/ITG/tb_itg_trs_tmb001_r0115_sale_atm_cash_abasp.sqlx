@@ -1,6 +1,8 @@
 config {
   type: "table",
   schema: "itg",
+tags: ["commercial"],
+
   bigquery: {
     partitionBy: "dt_transaction",
     clusterBy: ["ds_product"],
