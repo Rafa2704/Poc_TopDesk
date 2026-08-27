@@ -13,6 +13,7 @@ config {
 
 SELECT 
     *
+    FROM
 --  FROM prd-autopass-ed-001.his.tb_his_trs_tmb001_com_tranmt_x_payment_mode
 
 --  FOR SYSTEM_TIME AS OF TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 HOUR)
